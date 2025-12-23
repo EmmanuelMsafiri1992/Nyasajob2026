@@ -9,4 +9,4 @@ deployment:
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan optimize:clear
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php -r "if(function_exists('opcache_reset')) opcache_reset();" || true
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan view:cache
-      - test -f $DEPLOYPATH/public/mix-manifest.json || echo '{ "/dist/public/styles.css": "/dist/public/styles.css", "/dist/public/styles.rtl.css": "/dist/public/styles.rtl.css", "/dist/public/scripts.js": "/dist/public/scripts.js" }' > $DEPLOYPATH/public/mix-manifest.json
+      - echo '{ "/dist/public/styles.css": "/dist/public/styles.css", "/dist/public/styles.rtl.css": "/dist/public/styles.rtl.css", "/dist/public/scripts.js": "/dist/public/scripts.js", "/dist/admin/styles.css": "/dist/admin/styles.css", "/dist/admin/scripts.js": "/dist/admin/scripts.js" }' > $DEPLOYPATH/public/mix-manifest.json
