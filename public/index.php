@@ -103,14 +103,21 @@ function _getComposerRequiredPhpVersion(): string
 	if (empty($version)) {
 		$version = _getRequiredPhpVersion($defaultVersion);
 	}
-	
-	// String to Float
+
+	// Handle multiple version constraints (e.g., "^8.2|^8.3|^8.4")
+	// Take only the first version constraint
 	$version = trim($version);
+	if (str_contains($version, '|')) {
+		$versionParts = explode('|', $version);
+		$version = trim($versionParts[0]);
+	}
+
+	// String to Float - extract version number
 	$version = strtr($version, [' ' => '']);
 	$version = preg_replace('/ +/', '', $version);
 	$version = str_replace(',', '.', $version);
 	$version = preg_replace('/[^\d.]/', '', $version);
-	
+
 	return is_string($version) ? $version : $defaultVersion;
 }
 

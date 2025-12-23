@@ -850,14 +850,21 @@ function buildAttributes(?array $attributes): string
  */
 function isPng(?string $bufferImg, bool $recursive = true): bool
 {
+	if ($bufferImg === null || $bufferImg === '') {
+		return false;
+	}
+
 	$f = finfo_open();
 	$result = finfo_buffer($f, $bufferImg, FILEINFO_MIME_TYPE);
-	
-	if (!str_contains($result, 'image') && $recursive) {
-		// Plain Text
-		return str_contains($bufferImg, 'image/png');
+
+	if ($result === false || !str_contains($result, 'image')) {
+		if ($recursive) {
+			// Plain Text
+			return str_contains($bufferImg, 'image/png');
+		}
+		return false;
 	}
-	
+
 	return ($result == 'image/png');
 }
 

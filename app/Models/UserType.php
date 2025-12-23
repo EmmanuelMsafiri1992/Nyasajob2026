@@ -2,7 +2,7 @@
 namespace App\Models;
 
 use App\Models\Scopes\ActiveScope;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 
 class UserType extends BaseModel
 {

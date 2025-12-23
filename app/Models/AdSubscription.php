@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\Scopes\ActiveScope;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;

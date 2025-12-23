@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Models\Scopes\ActiveScope;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class AdPackage extends BaseModel

@@ -1124,4 +1124,9 @@ return [
 
 
 
+	// Custom Menu Items
+	'Courses' => 'Courses',
+	'Advertise' => 'Advertise',
+	'My Advertisements' => 'My Advertisements',
+
 ];

@@ -43,7 +43,11 @@ trait CheckerTrait
 		// Check PHP version
 		$requiredPhpVersion = $this->getComposerRequiredPhpVersion();
 		if ($requiredPhpVersion) {
-			$cleanVersion = preg_replace('/[^0-9.]/', '', $requiredPhpVersion);
+			// Handle multiple version constraints (e.g., "^8.2|^8.3|^8.4")
+			// Take the first version constraint and extract the version number
+			$versionParts = explode('|', $requiredPhpVersion);
+			$firstVersion = trim($versionParts[0]);
+			$cleanVersion = preg_replace('/[^0-9.]/', '', $firstVersion);
 			if (version_compare(PHP_VERSION, $cleanVersion, '<')) {
 				$errors[] = "PHP version {$cleanVersion} or higher is required. Current: " . PHP_VERSION;
 			}

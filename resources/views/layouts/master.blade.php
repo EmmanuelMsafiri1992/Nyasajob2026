@@ -204,6 +204,7 @@
 
 @includeWhen(!auth()->check(), 'auth.login.inc.modal')
 @includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.modal.change-country', 'layouts.inc.modal.change-country'])
+@includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.modal.change-language', 'layouts.inc.modal.change-language'])
 @includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.modal.error', 'layouts.inc.modal.error'])
 @include('cookie-consent::index')
 

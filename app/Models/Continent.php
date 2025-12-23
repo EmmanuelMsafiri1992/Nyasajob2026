@@ -3,7 +3,7 @@ namespace App\Models;
 
 
 use App\Observers\ContinentObserver;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 
 class Continent extends BaseModel
 {

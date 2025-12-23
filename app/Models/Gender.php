@@ -2,8 +2,8 @@
 namespace App\Models;
 
 use App\Observers\GenderObserver;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
 
 class Gender extends BaseModel
 {

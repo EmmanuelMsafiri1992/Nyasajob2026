@@ -94,6 +94,15 @@
 						@endif
 					@endif
 				@endif
+				{{-- Language Selector (Mobile) --}}
+				@php
+					$supportedLanguages = getSupportedLanguages();
+				@endphp
+				@if (is_array($supportedLanguages) && count($supportedLanguages) > 1)
+					<button class="btn btn-default d-md-none d-block float-end me-2" data-bs-toggle="modal" data-bs-target="#selectLanguage">
+						<i class="bi bi-globe2"></i>
+					</button>
+				@endif
 			</div>
 			
 			<div class="navbar-collapse collapse" id="navbarsDefault">
@@ -128,7 +137,21 @@
 							</a>
 						</li>
 					@endif
-					
+
+					{{-- Courses --}}
+					<li class="nav-item">
+						<a href="{{ url('/courses') }}" class="nav-link">
+							<i class="fa-solid fa-graduation-cap"></i> {{ t('Courses') }}
+						</a>
+					</li>
+
+					{{-- Advertise With Us --}}
+					<li class="nav-item">
+						<a href="{{ route('advertise.index') }}" class="nav-link">
+							<i class="fa-solid fa-bullhorn"></i> {{ t('Advertise') }}
+						</a>
+					</li>
+
 					@if (empty($authUser))
 						<li class="nav-item dropdown no-arrow open-on-hover d-md-block d-sm-none d-none">
 							<a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown">
@@ -189,13 +212,20 @@
 											</a>
 										</li>
 									@endforeach
+									{{-- My Advertisements Link --}}
+									<li class="dropdown-divider"></li>
+									<li class="dropdown-item">
+										<a href="{{ url('/account/my-ads') }}">
+											<i class="fa-solid fa-ad"></i> {{ t('My Advertisements') }}
+										</a>
+									</li>
 								@endif
 							</ul>
 						</li>
 					@endif
 					
-					@if (doesUserCanCreateListing($authUser))
-						@if (config('settings.listing_form.pricing_page_enabled') == '2')
+					@if (empty($authUser) || (!empty($authUser) && in_array($authUser->user_type_id, [1])))
+						@if (config('settings.single.pricing_page_enabled') == '2')
 							<li class="nav-item pricing">
 								<a href="{{ \App\Helpers\UrlGen::pricing() }}" class="nav-link">
 									<i class="fa-solid fa-tags"></i> {{ t('pricing_label') }}
