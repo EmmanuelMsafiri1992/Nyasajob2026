@@ -34,11 +34,13 @@
     // ==============================
     Iconpicker.ICONSET = {
         _custom: null,
+        bootstrapfontawesome: $.iconset_bootstrapfontawesome || Iconpicker.ICONSET_EMPTY,
         bootstrapicons: $.iconset_bootstrapicons || Iconpicker.ICONSET_EMPTY,
         elusiveicons: $.iconset_elusiveicons || Iconpicker.ICONSET_EMPTY,
         flagicon: $.iconset_flagicon || Iconpicker.ICONSET_EMPTY,
         fontawesome4: $.iconset_fontawesome4 || Iconpicker.ICONSET_EMPTY,
         fontawesome5: $.iconset_fontawesome5 || Iconpicker.ICONSET_EMPTY,
+        fontawesome6: $.iconset_fontawesome6 || Iconpicker.ICONSET_EMPTY,
         glyphicon: $.iconset_glyphicon || Iconpicker.ICONSET_EMPTY,
         ionicons: $.iconset_ionicons || Iconpicker.ICONSET_EMPTY,
         mapicons: $.iconset_mapicons || Iconpicker.ICONSET_EMPTY,

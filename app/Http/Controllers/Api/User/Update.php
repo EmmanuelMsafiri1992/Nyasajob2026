@@ -1,7 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\User;
 
-use App\Http\Requests\UserRequest;
+use App\Http\Requests\Front\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Scopes\VerifiedScope;
 use App\Models\User;
@@ -11,33 +26,34 @@ trait Update
 {
 	/**
 	 * @param $id
-	 * @param \App\Http\Requests\UserRequest $request
+	 * @param \App\Http\Requests\Front\UserRequest $request
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function updateDetails($id, UserRequest $request): \Illuminate\Http\JsonResponse
 	{
 		$user = User::withoutGlobalScopes([VerifiedScope::class])->where('id', $id)->first();
 		
 		if (empty($user)) {
-			return $this->respondNotFound(t('user_not_found'));
+			return apiResponse()->notFound(t('user_not_found'));
 		}
 		
 		$authUser = request()->user() ?? auth('sanctum')->user();
+		if (empty($authUser)) {
+			return apiResponse()->unauthorized();
+		}
 		
 		// Check logged User
 		// Get the User Personal Access Token Object
 		$personalAccess = $authUser->tokens()->where('id', getApiAuthToken())->first();
 		if (!empty($personalAccess)) {
 			if ($personalAccess->tokenable_id != $user->id) {
-				return $this->respondUnauthorized();
+				return apiResponse()->unauthorized();
 			}
 		} else {
-			return $this->respondUnauthorized();
+			return apiResponse()->unauthorized();
 		}
 		
-		// Check if these fields has changed
+		// Check if these fields have changed
 		$emailChanged = $request->filled('email') && $request->input('email') != $user->email;
 		$phoneChanged = $request->filled('phone') && $request->input('phone') != $user->phone;
 		$usernameChanged = $request->filled('username') && $request->input('username') != $user->username;
@@ -97,7 +113,7 @@ trait Update
 		
 		$extra = [];
 		
-		// Don't log out the User (See User model)
+		// Don't log out the User (See the User model)
 		$extra['emailOrPhoneChanged'] = ($emailVerificationRequired || $phoneVerificationRequired);
 		
 		// Save
@@ -109,7 +125,7 @@ trait Update
 			'result'  => (new UserResource($user))->toArray($request),
 		];
 		
-		// Send Email Verification message
+		// Send an Email Verification message
 		if ($emailVerificationRequired) {
 			$extra['sendEmailVerification'] = $this->sendEmailVerification($user);
 			if (
@@ -121,7 +137,7 @@ trait Update
 			}
 		}
 		
-		// Send Phone Verification message
+		// Send a Phone Verification message
 		if ($phoneVerificationRequired) {
 			$extra['sendPhoneVerification'] = $this->sendPhoneVerification($user);
 			if (
@@ -137,34 +153,36 @@ trait Update
 		$extra['photo'] = [];
 		if ($request->hasFile('photo')) {
 			// Update User's Photo
-			$extra['photo'] = $this->updatePhoto($user, $request);
+			$extra['photo'] = $this->updateUserPhoto($user->id, $request)->getData(true);
 		} else {
 			// Remove User's Photo
 			$photoRemovalRequested = ($request->filled('remove_photo') && $request->input('remove_photo'));
 			if ($photoRemovalRequested) {
-				$extra['photo'] = $this->removePhoto($user, $request);
+				$extra['photo'] = $this->removeUserPhoto($user->id, $request)->getData(true);
 			}
 		}
-		if (isset($extra['photo']['success'])) {
-			// Update the '$data' result value, If photo is uploaded successfully
+		if (array_key_exists('success', $extra['photo'])) {
+			// Update the '$data' result value If a photo is uploaded successfully
 			if ($extra['photo']['success']) {
-				if (isset($extra['photo']['result']) && !empty($extra['photo']['result'])) {
+				if (!empty($extra['photo']['result'])) {
 					$data['result'] = $extra['photo']['result'];
 					unset($extra['photo']['result']);
 				}
 			}
 			
-			// Update the '$data' infos, If error found during the photo upload
-			if (!$extra['photo']['success'] && isset($extra['photo']['message'])) {
-				$data['success'] = $extra['photo']['success'];
-				$data['message'] = $extra['photo']['message'];
-				unset($extra['photo']['success']);
-				unset($extra['photo']['message']);
+			// Update the '$data' infos If error found during the photo upload
+			if (!$extra['photo']['success']) {
+				if (array_key_exists('message', $extra['photo'])) {
+					$data['success'] = $extra['photo']['success'];
+					$data['message'] = $extra['photo']['message'];
+					unset($extra['photo']['success']);
+					unset($extra['photo']['message']);
+				}
 			}
 		}
 		
 		$data['extra'] = $extra;
 		
-		return $this->respondUpdated($data);
+		return apiResponse()->updated($data);
 	}
 }

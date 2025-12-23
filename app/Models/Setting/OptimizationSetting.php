@@ -1,7 +1,24 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Setting;
 
-use Illuminate\Support\Facades\Route;
+/*
+ * settings.optimization.option
+ */
 
 class OptimizationSetting
 {
@@ -59,10 +76,10 @@ class OptimizationSetting
 		// Check if the /.env file's cache configuration variables are different to the DB value,
 		// If so, then display the right value from the /.env file.
 		if (is_array($value)) {
-			if (str_contains(Route::currentRouteAction(), 'Admin\SettingController@edit')) {
-				if (array_key_exists('cache_driver', $value) && getenv('CACHE_DRIVER')) {
-					if ($value['cache_driver'] != env('CACHE_DRIVER')) {
-						$value['cache_driver'] = env('CACHE_DRIVER');
+			if (str_contains(currentRouteAction(), 'Admin\SettingController@edit')) {
+				if (array_key_exists('cache_driver', $value) && getenv('CACHE_STORE')) {
+					if ($value['cache_driver'] != env('CACHE_STORE')) {
+						$value['cache_driver'] = env('CACHE_STORE');
 					}
 				}
 				if (array_key_exists('memcached_servers_1_host', $value) && getenv('MEMCACHED_SERVER_1_HOST')) {
@@ -118,6 +135,8 @@ class OptimizationSetting
 	
 	public static function getFields($diskName)
 	{
+		$cacheDrivers = (array)config('larapen.options.cache');
+		
 		$fields = [
 			[
 				'name'  => 'caching_system_sep',
@@ -128,14 +147,7 @@ class OptimizationSetting
 				'name'              => 'cache_driver',
 				'label'             => trans('admin.cache_driver_label'),
 				'type'              => 'select2_from_array',
-				'options'           => [
-					'file'      => 'File (Default)',
-					'array'     => 'None',
-					'database'  => 'Database',
-					'apc'       => 'APC',
-					'memcached' => 'Memcached',
-					'redis'     => 'Redis',
-				],
+				'options'           => $cacheDrivers,
 				'hint'              => trans('admin.cache_driver_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
@@ -155,10 +167,14 @@ class OptimizationSetting
 				'type'  => 'custom_html',
 				'value' => trans('admin.cache_driver_info'),
 			],
+			
 			[
-				'name'  => 'memcached_sep',
-				'type'  => 'custom_html',
-				'value' => trans('admin.memcached_sep_value'),
+				'name'              => 'memcached_sep',
+				'type'              => 'custom_html',
+				'value'             => trans('admin.memcached_sep_value'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-12 memcached',
+				],
 			],
 			[
 				'name'              => 'memcached_persistent_id',
@@ -166,13 +182,16 @@ class OptimizationSetting
 				'type'              => 'text',
 				'hint'              => trans('admin.memcached_persistent_id_hint'),
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
-				'name'  => 'separator_clear_1',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
+				'name'              => 'separator_clear_1',
+				'type'              => 'custom_html',
+				'value'             => '<div style="clear: both;"></div>',
+				'wrapperAttributes' => [
+					'class' => 'col-md-12 memcached',
+				],
 			],
 			[
 				'name'              => 'memcached_sasl_username',
@@ -180,7 +199,7 @@ class OptimizationSetting
 				'type'              => 'text',
 				'hint'              => trans('admin.memcached_sasl_username_hint'),
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
@@ -189,13 +208,16 @@ class OptimizationSetting
 				'type'              => 'text',
 				'hint'              => trans('admin.memcached_sasl_password_hint'),
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
-				'name'  => 'memcached_servers_sep',
-				'type'  => 'custom_html',
-				'value' => trans('admin.memcached_servers_sep_value'),
+				'name'              => 'memcached_servers_sep',
+				'type'              => 'custom_html',
+				'value'             => trans('admin.memcached_servers_sep_value'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-12 memcached',
+				],
 			],
 			[
 				'name'              => 'memcached_servers_1_host',
@@ -203,7 +225,7 @@ class OptimizationSetting
 				'type'              => 'text',
 				'hint'              => trans('admin.memcached_servers_host_hint'),
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
@@ -212,7 +234,7 @@ class OptimizationSetting
 				'type'              => 'number',
 				'hint'              => trans('admin.memcached_servers_port_hint'),
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
@@ -220,7 +242,7 @@ class OptimizationSetting
 				'label'             => trans('admin.memcached_servers_host_label', ['num' => 2]) . ' (' . trans('admin.Optional') . ')',
 				'type'              => 'text',
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
@@ -228,7 +250,7 @@ class OptimizationSetting
 				'label'             => trans('admin.memcached_servers_port_label', ['num' => 2]) . ' (' . trans('admin.Optional') . ')',
 				'type'              => 'number',
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
@@ -236,7 +258,7 @@ class OptimizationSetting
 				'label'             => trans('admin.memcached_servers_host_label', ['num' => 3]) . ' (' . trans('admin.Optional') . ')',
 				'type'              => 'text',
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
 			[
@@ -244,205 +266,10 @@ class OptimizationSetting
 				'label'             => trans('admin.memcached_servers_port_label', ['num' => 3]) . ' (' . trans('admin.Optional') . ')',
 				'type'              => 'number',
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 memcached',
 				],
 			],
-			[
-				'name'  => 'redis_sep',
-				'type'  => 'custom_html',
-				'value' => trans('admin.redis_sep_value'),
-			],
-			[
-				'name'              => 'redis_client',
-				'label'             => trans('admin.redis_client_label'),
-				'type'              => 'select2_from_array',
-				'options'           => [
-					'predis'   => 'Predis',
-					'phpredis' => 'PhpRedis',
-				],
-				'hint'              => trans('admin.redis_client_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'  => 'separator_clear_2',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
-			],
-			[
-				'name'              => 'redis_cluster_activation',
-				'label'             => trans('admin.redis_cluster_activation_label'),
-				'type'              => 'checkbox_switch',
-				'hint'              => trans('admin.redis_cluster_activation_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster',
-				'label'             => trans('admin.redis_cluster_label'),
-				'type'              => 'select2_from_array',
-				'options'           => [
-					'predis' => 'Predis',
-					'redis'  => 'Redis',
-				],
-				'hint'              => trans('admin.redis_cluster_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'  => 'separator_clear_3',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
-			],
-			[
-				'name'  => 'redis_server_sep',
-				'type'  => 'custom_html',
-				'value' => trans('admin.redis_server_sep_value'),
-			],
-			[
-				'name'              => 'redis_host',
-				'label'             => trans('admin.redis_host_label'),
-				'type'              => 'text',
-				'hint'              => trans('admin.redis_host_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_password',
-				'label'             => trans('admin.redis_password_label'),
-				'type'              => 'text',
-				'hint'              => trans('admin.redis_password_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_port',
-				'label'             => trans('admin.redis_port_label'),
-				'type'              => 'number',
-				'hint'              => trans('admin.redis_port_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_database',
-				'label'             => trans('admin.redis_database_label'),
-				'type'              => 'text',
-				'hint'              => trans('admin.redis_database_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'  => 'redis_clusters_sep',
-				'type'  => 'custom_html',
-				'value' => trans('admin.redis_clusters_sep_value'),
-			],
-			[
-				'name'              => 'redis_cluster_1_host',
-				'label'             => trans('admin.redis_cluster_host_label', ['num' => 1]),
-				'type'              => 'text',
-				'hint'              => trans('admin.redis_cluster_host_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_1_password',
-				'label'             => trans('admin.redis_cluster_password_label', ['num' => 1]),
-				'type'              => 'text',
-				'hint'              => trans('admin.redis_cluster_password_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_1_port',
-				'label'             => trans('admin.redis_cluster_port_label', ['num' => 1]),
-				'type'              => 'number',
-				'hint'              => trans('admin.redis_cluster_port_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_1_database',
-				'label'             => trans('admin.redis_cluster_database_label', ['num' => 1]),
-				'type'              => 'text',
-				'hint'              => trans('admin.redis_cluster_database_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_2_host',
-				'label'             => trans('admin.redis_cluster_host_label', ['num' => 2]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'text',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_2_password',
-				'label'             => trans('admin.redis_cluster_password_label', ['num' => 2]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'text',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_2_port',
-				'label'             => trans('admin.redis_cluster_port_label', ['num' => 2]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'number',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_2_database',
-				'label'             => trans('admin.redis_cluster_database_label', ['num' => 2]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'text',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_3_host',
-				'label'             => trans('admin.redis_cluster_host_label', ['num' => 3]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'text',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_3_password',
-				'label'             => trans('admin.redis_cluster_password_label', ['num' => 3]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'text',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_3_port',
-				'label'             => trans('admin.redis_cluster_port_label', ['num' => 3]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'number',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'redis_cluster_3_database',
-				'label'             => trans('admin.redis_cluster_database_label', ['num' => 3]) . ' (' . trans('admin.Optional') . ')',
-				'type'              => 'text',
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
+			
 			[
 				'name'  => 'minify_html_sep',
 				'type'  => 'custom_html',
@@ -459,6 +286,6 @@ class OptimizationSetting
 			],
 		];
 		
-		return $fields;
+		return addOptionsGroupJavaScript(__NAMESPACE__, __CLASS__, $fields);
 	}
 }

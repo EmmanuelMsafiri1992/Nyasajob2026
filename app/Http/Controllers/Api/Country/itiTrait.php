@@ -1,9 +1,27 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Country;
 
+use App\Exceptions\Custom\CustomException;
 use App\Helpers\Arr;
 use App\Models\Country;
 use App\Models\Scopes\ActiveScope;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 
 trait itiTrait
 {
@@ -11,10 +29,9 @@ trait itiTrait
 	 * Get the 'Intl Tel Input' countries
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	public function getItiCountries(): \Illuminate\Http\JsonResponse
+	public function getItiCountries(): JsonResponse
 	{
 		// Get the countries from the plugin JS file
 		// to get eventual missed information (e.g. priority)
@@ -27,22 +44,23 @@ trait itiTrait
 		$dbCountries = $this->getItiCountriesFromDb();
 		
 		if ($dbCountries->isEmpty()) {
-			return $this->respondNoContent();
+			return apiResponse()->noContent();
 		}
 		
 		$dbCountries = $dbCountries->toArray();
 		
 		$countries = [];
 		foreach ($dbCountries as $country) {
+			$countryName = getColumnTranslation($country['name']);
 			if (
-				empty($country['name'])
+				empty($countryName)
 				|| empty($country['code'])
 				|| empty($country['phone'])
 			) {
 				continue;
 			}
 			
-			$name = str($country['name'])->limit(50)->toString();
+			$name = str($countryName)->limit(50)->toString();
 			$iso2 = strtolower($country['code']);
 			
 			$newItem = [
@@ -104,13 +122,14 @@ trait itiTrait
 			'result'  => $countries,
 		];
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 	
 	/**
 	 * Get the countries from the plugin JS file
 	 *
 	 * @return array
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
 	public function getItiCountriesFromConfig(): array
 	{
@@ -120,7 +139,7 @@ trait itiTrait
 			$buffer = str($buffer)->betweenFirst('var allCountries =', '];')->trim()->toString() . ']';
 			
 			if (str_starts_with($buffer, '[') && str_ends_with($buffer, ']]')) {
-				eval('$itiCountries = ' . $buffer . ';');
+				$itiCountries = $this->convertJsArrayToPHPArray($buffer);
 			}
 		}
 		
@@ -147,13 +166,12 @@ trait itiTrait
 	 * Get the countries from DB
 	 *
 	 * @return \Illuminate\Support\Collection
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	private function getItiCountriesFromDb(): \Illuminate\Support\Collection
+	private function getItiCountriesFromDb(): Collection
 	{
 		$phoneOfCountries = config('settings.sms.phone_of_countries', 'local');
-		$isFromAdminPanel = (request()->filled('isFromAdminPanel') && (int)request()->get('isFromAdminPanel') == 1);
+		$isFromAdminPanel = (request()->filled('isFromAdminPanel') && (int)request()->input('isFromAdminPanel') == 1);
 		$countryCode = config('country.code', 'US');
 		
 		$dbQueryCanBeSkipped = (!isFromAdminPanel() && $phoneOfCountries == 'local' && !empty(config('country')));
@@ -195,17 +213,35 @@ trait itiTrait
 					return $countries;
 				});
 		} catch (\Throwable $e) {
-			$country = [
-				'code'  => $countryCode,
-				'name'  => config('country.name', 'United States'),
-				'phone' => config('country.phone', '1'),
-			];
-			$countries = [$countryCode => collect($country)];
+			$message = 'Impossible to get countries from database. Error: ' . $e->getMessage();
+			throw new CustomException($message);
 		}
 		
 		$countries = collect($countries);
 		
 		// Sort
 		return Arr::mbSortBy($countries, 'name', app()->getLocale());
+	}
+	
+	/**
+	 * @param $jsArrayString
+	 * @return array
+	 * @throws \App\Exceptions\Custom\CustomException
+	 */
+	private function convertJsArrayToPHPArray($jsArrayString): array
+	{
+		// Remove any trailing commas within the array to ensure it's valid JSON
+		// $jsArrayString = preg_replace('#,\s*([\]}])#', '$1', $jsArrayString);
+		
+		// Convert the JavaScript array string to a PHP array
+		$phpArray = json_decode($jsArrayString, true);
+		
+		// Check if conversion was successful
+		if (json_last_error() === JSON_ERROR_NONE) {
+			return is_array($phpArray) ? $phpArray : [];
+		} else {
+			$message = "Error decoding JSON: " . json_last_error_msg();
+			throw new CustomException($message, 400);
+		}
 	}
 }

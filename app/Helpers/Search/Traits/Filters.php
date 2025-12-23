@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Search\Traits;
 
 use App\Helpers\Search\Traits\Filters\AuthorFilter;
@@ -17,15 +32,15 @@ trait Filters
 	use AuthorFilter, CategoryFilter, KeywordFilter, LocationFilter, TagFilter,
 		DateFilter, PostTypeFilter, SalaryFilter, DynamicFieldsFilter, CompanyFilter;
 	
-	protected function applyFilters()
+	protected function applyFilters(): void
 	{
 		if (!(isset($this->posts))) {
 			return;
 		}
 		
 		// Default Filters
-		$this->posts->currentCountry()->verified()->unarchived();
-		if (config('settings.single.listings_review_activation')) {
+		$this->posts->inCountry()->verified()->unarchived();
+		if (config('settings.listing_form.listings_review_activation')) {
 			$this->posts->reviewed();
 		}
 		

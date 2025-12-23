@@ -1,11 +1,26 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use App\Helpers\Localization\Language;
 use App\Models\Language as LanguageModel;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Collection;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
 
 class SetBrowserLocale
@@ -15,15 +30,12 @@ class SetBrowserLocale
 	 *
 	 * @param \Illuminate\Http\Request $request
 	 * @param \Closure $next
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|mixed
+	 * @return \Illuminate\Http\RedirectResponse|mixed
 	 */
 	public function handle(Request $request, Closure $next)
 	{
 		// Exception for Install & Upgrade Routes
-		if (
-			str_contains(Route::currentRouteAction(), 'InstallController')
-			|| str_contains(Route::currentRouteAction(), 'UpgradeController')
-		) {
+		if (isFromInstallOrUpgradeProcess()) {
 			return $next($request);
 		}
 		
@@ -34,7 +46,7 @@ class SetBrowserLocale
 		}
 		
 		// Detect the user's browser language (If the option is activated in the system)
-		if (config('settings.app.auto_detect_language') == '1') {
+		if (config('settings.localization.auto_detect_language') == 'from_browser') {
 			$cacheExpiration = config('settings.optimization.cache_expiration');
 			
 			if (!session()->has('browserLangCode')) {
@@ -61,24 +73,29 @@ class SetBrowserLocale
 				try {
 					$country = Language::getCountryFromIP();
 				} catch (\Exception $e) {
-					$country = collect([]);
+					$country = collect();
+				}
+				
+				// Get the country's language
+				$countryLang = collect();
+				if ($country->isNotEmpty() && $country->has('lang')) {
+					$countryLang = $country->get('lang');
+					$countryLang = ($countryLang instanceof Collection) ? $countryLang : collect();
 				}
 				
 				// Search the default language (Intersection Browser & User's Country language OR First Browser language)
 				// Prevent to always select "en" or "en-US" as First Browser Language Code
 				$browserLangCode = '';
 				if (!empty($langTab)) {
-					foreach ($langTab as $key => $value) {
-						if (!$country->isEmpty() && $country->has('lang')) {
-							if (!$country->get('lang')->isEmpty() && $country->get('lang')->has('abbr')) {
-								if ($value['code'] == $country->get('lang')->get('abbr')) {
-									$browserLangCode = $value['code'];
-									break;
-								}
-								if (str_contains($value['code'], $country->get('lang')->get('abbr'))) {
-									$browserLangCode = substr($value['code'], 0, 2);
-									break;
-								}
+					foreach ($langTab as $value) {
+						if ($countryLang->isNotEmpty() && $countryLang->has('code')) {
+							if ($value['code'] == $countryLang->get('code')) {
+								$browserLangCode = $value['code'];
+								break;
+							}
+							if (str_contains($value['code'], $countryLang->get('code'))) {
+								$browserLangCode = substr($value['code'], 0, 2);
+								break;
 							}
 						} else {
 							if ($browserLangCode == '') {
@@ -91,17 +108,13 @@ class SetBrowserLocale
 				// Check if the language is available in the system
 				if ($browserLangCode != '') {
 					// Get the Language details
-					if (
-						!$country->isEmpty()
-						&& $country->has('lang')
-						&& $country->get('lang')->has('abbr')
-						&& $country->get('lang')->get('abbr') == $browserLangCode
-					) {
+					if ($countryLang->has('code') && $countryLang->get('code') == $browserLangCode) {
 						$isAvailableLang = $country->get('lang');
 					} else {
 						try {
-							$isAvailableLang = cache()->remember('language.' . $browserLangCode, $cacheExpiration, function () use ($browserLangCode) {
-								return LanguageModel::where('abbr', $browserLangCode)->first();
+							$cacheId = 'language.' . $browserLangCode;
+							$isAvailableLang = cache()->remember($cacheId, $cacheExpiration, function () use ($browserLangCode) {
+								return LanguageModel::where('code', $browserLangCode)->first();
 							});
 						} catch (\Exception $e) {
 							$isAvailableLang = [];
@@ -109,22 +122,25 @@ class SetBrowserLocale
 						$isAvailableLang = collect($isAvailableLang);
 					}
 					
-					if (!$isAvailableLang->isEmpty()) {
+					if ($isAvailableLang->isNotEmpty()) {
 						// If language found and is available in the system,
 						// And if the browser language redirection has not been done yet,
 						// Save it in session or in cookie and select it by making a redirect to the homepage (with the language code)
-						if ($isAvailableLang->has('abbr')) {
+						if ($isAvailableLang->has('code')) {
+							$langCode = $isAvailableLang->get('code');
 							if (!request()->filled('bl')) {
-								session()->put('browserLangCode', $isAvailableLang->get('abbr'));
+								session()->put('browserLangCode', $langCode);
 								
 								// If the browser language is different to the system language,
 								// Make a redirection for language auto-selection
 								if ($browserLangCode != config('app.locale')) {
-									$currentUrl = url('locale/' . $isAvailableLang->get('abbr'));
-									$queryString = (request()->getQueryString()) ? request()->getQueryString() . '&bl=1' : '?bl=1';
-									$url = $currentUrl . '?' . $queryString;
+									$queryString = request()->getQueryString();
+									$queryString = !empty($queryString) ? $queryString . '&bl=1' : 'bl=1';
 									
-									return redirect($url)->withHeaders(config('larapen.core.noCacheHeaders'));
+									$url = url('locale/' . $langCode);
+									$url = $url . '?' . $queryString;
+									
+									return redirect()->to($url)->withHeaders(config('larapen.core.noCacheHeaders'));
 								}
 							}
 						}

@@ -1,10 +1,24 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use App\Helpers\UrlGen;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 
 class TipsMessages
 {
@@ -18,10 +32,7 @@ class TipsMessages
 	public function handle(Request $request, Closure $next)
 	{
 		// Exception for Install & Upgrade Routes
-		if (
-			str_contains(Route::currentRouteAction(), 'InstallController')
-			|| str_contains(Route::currentRouteAction(), 'UpgradeController')
-		) {
+		if (isFromInstallOrUpgradeProcess()) {
 			return $next($request);
 		}
 		
@@ -33,15 +44,15 @@ class TipsMessages
 		if (
 			!auth()->check()
 			&& request()->segment(1) !== null
-			&& !str_contains(Route::currentRouteAction(), 'RegisterController')
-			&& !str_contains(Route::currentRouteAction(), 'LoginController')
-			&& !str_contains(Route::currentRouteAction(), 'ForgotPasswordController')
-			&& !str_contains(Route::currentRouteAction(), 'ResetPasswordController')
-			&& !str_contains(Route::currentRouteAction(), 'Post\CreateOrEdit\\')
-			&& !str_contains(Route::currentRouteAction(), 'Search\\')
-			&& !str_contains(Route::currentRouteAction(), 'SitemapController')
-			&& !str_contains(Route::currentRouteAction(), 'PageController@cms')
-			&& !str_contains(Route::currentRouteAction(), 'PageController@contact')
+			&& !str_contains(currentRouteAction(), 'RegisterController')
+			&& !str_contains(currentRouteAction(), 'LoginController')
+			&& !str_contains(currentRouteAction(), 'ForgotPasswordController')
+			&& !str_contains(currentRouteAction(), 'ResetPasswordController')
+			&& !str_contains(currentRouteAction(), 'Post\CreateOrEdit\\')
+			&& !str_contains(currentRouteAction(), 'Search\\')
+			&& !str_contains(currentRouteAction(), 'SitemapController')
+			&& !str_contains(currentRouteAction(), 'PageController@cms')
+			&& !str_contains(currentRouteAction(), 'PageController@contact')
 		) {
 			$msg = 'login_for_faster_access_to_the_best_deals';
 			$siteCountryInfo = t($msg, [
@@ -58,7 +69,7 @@ class TipsMessages
 		$countryCode = config('country.code');
 		$ipCountryCode = config('ipCountry.code');
 		$ipCountryName = config('ipCountry.name');
-		if (config('settings.geo_location.active')) {
+		if (config('settings.localization.geoip_activation')) {
 			if (!empty($ipCountryCode) && !empty($countryCode)) {
 				if ($ipCountryCode != $countryCode) {
 					$msg = 'app_is_also_available_in_your_country';
@@ -78,7 +89,7 @@ class TipsMessages
 		}
 		if (isset($paddingTopExists)) {
 			// On search results page, the search form is always the first row
-			if (str_contains(Route::currentRouteAction(), '\Search\\')) {
+			if (str_contains(currentRouteAction(), 'Search\\')) {
 				$paddingTopExists = false;
 			}
 			view()->share('paddingTopExists', $paddingTopExists);

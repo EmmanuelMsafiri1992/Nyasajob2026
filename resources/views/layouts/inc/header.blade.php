@@ -1,25 +1,47 @@
-<?php
-// Search parameters
-$queryString = (request()->getQueryString() ? ('?' . request()->getQueryString()) : '');
-
-// Check if the Multi-Countries selection is enabled
-$multiCountriesIsEnabled = false;
-$multiCountriesLabel = '';
-if (config('settings.geo_location.show_country_flag')) {
-	if (!empty(config('country.code'))) {
-		if (isset($countries) && $countries->count() > 1) {
-			$multiCountriesIsEnabled = true;
-			$multiCountriesLabel = 'title="' . t('Select a Country') . '"';
+@php
+	$countries ??= collect();
+	
+	// Search parameters
+	$queryString = request()->getQueryString();
+	$queryString = !empty($queryString) ? '?' . $queryString : '';
+	
+	$showCountryFlagNextLogo = (config('settings.localization.show_country_flag') == 'in_next_logo');
+	
+	// Check if the Multi-Countries selection is enabled
+	$multiCountryIsEnabled = false;
+	$multiCountryLabel = '';
+	if ($showCountryFlagNextLogo) {
+		if (!empty(config('country.code'))) {
+			if ($countries->count() > 1) {
+				$multiCountryIsEnabled = true;
+				$multiCountryLabel = 'title="' . t('select_country') . '"';
+			}
 		}
 	}
-}
-
-// Logo Label
-$logoLabel = '';
-if ($multiCountriesIsEnabled) {
-	$logoLabel = config('settings.app.name') . ((!empty(config('country.name'))) ? ' ' . config('country.name') : '');
-}
-?>
+	
+	// Country
+	$countryName = config('country.name');
+	$countryFlag24Url = config('country.flag24_url');
+	$countryFlag32Url = config('country.flag32_url');
+	
+	// Logo
+	$logoFactoryUrl = config('larapen.media.logo-factory');
+	$logoDarkUrl = config('settings.app.logo_dark_url', $logoFactoryUrl);
+	$logoLightUrl = config('settings.app.logo_light_url', $logoFactoryUrl);
+	$logoAlt = strtolower(config('settings.app.name'));
+	$logoWidth = (int)config('settings.upload.img_resize_logo_width', 454);
+	$logoHeight = (int)config('settings.upload.img_resize_logo_height', 80);
+	
+	// Logo Label
+	$logoLabel = '';
+	if ($multiCountryIsEnabled) {
+		$logoLabel = config('settings.app.name') . (!empty($countryName) ? ' ' . $countryName : '');
+	}
+	
+	// User Menu
+	$authUser = auth()->check() ? auth()->user() : null;
+	$userMenu ??= collect();
+@endphp
 <div class="header">
 	<nav class="navbar fixed-top navbar-site navbar-light bg-light navbar-expand-md" role="navigation">
 		<div class="container">
@@ -27,10 +49,22 @@ if ($multiCountriesIsEnabled) {
 			<div class="navbar-identity p-sm-0">
 				{{-- Logo --}}
 				<a href="{{ url('/') }}" class="navbar-brand logo logo-title">
-					<img src="{{ config('settings.app.logo_url') }}"
-						 alt="{{ strtolower(config('settings.app.name')) }}" class="main-logo" data-bs-placement="bottom"
+					<img src="{{ $logoDarkUrl }}"
+						 alt="{{ $logoAlt }}"
+						 class="main-logo light-logo"
+						 data-bs-placement="bottom"
 						 data-bs-toggle="tooltip"
-						 title="{!! $logoLabel !!}"/>
+						 title="{!! $logoLabel !!}"
+						 style="max-width: {{ $logoWidth }}px; max-height: {{ $logoHeight }}px; width:auto;"
+					/>
+					<img src="{{ $logoLightUrl }}"
+					     alt="{{ $logoAlt }}"
+					     class="main-logo dark-logo"
+					     data-bs-placement="bottom"
+					     data-bs-toggle="tooltip"
+					     title="{!! $logoLabel !!}"
+					     style="max-width: {{ $logoWidth }}px; max-height: {{ $logoHeight }}px; width:auto;"
+					/>
 				</a>
 				{{-- Toggle Nav (Mobile) --}}
 				<button class="navbar-toggler -toggler float-end"
@@ -47,131 +81,86 @@ if ($multiCountriesIsEnabled) {
 					</svg>
 				</button>
 				{{-- Country Flag (Mobile) --}}
-				@if ($multiCountriesIsEnabled)
-					@if (!empty(config('country.icode')))
-						@if (file_exists(public_path().'/images/flags/24/' . config('country.icode') . '.png'))
-							<button class="flag-menu country-flag d-md-none d-block btn btn-default float-end" href="#selectCountry" data-bs-toggle="modal">
-								<img src="{{ url('images/flags/24/' . config('country.icode') . '.png') . getPictureVersion() }}"
-									 alt="{{ config('country.name') }}"
-									 style="float: left;"
-								>
+				@if ($showCountryFlagNextLogo)
+					@if ($multiCountryIsEnabled)
+						@if (!empty($countryFlag24Url))
+							<button class="flag-menu country-flag d-md-none d-sm-block d-none btn btn-default float-end"
+							        href="#selectCountry"
+							        data-bs-toggle="modal"
+							>
+								<img src="{{ $countryFlag24Url }}" alt="{{ $countryName }}" style="float: left;">
 								<span class="caret d-none"></span>
 							</button>
 						@endif
 					@endif
 				@endif
-				{{-- Language Selector (Mobile) --}}
-				<?php $supportedLanguages = getSupportedLanguages(); ?>
-				@if (is_array($supportedLanguages) && count($supportedLanguages) > 1)
-					<button class="btn btn-default d-md-none d-block float-end me-2" data-bs-toggle="modal" data-bs-target="#selectLanguage">
-						<i class="bi bi-globe2"></i>
-					</button>
-				@endif
 			</div>
+			
 			<div class="navbar-collapse collapse" id="navbarsDefault">
 				<ul class="nav navbar-nav me-md-auto navbar-left">
 					{{-- Country Flag --}}
-					@if (config('settings.geo_location.show_country_flag'))
-						@if (!empty(config('country.icode')))
-							@if (file_exists(public_path() . '/images/flags/32/' . config('country.icode') . '.png'))
-								<li class="flag-menu country-flag d-none d-md-block nav-item"
-									data-bs-toggle="tooltip"
-									data-bs-placement="{{ (config('lang.direction') == 'rtl') ? 'bottom' : 'right' }}" {!! $multiCountriesLabel !!}
-								>
-									@if ($multiCountriesIsEnabled)
-										<a class="nav-link p-0" data-bs-toggle="modal" data-bs-target="#selectCountry">
-											<img class="flag-icon mt-1"
-												 src="{{ url('images/flags/32/' . config('country.icode') . '.png') . getPictureVersion() }}"
-												 alt="{{ config('country.name') }}"
-											>
-											<span class="caret d-lg-block d-md-none float-end mt-3 mx-1"></span>
-										</a>
-									@else
-										<a class="p-0" style="cursor: default;">
-											<img class="flag-icon"
-												 src="{{ url('images/flags/32/' . config('country.icode') . '.png') . getPictureVersion() }}"
-												 alt="{{ config('country.name') }}"
-											>
-										</a>
-									@endif
-								</li>
-							@endif
+					@if ($showCountryFlagNextLogo)
+						@if (!empty($countryFlag32Url))
+							<li class="flag-menu country-flag d-md-block d-sm-none d-none nav-item"
+							    data-bs-toggle="tooltip"
+							    data-bs-placement="{{ (config('lang.direction') == 'rtl') ? 'bottom' : 'right' }}" {!! $multiCountryLabel !!}
+							>
+								@if ($multiCountryIsEnabled)
+									<a class="nav-link p-0" data-bs-toggle="modal" data-bs-target="#selectCountry">
+										<img class="flag-icon mt-1" src="{{ $countryFlag32Url }}" alt="{{ $countryName }}">
+										<span class="caret d-lg-block d-md-none d-sm-none d-none float-end mt-3 mx-1"></span>
+									</a>
+								@else
+									<a class="p-0" style="cursor: default;">
+										<img class="flag-icon" src="{{ $countryFlag32Url }}" alt="{{ $countryName }}">
+									</a>
+								@endif
+							</li>
 						@endif
 					@endif
 				</ul>
 				
 				<ul class="nav navbar-nav ms-auto navbar-right">
-					@if (config('settings.list.display_browse_jobs_link'))
+					@if (config('settings.listings_list.display_browse_jobs_link'))
 						<li class="nav-item d-lg-block d-md-none d-block">
 							<a href="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" class="nav-link">
-								<i class="fas fa-th-list"></i> {{ t('Browse Jobs') }}
+								<i class="fa-solid fa-list"></i> {{ t('Browse Jobs') }}
 							</a>
 						</li>
 					@endif
-
-					{{-- Courses --}}
-					<li class="nav-item">
-						<a href="{{ url('/courses') }}" class="nav-link">
-							<i class="fas fa-graduation-cap"></i> {{ t('Courses') }}
-						</a>
-					</li>
-
-					{{-- Interview Tips --}}
-					{{--
-					<li class="nav-item">
-						<a href="{{ url('/interview-tips') }}" class="nav-link">
-							<i class="fas fa-lightbulb"></i> {{ t('Interview Tips') }}
-						</a>
-					</li>
-					--}}
-
-					{{-- Advertise With Us --}}
-					<li class="nav-item">
-						<a href="{{ route('advertise.index') }}" class="nav-link">
-							<i class="fas fa-bullhorn"></i> {{ t('Advertise') }}
-						</a>
-					</li>
-
-					@if (!auth()->check())
+					
+					@if (empty($authUser))
 						<li class="nav-item dropdown no-arrow open-on-hover d-md-block d-sm-none d-none">
 							<a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown">
-								<i class="fas fa-user"></i>
+								<i class="fa-solid fa-user"></i>
 								<span>{{ t('log_in') }}</span>
-								<i class="fas fa-chevron-down"></i>
+								<i class="fa-solid fa-chevron-down"></i>
 							</a>
 							<ul id="authDropdownMenu" class="dropdown-menu user-menu shadow-sm">
 								<li class="dropdown-item">
-									@if (config('settings.security.login_open_in_modal'))
-										<a href="#quickLogin" class="nav-link" data-bs-toggle="modal"><i class="fas fa-user"></i> {{ t('log_in') }}</a>
-									@else
-										<a href="{{ \App\Helpers\UrlGen::login() }}" class="nav-link"><i class="fas fa-user"></i> {{ t('log_in') }}</a>
-									@endif
+									<a href="#quickLogin" class="nav-link" data-bs-toggle="modal"><i class="fa-solid fa-user"></i> {{ t('log_in') }}</a>
 								</li>
 								<li class="dropdown-item">
-									<a href="{{ \App\Helpers\UrlGen::register() }}" class="nav-link"><i class="far fa-user"></i> {{ t('sign_up') }}</a>
+									<a href="{{ \App\Helpers\UrlGen::register() }}" class="nav-link"><i class="fa-regular fa-user"></i> {{ t('sign_up') }}</a>
 								</li>
 							</ul>
 						</li>
 						<li class="nav-item d-md-none d-sm-block d-block">
-							@if (config('settings.security.login_open_in_modal'))
-								<a href="#quickLogin" class="nav-link" data-bs-toggle="modal"><i class="fas fa-user"></i> {{ t('log_in') }}</a>
-							@else
-								<a href="{{ \App\Helpers\UrlGen::login() }}" class="nav-link"><i class="fas fa-user"></i> {{ t('log_in') }}</a>
-							@endif
+							<a href="#quickLogin" class="nav-link" data-bs-toggle="modal"><i class="fa-solid fa-user"></i> {{ t('log_in') }}</a>
 						</li>
 						<li class="nav-item d-md-none d-sm-block d-block">
-							<a href="{{ \App\Helpers\UrlGen::register() }}" class="nav-link"><i class="far fa-user"></i> {{ t('sign_up') }}</a>
+							<a href="{{ \App\Helpers\UrlGen::register() }}" class="nav-link"><i class="fa-regular fa-user"></i> {{ t('sign_up') }}</a>
 						</li>
 					@else
 						<li class="nav-item dropdown no-arrow open-on-hover">
 							<a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown">
-								<i class="fas fa-user-circle"></i>
-								<span>{{ auth()->user()->name }}</span>
+								<i class="fa-solid fa-circle-user"></i>
+								<span>{{ $authUser->name }}</span>
 								<span class="badge badge-pill badge-important count-threads-with-new-messages d-lg-inline-block d-md-none">0</span>
-								<i class="fas fa-chevron-down"></i>
+								<i class="fa-solid fa-chevron-down"></i>
 							</a>
 							<ul id="userMenuDropdown" class="dropdown-menu user-menu shadow-sm">
-								@if (isset($userMenu) && !empty($userMenu))
+								@if ($userMenu->count() > 0)
 									@php
 										$menuGroup = '';
 										$dividerNeeded = false;
@@ -194,63 +183,48 @@ if ($multiCountriesIsEnabled) {
 										<li class="dropdown-item{!! (isset($value['isActive']) && $value['isActive']) ? ' active' : '' !!}">
 											<a href="{{ $value['url'] }}">
 												<i class="{{ $value['icon'] }}"></i> {{ $value['name'] }}
-												@if (isset($value['countVar'], $value['countCustomClass']) && !empty($value['countVar']) && !empty($value['countCustomClass']))
+												@if (!empty($value['countVar']) && !empty($value['countCustomClass']))
 													<span class="badge badge-pill badge-important{{ $value['countCustomClass'] }}">0</span>
 												@endif
 											</a>
 										</li>
 									@endforeach
-									{{-- My Advertisements Link --}}
-									<li class="dropdown-divider"></li>
-									<li class="dropdown-item">
-										<a href="{{ route('advertise.my-ads') }}">
-											<i class="fas fa-ad"></i> {{ t('My Advertisements') }}
-										</a>
-									</li>
 								@endif
 							</ul>
 						</li>
 					@endif
 					
-					@if (!auth()->check() || (auth()->check() && in_array(auth()->user()->user_type_id, [1])))
-						@if (config('settings.single.pricing_page_enabled') == '2')
+					@if (doesUserCanCreateListing($authUser))
+						@if (config('settings.listing_form.pricing_page_enabled') == '2')
 							<li class="nav-item pricing">
 								<a href="{{ \App\Helpers\UrlGen::pricing() }}" class="nav-link">
-									<i class="fas fa-tags"></i> {{ t('pricing_label') }}
+									<i class="fa-solid fa-tags"></i> {{ t('pricing_label') }}
 								</a>
 							</li>
 						@endif
 					@endif
 					
-					<?php
-					$addListingCanBeShown = false;
-					$addListingUrl = \App\Helpers\UrlGen::addPost();
-					$addListingAttr = '';
-					if (!auth()->check()) {
-						$addListingCanBeShown = true;
-						if (config('settings.single.guests_can_post_listings') != '1') {
-							$addListingUrl = '#quickLogin';
-							$addListingAttr = ' data-bs-toggle="modal"';
-						}
-					} else {
-						if (in_array(auth()->user()->user_type_id, [1])) {
-							$addListingCanBeShown = true;
-						}
-					}
-					if (config('settings.single.pricing_page_enabled') == '1') {
-						$addListingUrl = \App\Helpers\UrlGen::pricing();
-						$addListingAttr = '';
-					}
-					?>
-					@if ($addListingCanBeShown)
+					@php
+						[
+							$userCanCreateListing,
+							$createListingLinkUrl,
+							$createListingLinkAttr
+						] = getCreateListingLinkInfo();
+					@endphp
+					@if ($userCanCreateListing)
 						<li class="nav-item postadd">
-							<a class="btn btn-block btn-border btn-listing" href="{{ $addListingUrl }}"{!! $addListingAttr !!}>
-								<i class="far fa-edit"></i> {{ t('Create Job') }}
+							<a class="btn btn-block btn-border btn-listing"
+							   href="{{ $createListingLinkUrl }}"{!! $createListingLinkAttr !!}
+							>
+								<i class="fa-regular fa-pen-to-square"></i> {{ t('Create Job') }}
 							</a>
 						</li>
 					@endif
 					
-					@includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.menu.select-language', 'layouts.inc.menu.select-language'])
+					@includeFirst([
+						config('larapen.core.customizedViewPath') . 'layouts.inc.menu.select-language',
+						'layouts.inc.menu.select-language'
+					])
 				
 				</ul>
 			</div>

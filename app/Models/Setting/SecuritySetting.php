@@ -1,11 +1,36 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Setting;
+
+/*
+ * settings.security.option
+ */
 
 class SecuritySetting
 {
 	public static function getValues($value, $disk)
 	{
 		if (empty($value)) {
+			
+			$value['honeypot_enabled'] = '1';
+			$value['honeypot_name_field_name'] = 'entity_field';
+			$value['honeypot_valid_from_field_name'] = 'valid_field';
+			$value['honeypot_amount_of_seconds'] = '3';
+			$value['honeypot_respond_to_spam_with'] = 'blank_page';
 			
 			$value['captcha_delay'] = '1000';
 			$value['recaptcha_version'] = 'v2';
@@ -30,6 +55,22 @@ class SecuritySetting
 			$value['email_validator_filter'] = '0';
 			
 		} else {
+			
+			if (!array_key_exists('honeypot_enabled', $value)) {
+				$value['honeypot_enabled'] = '1';
+			}
+			if (!array_key_exists('honeypot_name_field_name', $value)) {
+				$value['honeypot_name_field_name'] = 'entity_field';
+			}
+			if (!array_key_exists('honeypot_valid_from_field_name', $value)) {
+				$value['honeypot_valid_from_field_name'] = 'valid_field';
+			}
+			if (!array_key_exists('honeypot_amount_of_seconds', $value)) {
+				$value['honeypot_amount_of_seconds'] = '3';
+			}
+			if (!array_key_exists('honeypot_respond_to_spam_with', $value)) {
+				$value['honeypot_respond_to_spam_with'] = 'blank_page';
+			}
 			
 			if (!array_key_exists('captcha_delay', $value)) {
 				$value['captcha_delay'] = '1000';
@@ -123,6 +164,89 @@ class SecuritySetting
 			],
 			
 			[
+				'name'  => 'honeypot_title',
+				'type'  => 'custom_html',
+				'value' => trans('admin.honeypot_title'),
+			],
+			[
+				'name'  => 'honeypot_enabled',
+				'label' => trans('admin.honeypot_enabled_label'),
+				'type'  => 'checkbox_switch',
+				'hint'  => trans('admin.honeypot_enabled_hint'),
+			],
+			[
+				'name'              => 'honeypot_name_field_name',
+				'label'             => trans('admin.honeypot_name_field_name_label'),
+				'type'              => 'text',
+				'hint'              => trans('admin.honeypot_name_field_name_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6 honeypot-el',
+				],
+			],
+			[
+				'name'              => 'honeypot_respond_to_spam_with',
+				'label'             => trans('admin.honeypot_respond_to_spam_with_label'),
+				'type'              => 'select2_from_array',
+				'options'           => [
+					'blank_page'     => 'Blank Page',
+					'http_error_500' => 'HTTP Error 500',
+				],
+				'wrapperAttributes' => [
+					'class' => 'col-md-6 honeypot-el',
+				],
+				'hint'              => trans('admin.honeypot_respond_to_spam_with_hint'),
+			],
+			[
+				'name'              => 'honeypot_separator_1',
+				'type'              => 'custom_html',
+				'value'             => '<div style="clear: both;"></div>',
+				'wrapperAttributes' => [
+					'class' => 'col-md-12 extended honeypot-el',
+				],
+			],
+			[
+				'name'              => 'honeypot_randomize_name_field_name',
+				'label'             => trans('admin.honeypot_randomize_name_field_name_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.honeypot_randomize_name_field_name_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6 honeypot-el',
+				],
+			],
+			[
+				'name'              => 'honeypot_valid_from_timestamp',
+				'label'             => trans('admin.honeypot_valid_from_timestamp_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.honeypot_valid_from_timestamp_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6 honeypot-el',
+				],
+			],
+			[
+				'name'              => 'honeypot_valid_from_field_name',
+				'label'             => trans('admin.honeypot_valid_from_field_name_label'),
+				'type'              => 'text',
+				'hint'              => trans('admin.honeypot_valid_from_field_name_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6 honeypot-el honeypot-timestamp-el',
+				],
+			],
+			[
+				'name'              => 'honeypot_amount_of_seconds',
+				'label'             => trans('admin.honeypot_amount_of_seconds_label'),
+				'type'              => 'number',
+				'attributes'        => [
+					'min'  => 1,
+					'max'  => 3600,
+					'step' => 1,
+				],
+				'hint'              => trans('admin.honeypot_amount_of_seconds_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6 honeypot-el honeypot-timestamp-el',
+				],
+			],
+			
+			[
 				'name'  => 'captcha_title',
 				'type'  => 'custom_html',
 				'value' => trans('admin.captcha_title'),
@@ -140,10 +264,6 @@ class SecuritySetting
 					'inverse'   => 'Simple Captcha (Inverse)',
 					'custom'    => 'Simple Captcha (Custom)',
 					'recaptcha' => 'Google reCAPTCHA',
-				],
-				'attributes'        => [
-					'id'  => 'captcha',
-					'onchange' => 'getCaptchaFields(this)',
 				],
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
@@ -175,17 +295,17 @@ class SecuritySetting
 				'hint'              => trans('admin.captcha_delay_hint'),
 			],
 			[
-				'name'  => 'captcha_custom',
-				'type'  => 'custom_html',
-				'value' => trans('admin.captcha_custom'),
+				'name'              => 'captcha_custom',
+				'type'              => 'custom_html',
+				'value'             => trans('admin.captcha_custom'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-12 s-captcha s-captcha-custom',
 				],
 			],
 			[
-				'name'  => 'captcha_custom_info',
-				'type'  => 'custom_html',
-				'value' => trans('admin.captcha_custom_info'),
+				'name'              => 'captcha_custom_info',
+				'type'              => 'custom_html',
+				'value'             => trans('admin.captcha_custom_info'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-12 s-captcha s-captcha-custom',
 				],
@@ -252,16 +372,13 @@ class SecuritySetting
 				'hint'              => trans('admin.captcha_bgImage_hint'),
 			],
 			[
-				'name'                => 'captcha_bgColor',
-				'label'               => trans('admin.captcha_bgColor_label'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'captcha_bgColor',
+				'label'             => trans('admin.captcha_bgColor_label'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6 s-captcha s-captcha-custom',
 				],
 			],
@@ -396,10 +513,6 @@ class SecuritySetting
 				'options'           => [
 					'v2' => 'v2 (Checkbox)',
 					'v3' => 'v3',
-				],
-				'attributes'        => [
-					'id'       => 'recaptchaVersion',
-					'onchange' => 'getReCaptchaFields(this)',
 				],
 				'hint'              => trans('admin.recaptcha_version_hint'),
 				'wrapperAttributes' => [
@@ -655,71 +768,8 @@ class SecuritySetting
 					'class' => 'col-md-6',
 				],
 			],
-			
-			// ==========
-			
-			[
-				'name'  => 'javascript',
-				'type'  => 'custom_html',
-				'value' => '<script>
-docReady(function() {
-	let captchaEl = document.querySelector("#captcha");
-	getCaptchaFields(captchaEl);
-	
-	let recaptchaVersionEl = document.querySelector("#recaptchaVersion");
-	getReCaptchaFields(recaptchaVersionEl);
-});
-
-function getCaptchaFields(captchaEl) {
-	let captchaElValue = captchaEl.value;
-	
-	if (captchaElValue === "") {
-		hideEl(document.querySelectorAll(".s-captcha"));
-		hideEl(document.querySelectorAll(".recaptcha"));
-	}
-	if (captchaElValue === "default" || captchaElValue === "math" || captchaElValue === "flat" || captchaElValue === "mini" || captchaElValue === "inverse") {
-		hideEl(document.querySelectorAll(".recaptcha"));
-		hideEl(document.querySelectorAll(".s-captcha-custom"));
-		showEl(document.querySelectorAll(".s-captcha:not(.s-captcha-custom)"));
-	}
-	if (captchaElValue === "custom") {
-		hideEl(document.querySelectorAll(".recaptcha"));
-		showEl(document.querySelectorAll(".s-captcha"));
-	}
-	if (captchaElValue === "recaptcha") {
-		hideEl(document.querySelectorAll(".s-captcha"));
-		showEl(document.querySelectorAll(".recaptcha"));
-		
-		let recaptchaVersionEl = document.querySelector("#recaptchaVersion");
-		getReCaptchaFields(recaptchaVersionEl);
-	}
-}
-
-function getReCaptchaFields(recaptchaVersionEl) {
-	let recaptchaVersionElValue = recaptchaVersionEl.value;
-	
-	let captchaEl = document.querySelector("#captcha");
-	let captchaElValue = captchaEl.value;
-	
-	if (captchaElValue === "recaptcha") {
-		hideEl(document.querySelectorAll(".s-captcha"));
-		showEl(document.querySelectorAll(".recaptcha"));
-		
-		if (recaptchaVersionElValue === "v3") {
-			hideEl(document.querySelectorAll(".recaptcha-v2"));
-			showEl(document.querySelectorAll(".recaptcha-v3"));
-		} else {
-			hideEl(document.querySelectorAll(".recaptcha-v3"));
-			showEl(document.querySelectorAll(".recaptcha-v2"));
-		}
-	} else {
-		hideEl(document.querySelectorAll(".recaptcha"));
-	}
-}
-</script>',
-			],
 		];
 		
-		return $fields;
+		return addOptionsGroupJavaScript(__NAMESPACE__, __CLASS__, $fields);
 	}
 }

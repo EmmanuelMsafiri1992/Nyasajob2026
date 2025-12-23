@@ -1,6 +1,6 @@
 <?php
 /**
- * RandomColor 1.0.4
+ * RandomColor 1.0.5
  *
  * PHP port of David Merfield JavaScript randomColor
  * https://github.com/davidmerfield/randomColor
@@ -8,7 +8,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Damien "Mistic" Sorel
+ * Copyright (c) 2014-2022 Damien "Mistic" Sorel
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +39,8 @@ class RandomColor
 	
 	static public function one(array $options = [])
 	{
+		$options = array_merge(['format' => '', 'hue' => [], 'luminosity' => ''], $options);
+		
 		$h = self::_pickHue($options);
 		$s = self::_pickSaturation($h, $options);
 		$v = self::_pickBrightness($h, $s, $options);
@@ -149,7 +151,7 @@ class RandomColor
 					break;
 				
 				case 'light':
-					$range[0] = ($range[1] + $range[0]) / 2;
+					$range[0] = round(($range[1] + $range[0]) / 2);
 					break;
 			}
 		}
@@ -205,7 +207,7 @@ class RandomColor
 				$m = ($v2 - $v1) / ($s2 - $s1);
 				$b = $v1 - $m * $s1;
 				
-				return $m * $s + $b;
+				return round($m * $s + $b);
 			}
 		}
 		

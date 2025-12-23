@@ -1,27 +1,24 @@
 @php
+	$authUser = auth()->check() ? auth()->user() : null;
+	$authUserId = !empty($authUser) ? $authUser->getAuthIdentifier() : 0;
+	$authUserTypeId = (!empty($authUser) && !empty($authUser->user_type_id)) ? $authUser->user_type_id : 0;
+	
 	$post ??= [];
 @endphp
 <div class="items-details">
 	<div class="row pb-4">
 		<div class="col-md-8 col-sm-12 col-12">
 			<div class="items-details-info jobs-details-info enable-long-words from-wysiwyg">
-				<h5 class="list-title"><strong>{{ t('ad_details') }}</strong></h5>
+				<h5 class="title-3"><strong>{{ t('ad_details') }}</strong></h5>
 				
 				{{-- Description --}}
 				<div>
 					{!! data_get($post, 'description') !!}
 				</div>
-
-				{{-- Mid-Content Ad --}}
-				@if (!empty($infeedAdvertising))
-					<div class="my-4 text-center">
-						{!! data_get($infeedAdvertising, 'tracking_code_large') !!}
-					</div>
-				@endif
-
+				
 				@if (!empty(data_get($post, 'company_description')))
 					{{-- Company Description --}}
-					<h5 class="list-title mt-5"><strong>{{ t('Company Description') }}</strong></h5>
+					<h5 class="title-3 mt-4"><strong>{{ t('Company Description') }}</strong></h5>
 					<div>
 						{!! data_get($post, 'company_description') !!}
 					</div>
@@ -29,9 +26,9 @@
 				
 				{{-- Tags --}}
 				@if (!empty(data_get($post, 'tags')))
-					<div class="row mt-3">
+					<div class="row mt-4">
 						<div class="col-12">
-							<h5 class="my-3 list-title"><strong>{{ t('Tags') }}</strong></h5>
+							<h5 class="title-3 mb-3"><strong>{{ t('Tags') }}</strong></h5>
 							@foreach(data_get($post, 'tags') as $iTag)
 								<span class="d-inline-block border border-inverse bg-light rounded-1 py-1 px-2 my-1 me-1">
 									<a href="{{ \App\Helpers\UrlGen::tag($iTag) }}">
@@ -73,16 +70,16 @@
 							<strong>{{ t('Salary') }}:</strong>&nbsp;
 							@if (data_get($post, 'salary_min') > 0 || data_get($post, 'salary_max') > 0)
 								@if (data_get($post, 'salary_min') > 0)
-									{!! \App\Helpers\Number::money(data_get($post, 'salary_min')) !!}
+									{!! \App\Helpers\Num::money(data_get($post, 'salary_min')) !!}
 								@endif
 								@if (data_get($post, 'salary_max') > 0)
 									@if (data_get($post, 'salary_min') > 0)
 										&nbsp;-&nbsp;
 									@endif
-									{!! \App\Helpers\Number::money(data_get($post, 'salary_max')) !!}
+									{!! \App\Helpers\Num::money(data_get($post, 'salary_max')) !!}
 								@endif
 							@else
-								{!! \App\Helpers\Number::money('--') !!}
+								{!! \App\Helpers\Num::money('--') !!}
 							@endif
 							@if (!empty(data_get($post, 'salaryType')))
 								{{ t('per') }} {{ data_get($post, 'salaryType.name') }}
@@ -119,7 +116,7 @@
 					@if (!empty(data_get($post, 'company')))
 						<li>
 							<a href="{{ \App\Helpers\UrlGen::company(null, data_get($post, 'company.id')) }}">
-								<i class="far fa-building"></i> {{ t('More jobs by company', ['company' => data_get($post, 'company.name')]) }}
+								<i class="fa-regular fa-building"></i> {{ t('More jobs by company', ['company' => data_get($post, 'company.name')]) }}
 							</a>
 						</li>
 					@endif
@@ -132,28 +129,26 @@
 						</li>
 					@endif
 					
-					@if (
-						!auth()->check()
-						|| (auth()->check() && auth()->id() != data_get($post, 'user_id'))
-					)
+					@if (empty($authUserId) || ($authUserId != data_get($post, 'user_id')))
 						@if (isVerifiedPost($post))
 							<li id="{{ data_get($post, 'id') }}">
 								<a class="make-favorite" href="javascript:void(0)">
-									@if (!auth()->check())
-										<i class="far fa-bookmark"></i> {{ t('Save Job') }}
-									@endif
-									@if (auth()->check() && in_array(auth()->user()->user_type_id, [2]))
-										@if (!empty(data_get($post, 'savedByLoggedUser')))
-											<i class="fas fa-bookmark"></i> {{ t('Saved Job') }}
-										@else
-											<i class="far fa-bookmark"></i> {{ t('Save Job') }}
+									@if (!empty($authUser))
+										@if ($authUserTypeId == 2)
+											@if (!empty(data_get($post, 'savedByLoggedUser')))
+												<i class="fa-solid fa-bookmark"></i> {{ t('Saved Job') }}
+											@else
+												<i class="fa-regular fa-bookmark"></i> {{ t('Save Job') }}
+											@endif
 										@endif
+									@else
+										<i class="fa-regular fa-bookmark"></i> {{ t('Save Job') }}
 									@endif
 								</a>
 							</li>
 							<li>
 								<a href="{{ \App\Helpers\UrlGen::reportPost($post) }}">
-									<i class="far fa-flag"></i> {{ t('Report abuse') }}
+									<i class="fa-regular fa-flag"></i> {{ t('Report abuse') }}
 								</a>
 							</li>
 						@endif
@@ -164,13 +159,13 @@
 	</div>
 	
 	<div class="content-footer text-start">
-		@if (auth()->check())
-			@if (auth()->user()->id == data_get($post, 'user_id'))
+		@if (!empty($authUser))
+			@if ($authUserId == data_get($post, 'user_id'))
 				<a class="btn btn-default" href="{{ \App\Helpers\UrlGen::editPost($post) }}">
-					<i class="far fa-edit"></i> {{ t('Edit') }}
+					<i class="fa-regular fa-pen-to-square"></i> {{ t('Edit') }}
 				</a>
 			@else
-				@if (in_array(auth()->user()->user_type_id, [2]))
+				@if ($authUserTypeId == 2)
 					{!! genEmailContactBtn($post) !!}
 				@endif
 			@endif

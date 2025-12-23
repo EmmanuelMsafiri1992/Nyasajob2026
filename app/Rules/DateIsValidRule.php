@@ -1,17 +1,33 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class DateIsValidRule implements Rule
+class DateIsValidRule implements ValidationRule
 {
-	public $type = '';
-	public $referenceDate = null;
-	public $strict = false;
-	public $attrLabel = '';
-	private $attr;
+	public ?string $type = '';
+	public ?string $referenceDate = null;
+	public bool $strict = false;
+	public ?string $attrLabel = '';
+	private string $attr;
 	
-	public function __construct($type, $referenceDate = null, $strict = false, $attrLabel = '')
+	public function __construct(?string $type, ?string $referenceDate = null, bool $strict = false, ?string $attrLabel = '')
 	{
 		$this->type = $type;
 		$this->referenceDate = (!empty($referenceDate) && isValidDate($referenceDate)) ? $referenceDate : date('Y-m-d H:i');
@@ -24,14 +40,26 @@ class DateIsValidRule implements Rule
 	}
 	
 	/**
+	 * Run the validation rule.
+	 */
+	public function validate(string $attribute, mixed $value, Closure $fail): void
+	{
+		if (!$this->passes($attribute, $value)) {
+			$fail($this->message());
+		}
+	}
+	
+	/**
 	 * Determine if the validation rule passes.
 	 *
 	 * @param string $attribute
 	 * @param mixed $value
 	 * @return bool
 	 */
-	public function passes($attribute, $value)
+	public function passes(string $attribute, mixed $value): bool
 	{
+		$value = getAsString($value);
+		
 		if (empty($this->attrLabel)) {
 			$this->attr = $attribute;
 		}
@@ -52,7 +80,7 @@ class DateIsValidRule implements Rule
 	 *
 	 * @return string
 	 */
-	public function message()
+	private function message(): string
 	{
 		if (!empty($this->attrLabel)) {
 			if ($this->type == 'future') {
@@ -91,15 +119,9 @@ class DateIsValidRule implements Rule
 	 * @param $value
 	 * @return bool
 	 */
-	private function isFutureDate($value)
+	private function isFutureDate($value): bool
 	{
-		$isFutureDate = false;
-		
-		if ($this->compareDate($value, $this->referenceDate, '>=')) {
-			$isFutureDate = true;
-		}
-		
-		return $isFutureDate;
+		return $this->compareDate($value, $this->referenceDate, '>=');
 	}
 	
 	/**
@@ -108,15 +130,9 @@ class DateIsValidRule implements Rule
 	 * @param $value
 	 * @return bool
 	 */
-	private function isPastDate($value)
+	private function isPastDate($value): bool
 	{
-		$isFutureDate = false;
-		
-		if ($this->compareDate($value, $this->referenceDate, '<')) {
-			$isFutureDate = true;
-		}
-		
-		return $isFutureDate;
+		return $this->compareDate($value, $this->referenceDate, '<');
 	}
 	
 	/**
@@ -125,13 +141,13 @@ class DateIsValidRule implements Rule
 	 * @param string $operator
 	 * @return bool
 	 */
-	private function compareDate($firstDate, $secondDate, $operator = '')
+	private function compareDate($firstDate, $secondDate, string $operator = ''): bool
 	{
 		$isValid = false;
 		
 		if (!isValidDate($firstDate) || !isValidDate($secondDate)) {
 			if ($this->strict) {
-				return $isValid;
+				return false;
 			} else {
 				return true; // Validated field can be string, etc.
 			}

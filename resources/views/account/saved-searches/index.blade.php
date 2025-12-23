@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -29,14 +42,14 @@
 
 				<div class="col-md-9 page-content">
 					<div class="inner-box">
-						<h2 class="title-2"><i class="fas fa-bell"></i> {{ t('Saved searches') }} </h2>
+						<h2 class="title-2"><i class="fa-solid fa-bell"></i> {{ t('Saved searches') }} </h2>
 						<div class="row">
 							<div class="col-md-12">
 								@if (!empty($savedSearches) && $totalSavedSearches > 0)
 									<div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-2 row-cols-2 g-2 g-lg-2">
 										@foreach ($savedSearches as $search)
 											@php
-												$isSelected = (request()->get('q') == data_get($search, 'keyword'));
+												$isSelected = (request()->query('q') == data_get($search, 'keyword'));
 											@endphp
 											<div class="col border border-1 rounded-2 bg-white {{ $isSelected ? 'active' : '' }}" style="height: 40px;">
 												<div class="float-start d-flex align-items-center" style="height: 100%;">

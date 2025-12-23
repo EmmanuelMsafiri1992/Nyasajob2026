@@ -20,10 +20,8 @@ return [
     'mailgun' => [
         'domain'   => null,
         'secret'   => null,
-		'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
-        'guzzle' => [
-            'verify' => false,
-        ],
+		'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'), // 'api.eu.mailgun.net' - If you are not using the United States Mailgun region
+        'scheme'   => 'https',
     ],
 	
 	'postmark' => [
@@ -44,6 +42,18 @@ return [
         ],
     ],
 	
+    'resend' => [
+	    'key' => env('RESEND_API_KEY'),
+    ],
+	
+    'mailersend' => [
+	    'api_key' => env('MAILERSEND_API_KEY'),
+    ],
+	
+    'brevo' => [
+	    'key' => env('BREVO_API_KEY'),
+    ],
+	
 	/*
 	 * Social Auth Providers
 	 */
@@ -52,18 +62,26 @@ return [
         'client_secret' => null,
         'redirect'      => env('APP_URL') . '/auth/facebook/callback',
     ],
+    
+    'linkedin-openid' => [
+	    'client_id'     => null,
+	    'client_secret' => null,
+	    'redirect'      => env('APP_URL') . '/auth/linkedin/callback',
+    ],
 	
-	'linkedin' => [
-		'client_id'     => null,
-		'client_secret' => null,
-		'redirect'      => env('APP_URL') . '/auth/linkedin/callback',
-	],
+	// OAuth 2.0
+    'twitter-oauth-2' => [
+	    'client_id'       => null,
+	    'client_secret'   => null,
+	    'redirect'        => env('APP_URL') . '/auth/twitter-oauth-2/callback',
+    ],
 	
-	'twitter' => [
-		'client_id'     => null,
-		'client_secret' => null,
-		'redirect'      => env('APP_URL') . '/auth/twitter/callback',
-	],
+	// OAuth 1.0
+    'twitter' => [
+	    'client_id'       => null,
+	    'client_secret'   => null,
+	    'redirect'        => env('APP_URL') . '/auth/twitter/callback',
+    ],
 	
     'google' => [
         'client_id'     => null,
@@ -79,6 +97,13 @@ return [
 	/*
 	 * Other
 	 */
+    'slack' => [
+	    'notifications' => [
+		    'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+		    'channel'              => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
+	    ],
+    ],
+	
 	'googlemaps' => [
 		'key' => null, //-> for Google Map JavaScript & Embeded
 	],

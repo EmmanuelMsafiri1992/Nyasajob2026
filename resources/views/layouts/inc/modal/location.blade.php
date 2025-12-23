@@ -5,6 +5,9 @@
 	$adminType = config('country.admin_type', 0);
 	$relAdminType = (in_array($adminType, ['1', '2'])) ? $adminType : 1;
 	$adminCode = data_get($city, 'subadmin' . $relAdminType . '_code') ?? data_get($admin, 'code') ?? 0;
+	
+	$inputs = request()->all();
+	$currSearch = base64_encode(serialize($inputs));
 @endphp
 {{-- Modal Select City --}}
 <div class="modal fade" id="browseLocations" tabindex="-1" aria-labelledby="browseLocationsLabel" aria-hidden="true">
@@ -13,7 +16,7 @@
 			
 			<div class="modal-header px-3">
 				<h4 class="modal-title" id="browseLocationsLabel">
-					<i class="far fa-map"></i> {{ t('select_a_location') }}
+					<i class="fa-regular fa-map"></i> {{ t('select_a_location') }}
 				</h4>
 				
 				<button type="button" class="close" data-bs-dismiss="modal">
@@ -37,11 +40,7 @@
 								<input type="hidden" id="modalUrl" name="url" value="">
 								<input type="hidden" id="modalAdminType" name="admin_type" value="{{ $adminType }}">
 								<input type="hidden" id="modalAdminCode" name="admin_code" value="">
-								<input type="hidden"
-									   id="currSearch"
-									   name="curr_search"
-									   value="{!! base64_encode(serialize(request()->all())) !!}"
-								>
+								<input type="hidden" id="currSearch" name="curr_search" value="{!! $currSearch !!}">
 								
 								<div class="row g-3">
 									<div class="col-sm-12 col-md-11 col-lg-10">

@@ -1,60 +1,72 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Search\Traits\Filters;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Number;
 use Larapen\LaravelDistance\Distance;
 
 trait LocationFilter
 {
-	protected static $defaultDistance = 50; // km
-	protected static $distance = null;      // km
-	protected static $maxDistance = 500;    // km
+	protected static int $defaultDistance = 50; // km
+	protected static ?int $distance = null;     // km
+	protected static int $maxDistance = 500;    // km
 	
-	protected function applyLocationFilter()
+	protected function applyLocationFilter(): void
 	{
 		if (!(isset($this->posts) && isset($this->postsTable))) {
 			return;
 		}
 		
 		// Distance (Max & Default distance)
-		self::$maxDistance = config('settings.list.search_distance_max', 0);
-		self::$defaultDistance = config('settings.list.search_distance_default', 0);
+		self::$maxDistance = abs((int)config('settings.listings_list.search_distance_max', 0));
+		self::$defaultDistance = abs((int)config('settings.listings_list.search_distance_default', 0));
+		
+		// Get the requested distance
+		$distance = request()->input('distance');
+		
+		// Set the distance
+		$isExtendedSearchesEnabled = (config('settings.listings_list.cities_extended_searches') == '1');
+		self::$distance = is_numeric($distance)
+			? Number::clamp($distance, min: 0, max: self::$maxDistance)
+			: ($isExtendedSearchesEnabled ? self::$defaultDistance : 0);
 		
 		// Priority Settings
-		if (request()->filled('distance') && is_numeric(request()->get('distance'))) {
-			self::$distance = request()->get('distance');
-			if (request()->get('distance') > self::$maxDistance) {
-				self::$distance = self::$maxDistance;
-			}
-		} else {
-			// Create the 'distance' parameter in the request()
-			if (config('settings.list.cities_extended_searches')) {
-				// request()->request->set('distance', self::$distance);
-				self::$distance = self::$defaultDistance;
-			}
-		}
 		
 		// Exception when admin. division searched (City not found)
 		// Skip arbitrary (fake) city with signed (-) ID, lon & lat
-		if (isset($this->city) && !empty($this->city)) {
+		if (!empty($this->city)) {
 			if (isset($this->city->id) && $this->city->id <= 0) {
 				return;
 			}
 		}
 		
-		if (str_contains(Route::currentRouteAction(), 'Search\CityController')) {
-			if (isset($this->city) && !empty($this->city)) {
+		if (str_contains(currentRouteAction(), 'Search\CityController')) {
+			if (!empty($this->city)) {
 				$this->applyLocationByCity($this->city);
 			}
 		} else {
 			if (request()->has('l')) {
-				if (isset($this->city) && !empty($this->city)) {
+				if (!empty($this->city)) {
 					$this->applyLocationByCity($this->city);
 				}
 			} else {
 				if (request()->filled('r')) {
-					if (isset($this->admin) && !empty($this->admin)) {
+					if (!empty($this->admin)) {
 						$this->applyLocationByAdminCode($this->admin->code);
 					}
 				}
@@ -69,7 +81,7 @@ trait LocationFilter
 	 * @param $adminCode
 	 * @return void
 	 */
-	private function applyLocationByAdminCode($adminCode)
+	private function applyLocationByAdminCode($adminCode): void
 	{
 		if (in_array(config('country.admin_type'), ['1', '2'])) {
 			// Get the admin. division table info
@@ -90,7 +102,7 @@ trait LocationFilter
 	 * @param $city
 	 * @return void
 	 */
-	private function applyLocationByCity($city)
+	private function applyLocationByCity($city): void
 	{
 		if (!isset($city->id) || !isset($city->longitude) || !isset($city->latitude)) {
 			return;
@@ -106,10 +118,11 @@ trait LocationFilter
 		// OrderBy Priority for Location
 		$this->orderBy[] = $this->postsTable . '.created_at DESC';
 		
-		if (config('settings.list.cities_extended_searches')) {
+		$isExtendedSearchesEnabled = (config('settings.listings_list.cities_extended_searches') == '1');
+		if ($isExtendedSearchesEnabled) {
 			
 			// Use the Cities Extended Searches
-			config()->set('distance.functions.default', config('settings.list.distance_calculation_formula'));
+			config()->set('distance.functions.default', config('settings.listings_list.distance_calculation_formula'));
 			config()->set('distance.countryCode', config('country.code'));
 			
 			$sql = Distance::select('lon', 'lat', $city->longitude, $city->latitude);
@@ -130,13 +143,13 @@ trait LocationFilter
 	}
 	
 	/**
-	 * Apply city filter (Using city's Id)
-	 * Search including City by City Id
+	 * Apply city filter (Using city's ID)
+	 * Search including City by City ID
 	 *
 	 * @param $cityId
 	 * @return void
 	 */
-	private function applyLocationByCityId($cityId)
+	private function applyLocationByCityId($cityId): void
 	{
 		if (empty(trim($cityId))) {
 			return;
@@ -148,12 +161,13 @@ trait LocationFilter
 	/**
 	 * Remove Distance from Request
 	 */
-	private function removeDistanceFromRequest()
+	private function removeDistanceFromRequest(): void
 	{
 		$input = request()->all();
 		
 		// (If it's not necessary) Remove the 'distance' parameter from request()
-		if (!config('settings.list.cities_extended_searches') || empty($this->city)) {
+		$isExtendedSearchesEnabled = (config('settings.listings_list.cities_extended_searches') == '1');
+		if (!$isExtendedSearchesEnabled || empty($this->city)) {
 			if (in_array('distance', array_keys($input))) {
 				unset($input['distance']);
 				request()->replace($input);

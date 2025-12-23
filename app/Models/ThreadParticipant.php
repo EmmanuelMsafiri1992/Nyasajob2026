@@ -1,17 +1,34 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Date;
+use App\Models\Traits\Common\AppendsTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 
 class ThreadParticipant extends BaseModel
 {
-	use SoftDeletes, Crud, Notifiable, HasFactory;
+	use SoftDeletes, Crud, AppendsTrait, Notifiable, HasFactory;
 	
 	/**
 	 * The table associated with the model.
@@ -21,31 +38,21 @@ class ThreadParticipant extends BaseModel
 	protected $table = 'threads_participants';
 	
 	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
+	 * @var array<int, string>
 	 */
-	// protected $primaryKey = 'id';
 	protected $appends = ['created_at_formatted'];
-	
-	/**
-	 * Indicates if the model should be timestamped.
-	 *
-	 * @var boolean
-	 */
-	// public $timestamps = false;
 	
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'thread_id',
@@ -54,28 +61,23 @@ class ThreadParticipant extends BaseModel
 		'is_important',
 	];
 	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
+	/**
+	 * Get the attributes that should be cast.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function casts(): array
 	{
-		parent::boot();
+		return [
+			'created_at' => 'datetime',
+			'updated_at' => 'datetime',
+			'deleted_at' => 'datetime',
+		];
 	}
 	
 	/*
@@ -90,7 +92,7 @@ class ThreadParticipant extends BaseModel
 	 *
 	 * @codeCoverageIgnore
 	 */
-	public function thread()
+	public function thread(): BelongsTo
 	{
 		return $this->belongsTo(Thread::class, 'thread_id', 'id');
 	}
@@ -102,7 +104,7 @@ class ThreadParticipant extends BaseModel
 	 *
 	 * @codeCoverageIgnore
 	 */
-	public function user()
+	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class, 'user_id');
 	}
@@ -121,11 +123,15 @@ class ThreadParticipant extends BaseModel
 	protected function createdAtFormatted(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				$value = new Carbon($this->attributes['created_at']);
-				$value->timezone(Date::getAppTimeZone());
+			get: function () {
+				$value = $this->created_at ?? ($this->attributes['created_at'] ?? null);
 				
-				return Date::formatFormNow($value);
+				if (!$value instanceof Carbon) {
+					$value = new Carbon($value);
+					$value->timezone(Date::getAppTimeZone());
+				}
+				
+				return Date::customFromNow($value);
 			},
 		);
 	}

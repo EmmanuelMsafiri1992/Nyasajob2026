@@ -1,6 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 use App\Helpers\Arr;
 use App\Helpers\DBTool;
+use App\Helpers\DotenvEditor;
 use App\Helpers\Localization\Country as CountryHelper;
 use App\Models\HomeSection;
 use App\Models\Package;
@@ -148,7 +164,7 @@ function doesCountriesPageCanBeLinkedToTheHomepage(): bool
  * @param bool $localized
  * @return string
  */
-function qsUrl(?string $path = null, ?array $queryArray = [], $secure = null, bool $localized = true): string
+function qsUrl(string $path = null, ?array $queryArray = [], $secure = null, bool $localized = true): string
 {
 	$url = getUrlWithoutQuery($path, $secure);
 	
@@ -387,7 +403,7 @@ function isFromAdminPanel($url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isAdminPanel(?string $url = null): bool
+function isAdminPanel(string $url = null): bool
 {
 	if (empty($url)) {
 		$isValid = (
@@ -418,7 +434,7 @@ function isAdminPanel(?string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDevEnv(?string $url = null): bool
+function isDevEnv(string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
@@ -438,7 +454,7 @@ function isDevEnv(?string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDemoEnv(?string $url = null): bool
+function isDemoEnv(string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
@@ -456,7 +472,7 @@ function isDemoEnv(?string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDemoDomain(?string $url = null): bool
+function isDemoDomain(string $url = null): bool
 {
 	$isDemoDomain = isDemoEnv($url);
 	
@@ -590,7 +606,7 @@ function isFromUrlThatCanContainCountryCode(): bool
  * @param string|null $url
  * @return bool
  */
-function isFromUrlAlwaysContainingCountryCode(?string $url = null): bool
+function isFromUrlAlwaysContainingCountryCode(string $url = null): bool
 {
 	if (empty($url)) {
 		$isValid = (
@@ -828,7 +844,7 @@ function getPlural($number): float|int
  * @param string|null $locale
  * @return string
  */
-function getUrlPageByType(?string $type, ?string $locale = null): string
+function getUrlPageByType(?string $type, string $locale = null): string
 {
 	if (is_null($locale)) {
 		$locale = config('app.locale');
@@ -1516,7 +1532,7 @@ function getMetaTag(?string $page): array
  * @param string|null $countryCode
  * @return string
  */
-function getDistanceUnit(?string $countryCode = null): string
+function getDistanceUnit(string $countryCode = null): string
 {
 	if (empty($countryCode)) {
 		$countryCode = config('country.code');
@@ -1533,7 +1549,7 @@ function getDistanceUnit(?string $countryCode = null): string
  * @param string|null $skin
  * @return string|null
  */
-function getFrontSkin(?string $skin = null): ?string
+function getFrontSkin(string $skin = null): ?string
 {
 	$savedSkin = config('settings.style.skin', 'default');
 	
@@ -1630,7 +1646,7 @@ function regexSimilarRoutesPrefixes(): array
  * @param string|null $browser
  * @return bool
  */
-function doesUserBrowserIs(?string $browser = null): bool
+function doesUserBrowserIs(string $browser = null): bool
 {
 	if (!empty($browser)) {
 		return (str_contains(request()->server('HTTP_USER_AGENT'), $browser));
@@ -1928,7 +1944,7 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
  *
  * @param string|null $typeOfBackup
  */
-function setBackupConfig(?string $typeOfBackup = null)
+function setBackupConfig(string $typeOfBackup = null)
 {
 	// Get the current version value
 	$version = preg_replace('/[^\d+]/', '', config('version.app'));
@@ -2074,16 +2090,8 @@ function dynamicRoute(string $key)
 function setDbFallbackLocale(?string $locale): void
 {
 	try {
-		$envPath = base_path('.env');
-		if (file_exists($envPath)) {
-			$envContent = file_get_contents($envPath);
-			if (preg_match('/^FALLBACK_LOCALE_FOR_DB=/m', $envContent)) {
-				$envContent = preg_replace('/^FALLBACK_LOCALE_FOR_DB=.*/m', 'FALLBACK_LOCALE_FOR_DB=' . $locale, $envContent);
-			} else {
-				$envContent .= "\nFALLBACK_LOCALE_FOR_DB=" . $locale;
-			}
-			file_put_contents($envPath, $envContent);
-		}
+		DotenvEditor::setKey('FALLBACK_LOCALE_FOR_DB', $locale);
+		DotenvEditor::save();
 	} catch (\Exception $e) {
 	}
 }
@@ -2096,12 +2104,8 @@ function setDbFallbackLocale(?string $locale): void
 function removeDbFallbackLocale(): void
 {
 	try {
-		$envPath = base_path('.env');
-		if (file_exists($envPath)) {
-			$envContent = file_get_contents($envPath);
-			$envContent = preg_replace('/^FALLBACK_LOCALE_FOR_DB=.*/m', 'FALLBACK_LOCALE_FOR_DB=null', $envContent);
-			file_put_contents($envPath, $envContent);
-		}
+		DotenvEditor::setKey('FALLBACK_LOCALE_FOR_DB', 'null');
+		DotenvEditor::save();
 	} catch (\Exception $e) {
 	}
 }
@@ -2234,38 +2238,14 @@ function isUtf8mb4Enabled(): bool
 	$defaultConnection = config('database.default');
 	$databaseCharset = config("database.connections.{$defaultConnection}.charset");
 	$databaseCollation = config("database.connections.{$defaultConnection}.collation");
-
+	
 	// Allow Emojis when the database charset is 'utf8mb4'
 	// and the database collation is 'utf8mb4_unicode_ci'
 	if ($databaseCharset == 'utf8mb4' && $databaseCollation == 'utf8mb4_unicode_ci') {
 		return true;
 	}
-
+	
 	return false;
-}
-
-/**
- * Strip Non-UTF-8 characters
- * Check if the database charset is 'utf8mb4' and the database collation is 'utf8mb4_unicode_ci'.
- * If it is, just return the input without the filter.
- * Otherwise, remove all 4 byte characters and store it in DB.
- *
- * @param string|null $string
- * @return string|null
- */
-function stripNonUtf(?string $string): ?string
-{
-	if (empty($string)) {
-		return $string;
-	}
-
-	/*
-	 * \p{L} matches any kind of letter from any language
-	 * \p{N} matches any kind of numeric character in any script (Optional)
-	 * \p{M} matches a character intended to be combined with another character (e.g. accents, umlauts, enclosing boxes, etc.)
-	 * [:ascii:] matches a character with ASCII value 0 through 127
-	 */
-	return preg_replace('/[^\p{L}\p{N}\p{M}[:ascii:]]+/ui', '', $string);
 }
 
 /**
@@ -2881,88 +2861,4 @@ function getNumberOfItemsToTake(?string $entity = null): float|int
 function isSubscriptionAvailable(): bool
 {
 	return (bool)version_compare(getCurrentVersion(), '13.0.0', '>=');
-}
-
-/**
- * Extract only digit characters
- *
- * @param string|null $value
- * @param int|null $default
- * @return string|int|null
- */
-function strToDigit(?string $value, ?int $default = null)
-{
-	$value = trim(preg_replace('/[^0-9]/', '', $value));
-	if (empty($value)) {
-		$value = $default;
-	}
-
-	return $value;
-}
-
-/**
- * Extract only digit characters and Convert the result in integer
- *
- * @param string|null $value
- * @param int $default
- * @return int
- */
-function strToInt(?string $value, int $default = 0): int
-{
-	return (int)strToDigit($value, $default);
-}
-
-/**
- * Get Pictures Limit
- *
- * @param $model
- * @return int|string
- * @throws \Psr\Container\ContainerExceptionInterface
- * @throws \Psr\Container\NotFoundExceptionInterface
- */
-function getPicturesLimit($model = null)
-{
-	if (empty($model)) {
-		$packageId = requestPackageId();
-		if (!empty($packageId)) {
-			$model = getPackageById($packageId);
-			$model = $model->toArray();
-		}
-	}
-
-	// Default Pictures Limit
-	$defaultLimit = 5;
-	$picturesLimit = (int)config('settings.single.pictures_limit', $defaultLimit);
-
-	$fromPackagesTable = (array_key_exists('pictures_limit', (array)$model));
-
-	if (!$fromPackagesTable) {
-		if (data_get($model, 'featured') == 1) {
-			$picturesLimit = (int)data_get($model, 'latestPayment.package.pictures_limit') ?? $picturesLimit;
-		}
-	} else {
-		$picturesLimit = (int)data_get($model, 'pictures_limit') ?? $picturesLimit;
-	}
-
-	if ($picturesLimit <= 0) $picturesLimit = $defaultLimit;
-
-	return $picturesLimit;
-}
-
-/**
- * Check if social login is enabled
- *
- * @return bool
- */
-function socialLoginIsEnabled(): bool
-{
-	return (
-		config('settings.social_auth.social_login_activation')
-		&& (
-			(config('settings.social_auth.facebook_client_id') && config('settings.social_auth.facebook_client_secret'))
-			|| (config('settings.social_auth.linkedin_client_id') && config('settings.social_auth.linkedin_client_secret'))
-			|| (config('settings.social_auth.twitter_client_id') && config('settings.social_auth.twitter_client_secret'))
-			|| (config('settings.social_auth.google_client_id') && config('settings.social_auth.google_client_secret'))
-		)
-	);
 }

@@ -70,8 +70,8 @@
 							}
 						}
 					};
-					
-					$(function () {
+			
+					onDocumentReady((event) => {
 						var ctx = document.getElementById('pieChartPosts').getContext('2d');
 						window.myPostsDoughnut = new Chart(ctx, config1);
 					});

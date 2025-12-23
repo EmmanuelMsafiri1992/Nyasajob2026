@@ -1,6 +1,6 @@
-<?php
-$thread ??= [];
-?>
+@php
+	$thread ??= [];
+@endphp
 <div class="list-group-item{{ data_get($thread, 'p_is_unread') ? '' : ' seen' }}">
 	<div class="form-check">
 		<div class="custom-control ps-0">
@@ -12,10 +12,10 @@ $thread ??= [];
 	<a href="{{ url('account/messages/' . data_get($thread, 'id')) }}" class="list-box-user">
 		<img src="{{ url(data_get($thread, 'p_creator.photo_url', '')) }}" alt="{{ data_get($thread, 'p_creator.name') }}">
 		<span class="name">
-			<?php
-			$userIsOnline = isUserOnline(data_get($thread, 'p_creator')) ? 'online' : 'offline';
-			?>
-			<i class="fa fa-circle {{ $userIsOnline }}"></i> {{ str(data_get($thread, 'p_creator.name'))->limit(14) }}
+			@php
+				$userIsOnline = isUserOnline(data_get($thread, 'p_creator')) ? 'online' : 'offline';
+			@endphp
+			<i class="fa-solid fa-circle {{ $userIsOnline }}"></i> {{ str(data_get($thread, 'p_creator.name'))->limit(14) }}
 		</span>
 	</a>
 	<a href="{{ url('account/messages/' . data_get($thread, 'id')) }}" class="list-box-content">
@@ -34,7 +34,7 @@ $thread ??= [];
 			   class="markAsNotImportant"
 			   title="{{ t('Mark as not important') }}"
 			>
-				<i class="fas fa-star"></i>
+				<i class="fa-solid fa-star"></i>
 			</a>
 		@else
 			<a href="{{ url('account/messages/' . data_get($thread, 'id') . '/actions?type=markAsImportant') }}"
@@ -43,7 +43,7 @@ $thread ??= [];
 			   class="markAsImportant"
 			   title="{{ t('Mark as important') }}"
 			>
-				<i class="far fa-star"></i>
+				<i class="fa-regular fa-star"></i>
 			</a>
 		@endif
 		<a href="{{ url('account/messages/' . data_get($thread, 'id') . '/delete') }}"
@@ -51,7 +51,7 @@ $thread ??= [];
 		   data-bs-placement="top"
 		   title="{{ t('Delete') }}"
 		>
-			<i class="fas fa-trash"></i>
+			<i class="fa-solid fa-trash"></i>
 		</a>
 		@if (data_get($thread, 'p_is_unread'))
 			<a href="{{ url('account/messages/' . data_get($thread, 'id') . '/actions?type=markAsRead') }}"
@@ -60,7 +60,7 @@ $thread ??= [];
 			   data-bs-placement="top"
 			   title="{{ t('Mark as read') }}"
 			>
-				<i class="fas fa-envelope"></i>
+				<i class="fa-solid fa-envelope"></i>
 			</a>
 		@else
 			<a href="{{ url('account/messages/' . data_get($thread, 'id') . '/actions?type=markAsUnread') }}"
@@ -69,7 +69,7 @@ $thread ??= [];
 			   data-bs-placement="top"
 			   title="{{ t('Mark as unread') }}"
 			>
-				<i class="fas fa-envelope-open"></i>
+				<i class="fa-solid fa-envelope-open"></i>
 			</a>
 		@endif
 	</div>

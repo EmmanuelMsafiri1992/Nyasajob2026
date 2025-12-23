@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Auth\Traits;
 
 use App\Helpers\Arr;
@@ -37,7 +52,7 @@ trait CompleteMissingAuthDataTrait
 			|| !Arr::keyExists('email', $user)
 			|| !Arr::keyExists('phone', $user)
 		) {
-			return $this->apiResponse($data);
+			return apiResponse()->json($data);
 		}
 		
 		$isVerifiedEmail = false;
@@ -49,6 +64,7 @@ trait CompleteMissingAuthDataTrait
 				&& !empty($post->email)
 				&& !empty($post->email_verified_at)
 			);
+			
 			$isVerifiedPhone = (
 				config('settings.sms.phone_verification') == '1'
 				&& !empty($post->phone)
@@ -65,12 +81,12 @@ trait CompleteMissingAuthDataTrait
 		}
 		
 		if (empty($email) && empty($phone)) {
-			return $this->apiResponse($data);
+			return apiResponse()->json($data);
 		}
 		
 		// Don't make any DB query if filled data is the same as auth user data
 		if ($user->email == $email && $user->phone == $phone) {
-			return $this->apiResponse($data);
+			return apiResponse()->json($data);
 		}
 		
 		// Get (verified) user instance that be saved
@@ -79,14 +95,18 @@ trait CompleteMissingAuthDataTrait
 		}
 		
 		if (empty($user)) {
-			return $this->apiResponse($data);
+			return apiResponse()->json($data);
 		}
 		
 		$message = null;
 		
 		// Complete missing email address
 		if (empty($user->email) && !empty($email)) {
-			$emailDoesntExist = User::withoutGlobalScopes([VerifiedScope::class])->where('email', $email)->doesntExist();
+			$emailDoesntExist = User::query()
+				->withoutGlobalScopes([VerifiedScope::class])
+				->where('email', $email)
+				->doesntExist();
+			
 			if ($emailDoesntExist) {
 				$user->email = $email;
 				$user->email_verified_at = $isVerifiedEmail ? now() : null;
@@ -96,7 +116,11 @@ trait CompleteMissingAuthDataTrait
 		
 		// Complete missing phone number
 		if (empty($user->phone) && !empty($phone)) {
-			$phoneDoesntExist = User::withoutGlobalScopes([VerifiedScope::class])->where('phone', $phone)->doesntExist();
+			$phoneDoesntExist = User::query()
+				->withoutGlobalScopes([VerifiedScope::class])
+				->where('phone', $phone)
+				->doesntExist();
+			
 			if ($phoneDoesntExist) {
 				$user->phone = $phone;
 				$user->phone_verified_at = $isVerifiedPhone ? now() : null;
@@ -111,6 +135,6 @@ trait CompleteMissingAuthDataTrait
 			$data['message'] = $message;
 		}
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 }

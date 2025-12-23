@@ -3,7 +3,7 @@
 		<div class="modal-content">
 			
 			<div class="modal-header px-3">
-				<h4 class="modal-title"><i class="fas fa-sign-in-alt"></i> {{ t('log_in') }} </h4>
+				<h4 class="modal-title"><i class="fa-solid fa-right-to-bracket"></i> {{ t('log_in') }} </h4>
 				
 				<button type="button" class="close" data-bs-dismiss="modal">
 					<span aria-hidden="true">&times;</span>
@@ -31,8 +31,14 @@
 								</div>
 							@endif
 							
-							@includeFirst([config('larapen.core.customizedViewPath') . 'auth.login.inc.social', 'auth.login.inc.social'], ['socialCol' => 12])
-							<?php $mtAuth = !socialLoginIsEnabled() ? ' mt-3' : ''; ?>
+							@includeFirst([
+								config('larapen.core.customizedViewPath') . 'auth.login.inc.social',
+								'auth.login.inc.social'
+							], ['socialCol' => 12])
+							@php
+								$mtAuth = !isSocialAuthEnabled() ? ' mt-3' : '';
+							@endphp
+							
 							
 							{{-- email --}}
 							@php
@@ -52,9 +58,10 @@
 									@endif
 								</div>
 								<div class="input-group">
-									<span class="input-group-text"><i class="fas fa-user"></i></span>
+									<span class="input-group-text"><i class="fa-solid fa-user"></i></span>
 									<input id="mEmail" name="email"
 										   type="text"
+										   data-valid-type="email"
 										   placeholder="{{ t('email_or_username') }}"
 										   class="form-control{{ $emailError }}"
 										   value="{{ $emailValue }}"
@@ -89,30 +96,39 @@
 							<input name="auth_field" type="hidden" value="{{ old('auth_field', getAuthField()) }}">
 							
 							{{-- password --}}
-							<?php $passwordError = (isset($errors) && $errors->has('password')) ? ' is-invalid' : ''; ?>
+							@php
+								$passwordError = (isset($errors) && $errors->has('password')) ? ' is-invalid' : '';
+							@endphp
 							<div class="mb-3">
 								<label for="password" class="control-label">{{ t('password') }}</label>
-								<div class="input-group show-pwd-group">
-									<span class="input-group-text"><i class="fas fa-lock"></i></span>
+								<div class="input-group required toggle-password-wrapper">
+									<span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
 									<input id="mPassword" name="password"
 										   type="password"
 										   class="form-control{{ $passwordError }}"
 										   placeholder="{{ t('password') }}"
 										   autocomplete="new-password"
 									>
-									<span class="icon-append show-pwd">
-										<button type="button" class="eyeOfPwd">
-											<i class="far fa-eye-slash"></i>
-										</button>
+									<span class="input-group-text">
+										<a class="toggle-password-link" href="#">
+											<i class="fa-regular fa-eye-slash"></i>
+										</a>
 									</span>
 								</div>
 							</div>
 							
 							{{-- remember --}}
-							<?php $rememberError = (isset($errors) && $errors->has('remember')) ? ' is-invalid' : ''; ?>
+							@php
+								$rememberError = (isset($errors) && $errors->has('remember')) ? ' is-invalid' : '';
+							@endphp
 							<div class="mb-3">
 								<label class="checkbox form-check-label float-start mt-2" for="rememberMe2" style="font-weight: normal;">
-									<input type="checkbox" value="1" name="remember_me" id="rememberMe2" class="{{ $rememberError }}"> {{ t('keep_me_logged_in') }}
+									<input type="checkbox"
+									       value="1"
+									       name="remember_me"
+									       id="rememberMe2"
+									       class="{{ $rememberError }}"
+									> {{ t('keep_me_logged_in') }}
 								</label>
 								<p class="float-end mt-2">
 									<a href="{{ url('password/reset') }}">

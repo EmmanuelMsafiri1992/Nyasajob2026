@@ -1,6 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\HomeSection;
 
+use App\Helpers\Search\PostQueries;
 use App\Helpers\UrlGen;
 use App\Http\Resources\EntityCollection;
 use App\Models\Advertising;
@@ -12,7 +28,7 @@ use App\Models\User;
 
 trait SectionDataTrait
 {
-	private array $embed = ['user', 'category', 'parent', 'postType', 'city', 'savedByLoggedUser', 'pictures', 'latestPayment', 'package', 'company'];
+	private array $embed = ['user', 'category', 'parent', 'postType', 'city', 'savedByLoggedUser', 'pictures', 'payment', 'package', 'company'];
 	
 	/**
 	 * Get search form (Always in Top)
@@ -39,33 +55,35 @@ trait SectionDataTrait
 		$maxItems = (int)($value['max_items'] ?? 14);
 		
 		// Get cities
-		if (config('settings.list.count_cities_listings')) {
-			$cacheId = config('country.code') . 'home.getLocations.cities.withCountPosts';
-			$cities = cache()->remember($cacheId, $cacheExpiration, function () use ($maxItems) {
-				return City::currentCountry()->withCount('posts')->take($maxItems)->orderByDesc('population')->orderBy('name')->get();
-			});
-		} else {
-			$cacheId = config('country.code') . 'home.getLocations.cities';
-			$cities = cache()->remember($cacheId, $cacheExpiration, function () use ($maxItems) {
-				return City::currentCountry()->take($maxItems)->orderByDesc('population')->orderBy('name')->get();
-			});
-		}
-		$cities = $cities->toArray();
+		$isItWithPostsCount = (config('settings.listings_list.count_cities_listings') == '1');
+		$cacheId = config('country.code') . 'home.getLocations.cities.withCountPosts.' . (int)$isItWithPostsCount;
+		$cities = cache()->remember($cacheId, $cacheExpiration, function () use ($maxItems, $isItWithPostsCount) {
+			return City::query()
+				->inCountry()
+				->when($isItWithPostsCount, fn ($query) => $query->withCount('posts'))
+				->take($maxItems)
+				->orderByDesc('population')
+				->orderBy('name')
+				->get();
+		});
+		
+		$cities = collect($cities->toArray());
 		
 		// Add "More Cities" link
 		$adminType = config('country.admin_type', 0);
 		$adminCodeCol = 'subadmin' . $adminType . '_code';
 		$moreCities = [
 			'id'          => 0,
-			'name'        => t('More cities') . ' &raquo;',
+			'name'        => t('more_cities') . ' &raquo;',
 			$adminCodeCol => 0,
 		];
-		$cities = collect($cities)->push($moreCities);
+		$cities = $cities->push($moreCities);
 		
 		// Get cities number of columns
 		$numberOfCols = 4;
 		if (data_get($value, 'show_map') == '1') {
-			if (file_exists(config('larapen.core.maps.path') . strtolower(config('country.code')) . '.svg')) {
+			$mapFilePath = config('larapen.core.maps.path') . strtolower(config('country.code')) . '.svg';
+			if (file_exists($mapFilePath)) {
 				$numberOfCols = (!empty(data_get($value, 'items_cols'))) ? (int)data_get($value, 'items_cols') : 3;
 			}
 		}
@@ -81,47 +99,21 @@ trait SectionDataTrait
 	}
 	
 	/**
-	 * Get sponsored posts
+	 * Get premium listings
 	 *
 	 * @param array|null $value
 	 * @return array
 	 */
-	protected function getSponsoredPosts(?array $value = []): array
+	protected function getPremiumListings(?array $value = []): array
 	{
-		$data = [];
+		$freeListingsInPremium = config('settings.listings_list.free_listings_in_premium');
+		config()->set('settings.listings_list.free_listings_in_premium', '0');
 		
-		$type = 'sponsored';
-		$cacheExpiration = (int)($value['cache_expiration'] ?? 0);
-		$maxItems = (int)($value['max_items'] ?? 20);
-		$orderBy = $value['order_by'] ?? 'random';
+		$listingsSection = $this->getListingsSection('premium', $value);
 		
-		// Get featured posts
-		$cacheId = config('country.code') . '.home.getPosts.' . $type;
-		$posts = cache()->remember($cacheId, $cacheExpiration, function () use ($maxItems, $type, $orderBy) {
-			return Post::getLatestOrSponsored($maxItems, $type, $orderBy);
-		});
+		config()->set('settings.listings_list.free_listings_in_premium', $freeListingsInPremium);
 		
-		$sponsored = null;
-		if ($posts->count() > 0) {
-			$savedQueries = request()->all();
-			request()->query->add(['embed' => implode(',', $this->embed)]);
-			
-			$postsCollection = new EntityCollection('PostController', $posts);
-			$postsResult = $postsCollection->toResponse(request())->getData();
-			
-			request()->replace($savedQueries);
-			
-			$sponsored = [
-				'title'      => t('Home - Sponsored Jobs'),
-				'link'       => UrlGen::searchWithoutQuery(),
-				'posts'      => $postsResult->data ?? [],
-				'totalPosts' => $postsResult->meta->total ?? 0,
-			];
-		}
-		
-		$data['featured'] = $sponsored;
-		
-		return $data;
+		return $listingsSection;
 	}
 	
 	/**
@@ -130,51 +122,122 @@ trait SectionDataTrait
 	 * @param array|null $value
 	 * @return array
 	 */
-	protected function getLatestPosts(?array $value = []): array
+	protected function getLatestListings(?array $value = []): array
+	{
+		return $this->getListingsSection('latest', $value);
+	}
+	
+	/**
+	 * Get listings' section
+	 *
+	 * @param string $op
+	 * @param array|null $setting
+	 * @return array
+	 */
+	private function getListingsSection(string $op = 'latest', ?array $setting = []): array
 	{
 		$data = [];
 		
-		$type = 'latest';
-		$cacheExpiration = (int)($value['cache_expiration'] ?? 0);
-		$maxItems = (int)($value['max_items'] ?? 12);
-		$orderBy = $value['order_by'] ?? 'date';
+		if (!in_array($op, ['latest', 'premium'])) return $data;
 		
-		// Get latest posts
-		$cacheId = config('country.code') . '.home.getPosts.' . $type;
-		$posts = cache()->remember($cacheId, $cacheExpiration, function () use ($maxItems, $type, $orderBy) {
-			return Post::getLatestOrSponsored($maxItems, $type, $orderBy);
-		});
+		// Get the section's settings
+		$cacheExpiration = (int)($setting['cache_expiration'] ?? 0);
+		$maxItems = (int)($setting['max_items'] ?? 12);
+		$orderBy = ($op == 'premium') ? 'random' : 'date';
+		$orderBy = $setting['order_by'] ?? $orderBy;
 		
-		$latest = null;
-		if (!empty($posts)) {
-			$savedQueries = request()->all();
-			request()->query->add(['embed' => implode(',', $this->embed)]);
+		// Get the listings
+		// Add the 'embed' tables
+		request()->query->add(['embed' => implode(',', $this->embed)]);
+		
+		$input = [
+			'op'              => $op,
+			'cacheExpiration' => $cacheExpiration,
+			'perPage'         => $maxItems,
+			'orderBy'         => $orderBy,
+		];
+		
+		// TEMPORARY FIX: Direct query instead of PostQueries
+		$query = Post::inCountry()->verified()->unarchived();
+		
+		if (config('settings.listing_form.listings_review_activation')) {
+			$query->reviewed();
+		}
+		
+		// Apply ordering
+		if ($orderBy == 'random') {
+			$query->inRandomOrder();
+		} else {
+			$query->orderByDesc('created_at');
+		}
+		
+		$postsCollection = $query->limit($maxItems)->get();
+		$totalPosts = $query->count();
+		
+		// Transform posts to match expected API format
+		$posts = $postsCollection->map(function ($post) {
+			return [
+				'id' => $post->id,
+				'title' => $post->title,
+				'slug' => $post->slug,
+				'url' => $post->url,
+				'company_name' => $post->company_name,
+				'created_at_formatted' => $post->created_at_formatted,
+				'salary_formatted' => $post->salary_formatted,
+				'visits_formatted' => $post->visits_formatted,
+				'logo_url' => [
+					'small' => $post->logo_url_small,
+					'medium' => $post->logo_url_medium,
+					'large' => $post->logo_url_large,
+				],
+				'category' => $post->category ? [
+					'id' => $post->category->id,
+					'name' => $post->category->name,
+					'slug' => $post->category->slug,
+				] : null,
+				'city' => $post->city ? [
+					'id' => $post->city->id,
+					'name' => $post->city->name,
+				] : null,
+			];
+		})->toArray();
+		
+		// Remove the 'embed' tables
+		request()->query->remove('embed');
+		
+		// Get the section's data
+		$section = null;
+		if ($totalPosts > 0) {
+			$title = ($op == 'premium')
+				? t('Home - Premium Listings')
+				: (($orderBy == 'random') ? t('Home - Random Jobs') : t('Home - Latest Jobs'));
 			
-			$postsCollection = new EntityCollection('PostController', $posts);
-			$postsResult = $postsCollection->toResponse(request())->getData();
+			$url = UrlGen::searchWithoutQuery();
+			if ($op == 'premium') {
+				$url .= (str_contains($url, '?')) ? '&' : '?';
+				$url .= 'filterBy=' . $op;
+			}
 			
-			request()->replace($savedQueries);
-			
-			$latest = [
-				'title'      => ($orderBy == 'random') ? t('Home - Random Jobs') : t('Home - Latest Jobs'),
-				'link'       => UrlGen::searchWithoutQuery(),
-				'posts'      => $postsResult->data ?? [],
-				'totalPosts' => $postsResult->meta->total ?? 0,
+			$section = [
+				'title'      => $title,
+				'link'       => $url,
+				'posts'      => $posts,
+				'totalPosts' => $totalPosts,
 			];
 		}
 		
-		$data['latest'] = $latest;
+		$data[$op] = $section;
 		
 		return $data;
 	}
 	
 	/**
-	 * Get featured ads companies
+	 * Get companies
 	 *
 	 * @param array|null $value
 	 * @return array
 	 */
-	private function getFeaturedPostsCompanies(?array $value = []): array
+	protected function getCompanies(?array $value = []): array
 	{
 		$data = [];
 		
@@ -185,14 +248,14 @@ trait SectionDataTrait
 		$featuredCompanies = null;
 		
 		// Get all Companies
-		$cacheId = config('country.code') . '.home.getFeaturedPostsCompanies.take.limit.x';
+		$cacheId = config('country.code') . '.home.getCompanies.take.limit.x';
 		$companies = cache()->remember($cacheId, $cacheExpiration, function () use ($maxItems) {
 			return Company::whereHas('posts', function ($query) {
-				$query->currentCountry();
+				$query->inCountry();
 			})->with(['user', 'user.permissions', 'user.roles'])
 				->withCount([
 					'posts' => function ($query) {
-						$query->currentCountry();
+						$query->inCountry();
 					},
 				])
 				->take($maxItems)
@@ -295,7 +358,7 @@ trait SectionDataTrait
 		
 		// Count Posts by category (if the option is enabled)
 		$countPostsPerCat = collect();
-		if (config('settings.list.count_categories_listings')) {
+		if (config('settings.listings_list.count_categories_listings')) {
 			$cacheId = config('country.code') . '.count.posts.per.cat.' . config('app.locale');
 			$countPostsPerCat = cache()->remember($cacheId, $cacheExpiration, function () {
 				return Category::countPostsPerCategory();
@@ -322,7 +385,7 @@ trait SectionDataTrait
 		if (empty($countPosts)) {
 			$cacheId = config('country.code') . '.count.posts';
 			$countPosts = cache()->remember($cacheId, $cacheExpiration, function () {
-				return Post::currentCountry()->unarchived()->count();
+				return Post::query()->inCountry()->unarchived()->count();
 			});
 		}
 		
@@ -340,7 +403,7 @@ trait SectionDataTrait
 		if (empty($countLocations)) {
 			$cacheId = config('country.code') . '.count.cities';
 			$countLocations = cache()->remember($cacheId, $cacheExpiration, function () {
-				return City::currentCountry()->count();
+				return City::query()->inCountry()->count();
 			});
 		}
 		

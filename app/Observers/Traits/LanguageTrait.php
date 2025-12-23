@@ -1,29 +1,45 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers\Traits;
 
 use App\Helpers\DBTool;
+use App\Helpers\DotenvEditor;
 use App\Models\Language;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
 
 trait LanguageTrait
 {
 	/**
 	 * UPDATING - Set default language (Call this method at last)
 	 *
-	 * @param $abbr
+	 * @param $code
+	 * @return void
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	public static function setDefaultLanguage($abbr)
+	public static function setDefaultLanguage($code): void
 	{
 		// Unset the old default language
 		Language::whereIn('active', [0, 1])->update(['default' => 0]);
 		
 		// Set the new default language
-		Language::where('abbr', $abbr)->update(['default' => 1]);
+		Language::where('code', $code)->update(['default' => 1]);
 		
 		// Update the Default App Locale
-		self::updateDefaultAppLocale($abbr);
+		self::updateDefaultAppLocale($code);
 	}
 	
 	// PRIVATE METHODS
@@ -32,18 +48,22 @@ trait LanguageTrait
 	 * Update the Default App Locale
 	 *
 	 * @param $locale
+	 * @return void
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	private static function updateDefaultAppLocale($locale)
+	private static function updateDefaultAppLocale($locale): void
 	{
-		setEnvValue('APP_LOCALE', $locale);
+		DotenvEditor::setKey('APP_LOCALE', $locale);
+		DotenvEditor::save();
 	}
 	
 	/**
 	 * Forgetting all DB translations for a specific locale
 	 *
 	 * @param $locale
+	 * @return void
 	 */
-	protected function forgetAllTranslations($locale)
+	protected function forgetAllTranslations($locale): void
 	{
 		// JSON columns manipulation is only available in:
 		// MySQL 5.7 or above & MariaDB 10.2.3 or above
@@ -55,44 +75,32 @@ trait LanguageTrait
 			return;
 		}
 		
-		$modelFiles = DBTool::getAppModelsFiles();
+		$modelClasses = DBTool::getAppModelClasses(translatable: true);
+		if (empty($modelClasses)) {
+			return;
+		}
 		
-		$namespace = 'App\\Models\\';
-		if (is_array($modelFiles) && count($modelFiles) > 0) {
-			foreach ($modelFiles as $filePath) {
-				$filename = last(explode(DIRECTORY_SEPARATOR, $filePath));
-				$modelName = head(explode('.', $filename));
+		foreach ($modelClasses as $modelClass) {
+			$model = new $modelClass;
+			
+			// Get the translatable columns
+			$columns = method_exists($model, 'getTranslatableAttributes')
+				? $model->getTranslatableAttributes()
+				: [];
+			if (empty($columns)) {
+				continue;
+			}
+			
+			$tableName = $model->getTable();
+			foreach ($columns as $column) {
+				$value = 'JSON_REMOVE(' . $column . ', \'$."' . $locale . '"\')';
+				$filter = $column . ' LIKE \'%"' . $locale . '":%\'';
 				
-				eval('$model = new ' . $namespace . $modelName . '();');
-				
-				if (isset($model) && $model instanceof Model) {
-					$isTranslatableModel = (
-						property_exists($model, 'translatable')
-						&& (
-							isset($model->translatable)
-							&& is_array($model->translatable)
-							&& !empty($model->translatable)
-						)
-						&& in_array(HasTranslations::class, class_uses($model))
-					);
-					
-					if ($isTranslatableModel) {
-						$tableName = $model->getTable();
-						foreach ($model->translatable as $column) {
-							$value = 'JSON_REMOVE(' . $column . ', \'$."' . $locale . '"\')';
-							// $filter = $column . ' REGEXP \'.+"' . $locale . '":.+\'';
-							$filter = $column . ' LIKE \'%"' . $locale . '":%\'';
-							
-							DB::table($tableName)
-								->whereNotNull($column)
-								->whereRaw($column . ' != ""')
-								->whereRaw($filter)
-								->update([
-									$column => DB::raw($value),
-								]);
-						}
-					}
-				}
+				DB::table($tableName)
+					->whereNotNull($column)
+					->whereRaw($column . ' != ""')
+					->whereRaw($filter)
+					->update([$column => DB::raw($value)]);
 			}
 		}
 	}

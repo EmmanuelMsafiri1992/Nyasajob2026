@@ -30,7 +30,7 @@ return [
 	// example
 	'email_example_title'       => ':appName Mail Set Up Successfully',
 	'email_example_content_1'   => 'Mail Set Up Successfully!',
-	'email_example_content_2'   => 'This email was sent out to test your new mail credentials for :appName. Because you have received this email, mail has been set-up properly and this email can be ignored.',
+	'email_example_content_2'   => 'This email was sent out to test your new mail credentials for :appName. Since you have received this email, your website mail sending configuration has been set-up properly. Please ignore this email and don\'t reply it.',
 	
 	
 	// email_verification
@@ -125,7 +125,7 @@ return [
 	'post_archived_content_1'           => 'Hello,',
 	'post_archived_content_2'           => 'Your ad ":title" has been archived from :appName at :now.',
 	'post_archived_content_3'           => 'You can repost it by clicking here : <a href=":repostUrl">:repostUrl</a>',
-	'post_archived_content_4'           => 'If you do nothing your ad will be permanently deleted on :dateDel.',
+	'post_archived_content_4'           => 'If you do nothing your ad will be permanently deleted on :willBeDeletedAt.',
 	'post_archived_content_5'           => 'Thank you for your trust and see you soon.',
 	'post_archived_content_6'           => 'PS: This is an automated email, please don\'t reply.',
 	
@@ -135,7 +135,7 @@ return [
 	'post_will_be_deleted_content_1'    => 'Hello,',
 	'post_will_be_deleted_content_2'    => 'Your ad ":title" will be deleted in :days days from :appName.',
 	'post_will_be_deleted_content_3'    => 'You can repost it by clicking here : <a href=":repostUrl">:repostUrl</a>',
-	'post_will_be_deleted_content_4'    => 'If you do nothing your ad will be permanently deleted on :dateDel.',
+	'post_will_be_deleted_content_4'    => 'If you do nothing your ad will be permanently deleted on :willBeDeletedAt.',
 	'post_will_be_deleted_content_5'    => 'Thank you for your trust and see you soon.',
 	'post_will_be_deleted_content_6'    => 'PS: This is an automated email, please don\'t reply.',
 	
@@ -173,17 +173,45 @@ return [
 	'payment_notification_content_1'  => 'Hello Admin,',
 	'payment_notification_content_2'  => 'The user :advertiserName has just paid a package for her job ad "<a href=":postUrl">:title</a>".',
 	'payment_notification_content_3'  => 'THE PAYMENT DETAILS
-<br><strong>Reason of the payment:</strong> Ad #:adId - :packageName
+<br><strong>Reason of the payment:</strong> Ad #:postId - :packageName
 <br><strong>Amount:</strong> :amount :currency
 <br><strong>Payment Method:</strong> :paymentMethodName',
 	
-	// payment_approved (new)
+	// payment_approved
 	'payment_approved_title'     => 'Your payment has been approved!',
 	'payment_approved_content_1' => 'Hello,',
 	'payment_approved_content_2' => 'Your payment for the ad "<a href=":postUrl">:title</a>" has been approved.',
 	'payment_approved_content_3' => 'Thank you!',
 	'payment_approved_content_4' => 'THE PAYMENT DETAILS
-<br><strong>Reason of the payment:</strong> Ad #:adId - :packageName
+<br><strong>Reason of the payment:</strong> Ad #:postId - :packageName
+<br><strong>Amount:</strong> :amount :currency
+<br><strong>Payment Method:</strong> :paymentMethodName',
+	
+	
+	// subscription_purchased
+	'subscription_purchased_title'             => 'Thanks for your subscription!',
+	'subscription_purchased_content_1'         => 'Hello,',
+	'subscription_purchased_content_2'         => 'We have received your payment for the ":packageName" subscription.',
+	'subscription_purchased_content_3'         => 'Thank you!',
+	
+	// subscription_notification
+	'subscription_notification_title'     => 'New subscription has been purchased',
+	'subscription_notification_content_1' => 'Hello Admin,',
+	'subscription_notification_content_2' => 'The user :userName has just paid the ":packageName" subscription.',
+	'subscription_notification_content_3' => 'THE PAYMENT DETAILS
+<br><strong>Reason of the payment:</strong> Subscription for ":packageName"
+<br><strong>User\'s account:</strong> :userName - ID: #:userId
+<br><strong>Amount:</strong> :amount :currency
+<br><strong>Payment Method:</strong> :paymentMethodName',
+	
+	// subscription_approved
+	'subscription_approved_title'     => 'Your subscription has been approved!',
+	'subscription_approved_content_1' => 'Hello,',
+	'subscription_approved_content_2' => 'Your ":packageName" subscription has been approved.',
+	'subscription_approved_content_3' => 'Thank you!',
+	'subscription_approved_content_4' => 'THE PAYMENT DETAILS
+<br><strong>Reason of the payment:</strong> Subscription for ":packageName"
+<br><strong>User\'s account:</strong> :userName - ID: #:userId
 <br><strong>Amount:</strong> :amount :currency
 <br><strong>Payment Method:</strong> :paymentMethodName',
 	
@@ -197,7 +225,7 @@ return [
 	// generated_password
 	'generated_password_title'            => 'Your password',
 	'generated_password_content_1'        => 'Hello :userName!',
-	'generated_password_content_2'        => 'You account has been created.',
+	'generated_password_content_2'        => 'Your account has been created.',
 	'generated_password_verify_content_3' => 'Click the button below to verify your email address.',
 	'generated_password_verify_action'    => 'Verify email address',
 	'generated_password_content_4'        => 'Your password is: <strong>:randomPassword</strong>',

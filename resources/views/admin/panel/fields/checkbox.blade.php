@@ -32,6 +32,9 @@
 		>
 		<label class="form-check-label fw-bolder">
 			{!! $field['label'] !!}
+			@if (isset($field['required']) && $field['required'])
+				<span class="text-danger">*</span>
+			@endif
 		</label>
 		
 		{{-- HINT --}}

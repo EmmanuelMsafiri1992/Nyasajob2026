@@ -28,7 +28,7 @@
 			<div class="card rounded">
 				<div class="card-body">
 					<h3 class="card-title">
-						<i class="fa fa-question-circle"></i> {{ trans('admin.Help') }}
+						<i class="fa-regular fa-circle-question"></i> {{ trans('admin.Help') }}
 					</h3>
 					<p class="card-text">{!! trans('admin.help_backup', ['backupLocalStorage' => relativeAppPath(storage_path('backups'))]) !!}</p>
 				</div>
@@ -43,7 +43,7 @@
 							data-style="zoom-in"
 					>
 						<span class="ladda-label">
-							<i class="fas fa-download"></i> {{ trans('admin.create_a_new_backup_all') }}
+							<i class="fa-solid fa-download"></i> {{ trans('admin.create_a_new_backup_all') }}
 						</span>
 					</button>
 					
@@ -53,7 +53,7 @@
 							data-style="zoom-in"
 					>
 						<span class="ladda-label">
-							<i class="fa fa-database"></i> {{ trans('admin.create_a_new_backup_database') }}
+							<i class="fa-solid fa-database"></i> {{ trans('admin.create_a_new_backup_database') }}
 						</span>
 					</button>
 					
@@ -63,7 +63,7 @@
 							data-style="zoom-in"
 					>
 						<span class="ladda-label">
-							<i class="fas fa-globe"></i> {{ trans('admin.create_a_new_backup_languages') }}
+							<i class="fa-solid fa-globe"></i> {{ trans('admin.create_a_new_backup_languages') }}
 						</span>
 					</button>
 					
@@ -73,7 +73,7 @@
 							data-style="zoom-in"
 					>
 						<span class="ladda-label">
-							<i class="far fa-copy"></i> {{ trans('admin.create_a_new_backup_files') }}
+							<i class="fa-regular fa-copy"></i> {{ trans('admin.create_a_new_backup_files') }}
 						</span>
 					</button>
 					
@@ -83,16 +83,16 @@
 							data-style="zoom-in"
 					>
 						<span class="ladda-label">
-							<i class="fa fa-industry"></i> {{ trans('admin.create_a_new_backup_app') }}
+							<i class="fa-solid fa-industry"></i> {{ trans('admin.create_a_new_backup_app') }}
 						</span>
 					</button>
 					
-					<?php
-					$backupSetting = \App\Models\Setting::where('key', 'backup')->first(['id']);
-					?>
+					@php
+						$backupSetting = \App\Models\Setting::where('key', 'backup')->first(['id']);
+					@endphp
 					@if (isset($backupSetting) and !empty($backupSetting))
 						<a href="{{ admin_url('settings/' . $backupSetting->id . '/edit') }}" class="btn btn-secondary shadow" style="margin-bottom:5px;">
-							<i class="fa fa-cog"></i> {{ trans('admin.backup_more_options') }}
+							<i class="fa-solid fa-gear"></i> {{ trans('admin.backup_more_options') }}
 						</a>
 					@endif
 					
@@ -116,11 +116,11 @@
 						</thead>
 						<tbody>
 						@foreach ($backups as $k => $b)
-							<?php
-							$lastModified = $b['last_modified'] ?? time();
-							$lastModified = \Illuminate\Support\Carbon::createFromTimeStamp($lastModified);
-							$lastModified = \App\Helpers\Date::format($lastModified, 'backup')
-							?>
+							@php
+								$lastModified = $b['last_modified'] ?? time();
+								$lastModified = \Illuminate\Support\Carbon::createFromTimeStamp($lastModified);
+								$lastModified = \App\Helpers\Date::format($lastModified, 'backup');
+							@endphp
 							<tr>
 								<th scope="row">{{ $k+1 }}</th>
 								<td>{{ $b['disk'] }}</td>
@@ -131,14 +131,14 @@
 										<a class="btn btn-xs btn-secondary"
 										   href="{{ admin_url('backups/download/') }}?disk={{ $b['disk'] }}&path={{ urlencode($b['file_path']) }}&file_name={{ urlencode($b['file_name']) }}"
 										>
-											<i class="fa fa-cloud-download"></i> {{ trans('admin.download') }}
+											<i class="fa-solid fa-cloud-arrow-down"></i> {{ trans('admin.download') }}
 										</a>
 									@endif
 									<a class="btn btn-xs btn-danger"
 									   data-button-type="delete"
 									   href="{{ admin_url('backups/delete/') }}?disk={{ $b['disk'] }}&path={{ urlencode($b['file_name']) }}"
 									>
-										<i class="fa fa-trash-o"></i> {{ trans('admin.delete') }}
+										<i class="fa-regular fa-trash-can"></i> {{ trans('admin.delete') }}
 									</a>
 								</td>
 							</tr>
@@ -160,7 +160,7 @@
     <script src="{{ asset('assets/plugins/ladda/ladda.js') }}"></script>
     
     <script>
-		jQuery(document).ready(function($) {
+	    onDocumentReady((event) => {
 			
 			/* Capture the Create new backup button */
 			let backupBtnEl = $('.backup-button');
@@ -227,7 +227,7 @@
 					l.setProgress(0.9);
 					
 					/* Show an alert with the result */
-					let message = getJqueryAjaxError(xhr);
+					let message = getErrorMessageFromXhr(xhr);
 					if (message !== null) {
 						pnAlert(message, 'error');
 					}
@@ -271,7 +271,7 @@
 							deleteButton.parentsUntil('tr').parent().remove();
 						});
 						ajax.fail(function(xhr) {
-							let message = getJqueryAjaxError(xhr);
+							let message = getErrorMessageFromXhr(xhr);
 							if (message !== null) {
 								pnAlert(message, 'error');
 							}

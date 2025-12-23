@@ -1,6 +1,22 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
+@php
+	$authUserIsAdmin ??= true;
+@endphp
 @section('content')
 	@include('common.spacer')
 	<div class="main-container">
@@ -20,14 +36,13 @@
 				<div class="col-md-3 page-sidebar">
 					@include('account.inc.sidebar')
 				</div>
-				<!--/.page-sidebar-->
 
 				<div class="col-md-9 page-content">
 					<div class="inner-box">
-						<h2 class="title-2"><i class="fas fa-times-circle"></i> {{ t('Close account') }} </h2>
+						<h2 class="title-2"><i class="fa-solid fa-circle-xmark"></i> {{ t('Close account') }} </h2>
 						<p>{{ t('you_are_sure_you_want_to_close_your_account') }}</p>
 
-						@if (isset($user) and $user->can(\App\Models\Permission::getStaffPermissions()))
+						@if ($authUserIsAdmin)
 							<div class="alert alert-danger" role="alert">
 								{{ t('Admin users can not be deleted by this way') }}
 							</div>
@@ -69,14 +84,9 @@
 						@endif
 
 					</div>
-					<!--/.inner-box-->
 				</div>
-				<!--/.page-content-->
 
 			</div>
-			<!--/.row-->
 		</div>
-		<!--/.container-->
 	</div>
-	<!-- /.main-container -->
 @endsection

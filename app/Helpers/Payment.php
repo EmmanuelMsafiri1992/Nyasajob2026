@@ -1,7 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers;
 
-use App\Http\Controllers\Api\Base\StaticApiResponseTrait;
+use App\Helpers\Payment\PaymentTrait;
 use App\Http\Resources\PaymentResource;
 use App\Models\Permission;
 use App\Models\Post;
@@ -10,34 +25,37 @@ use App\Models\Payment as PaymentModel;
 use App\Notifications\PaymentNotification;
 use App\Notifications\PaymentSent;
 use App\Models\User;
+use App\Notifications\SubscriptionNotification;
+use App\Notifications\SubscriptionPurchased;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 
 class Payment
 {
-	use StaticApiResponseTrait;
+	use PaymentTrait;
 	
-	public static $country;
-	public static $lang;
-	public static $msg = [];
-	public static $uri = [];
+	public static Collection $country;
+	public static Collection $lang;
+	public static array $msg = [];
+	public static array $uri = [];
 	
 	/**
 	 * Apply actions after successful Payment
 	 *
-	 * @param $params
-	 * @param \App\Models\Post $post
+	 * @param \App\Models\Post|\App\Models\User $payable
+	 * @param array $params
 	 * @param array $resData
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+	 * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
 	 */
-	public static function paymentConfirmationActions($params, Post $post, $resData = [])
+	public static function paymentConfirmationActions(Post|User $payable, array $params, array $resData = [])
 	{
 		// Save the Payment in database
-		$resData = self::register($post, $params, $resData);
+		$resData = self::register($payable, $params, $resData);
 		
 		if (isFromApi()) {
 			
-			return self::apiResponse($resData);
+			return apiResponse()->json($resData);
 			
 		} else {
 			
@@ -50,10 +68,10 @@ class Payment
 			if (data_get($resData, 'success')) {
 				session()->flash('message', data_get($resData, 'message'));
 				
-				return redirect(self::$uri['nextUrl']);
+				return redirect()->to(self::$uri['nextUrl']);
 			} else {
 				// Maybe never called
-				return redirect(self::$uri['nextUrl'])->withErrors(['error' => data_get($resData, 'message')]);
+				return redirect()->to(self::$uri['nextUrl'])->withErrors(['error' => data_get($resData, 'message')]);
 			}
 			
 		}
@@ -62,19 +80,21 @@ class Payment
 	/**
 	 * Apply actions when Payment failed
 	 *
-	 * @param $post
-	 * @param null $errorMessage
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-	 * @throws \Exception
+	 * @param \App\Models\Post|\App\Models\User $payable
+	 * @param string|array|null $errorMessage
+	 * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
 	 */
-	public static function paymentFailureActions($post, $errorMessage = null)
+	public static function paymentFailureActions(Post|User $payable, string|null|array $errorMessage = null)
 	{
 		// Remove the entry
-		self::removeEntry($post);
+		self::removeEntry($payable);
+		
+		$errorMessage = (is_string($errorMessage) || empty($errorMessage))
+			? $errorMessage
+			: 'Unexplained Error (Issue in the language files).';
 		
 		// Return to Form
-		$message = '';
-		$message .= self::$msg['checkout']['error'];
+		$message = self::$msg['checkout']['error'];
 		if (!empty($errorMessage)) {
 			$message .= '<br>' . $errorMessage;
 		}
@@ -89,39 +109,41 @@ class Payment
 				],
 			];
 			
-			return self::apiResponse($data);
+			return apiResponse()->json($data);
 		} else {
 			flash($message)->error();
 			
 			// Redirect
-			return redirect(self::$uri['previousUrl'] . '?error=payment')->withInput();
+			return redirect()->to(self::$uri['previousUrl'] . '?error=payment')->withInput();
 		}
 	}
 	
 	/**
 	 * Apply actions when API failed
 	 *
-	 * @param $post
-	 * @param $exception
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
-	 * @throws \Exception
+	 * @param \App\Models\Post|\App\Models\User $payable
+	 * @param \Throwable|null $e
+	 * @param string|null $message
+	 * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
 	 */
-	public static function paymentApiErrorActions($post, $exception)
+	public static function paymentApiErrorActions(Post|User $payable, ?\Throwable $e, ?string $message = null)
 	{
 		// Remove the entry
-		self::removeEntry($post);
+		self::removeEntry($payable);
+		
+		$message = ($e instanceof \Throwable) ? $e->getMessage() : $message;
 		
 		if (isFromApi()) {
 			$data = [
 				'success' => false,
 				'result'  => null,
-				'message' => $exception->getMessage(),
+				'message' => $message,
 				'extra'   => [
 					'previousUrl' => self::$uri['previousUrl'] . '?error=paymentApi',
 				],
 			];
 			
-			return self::apiResponse($data);
+			return apiResponse()->json($data);
 		} else {
 			// Remove local parameters into the session (if exists)
 			if (session()->has('params')) {
@@ -129,10 +151,10 @@ class Payment
 			}
 			
 			// Return to Form
-			flash($exception->getMessage())->error();
+			flash($message)->error();
 			
 			// Redirect
-			return redirect(self::$uri['previousUrl'] . '?error=paymentApi')->withInput();
+			return redirect()->to(self::$uri['previousUrl'] . '?error=paymentApi')->withInput();
 		}
 	}
 	
@@ -140,27 +162,43 @@ class Payment
 	 * Save the payment and Send payment confirmation email
 	 * NOTE: Used by the OfflinePayment plugin (and must be compatible with its version)
 	 *
-	 * @param \App\Models\Post $post
-	 * @param $params
+	 * @param \App\Models\Post|\App\Models\User $payable
+	 * @param array $params
 	 * @param array $resData
 	 * @return array
 	 */
-	public static function register(Post $post, $params, $resData = [])
+	public static function register(Post|User $payable, array $params, array $resData = [])
 	{
+		// Don't save payment if selected Package is not compatible with payable (Post|User)
+		if (!self::isPayableCompatibleWithPackageArray($payable, $params)) {
+			return $resData;
+		}
+		
 		$request = request();
 		
-		// Update ad 'reviewed'
-		$post->reviewed_at = now();
-		$post->featured = 1;
-		$post->save();
+		// Get the payable full name with namespace
+		$payableType = get_class($payable);
+		
+		$isPromoting = (str_ends_with($payableType, 'Post'));
+		$isSubscripting = (str_ends_with($payableType, 'User'));
+		
+		// Update the payable (Post|User)
+		if ($isPromoting) {
+			$payable->reviewed_at = now();
+		}
+		$payable->featured = 1;
+		$payable->save();
 		
 		// Get the payment info
-		$paymentInfo = [
-			'post_id'           => $post->id,
-			'package_id'        => $params['package_id'],
-			'payment_method_id' => $params['payment_method_id'],
-			'transaction_id'    => $params['transaction_id'] ?? null,
-			'amount'            => $params['amount'] ?? 0,
+		$paymentArray = [
+			'payable_id'        => $payable->id,
+			'payable_type'      => $payableType,
+			'package_id'        => data_get($params, 'package.id'),
+			'payment_method_id' => data_get($params, 'paymentMethod.id'),
+			'transaction_id'    => data_get($params, 'transaction_id'),
+			'amount'            => data_get($params, 'package.price', 0),
+			'period_start'      => data_get($params, 'package.period_start', now()->startOfDay()),
+			'period_end'        => data_get($params, 'package.period_end'),
 		];
 		
 		// Check if the 'currency_code' column is available in the Payment model
@@ -171,31 +209,33 @@ class Payment
 		});
 		
 		if ($currencyCodeColumnIsAvailable) {
-			if (isset($params['currency_code']) && !empty($params['currency_code'])) {
-				$currencyCode = $params['currency_code'];
-			} else {
-				$package = Package::find($params['package_id']);
+			$currencyCode = data_get($params, 'package.currency_code');
+			if (empty($currencyCode)) {
+				$package = Package::find(data_get($params, 'package.id'));
 				$currencyCode = (!empty($package) && isset($package->currency_code)) ? $package->currency_code : null;
 			}
-			$paymentInfo['currency_code'] = $currencyCode;
+			$paymentArray['currency_code'] = $currencyCode;
 		}
 		
 		// Check the uniqueness of the payment
-		$payment = PaymentModel::where('post_id', $paymentInfo['post_id'])
-			->where('package_id', $paymentInfo['package_id'])
-			->where('payment_method_id', $params['payment_method_id'])
+		$payment = PaymentModel::query()
+			->whereMorphedTo('payable', $payable)
+			->where('package_id', $paymentArray['package_id'])
+			->where('payment_method_id', $paymentArray['payment_method_id'])
+			->where('period_start', $paymentArray['period_start'])
+			->where('period_end', $paymentArray['period_end'])
 			->first();
 		
 		if (!empty($payment)) {
 			$resData['extra']['payment']['success'] = true;
 			$resData['extra']['payment']['message'] = self::$msg['checkout']['success'];
-			$resData['extra']['payment']['result'] = (new PaymentResource($payment))->toArray($request);
+			$resData['extra']['payment']['result'] = $payment = (new PaymentResource($payment))->toArray($request);
 			
 			return $resData;
 		}
 		
 		// Save the payment
-		$payment = new PaymentModel($paymentInfo);
+		$payment = new PaymentModel($paymentArray);
 		$payment->save();
 		
 		$resData['extra']['payment']['success'] = true;
@@ -211,17 +251,27 @@ class Payment
 		if (config('settings.mail.payment_notification') == 1) {
 			// Send Confirmation Email
 			try {
-				$post->notify(new PaymentSent($payment, $post));
-			} catch (\Exception $e) {
+				if ($isPromoting) {
+					$payable->notify(new PaymentSent($payment, $payable));
+				}
+				if ($isSubscripting) {
+					$payable->notify(new SubscriptionPurchased($payment, $payable));
+				}
+			} catch (\Throwable $e) {
 				// Not Necessary To Notify
 			}
 			
 			// Send to Admin the Payment Notification Email
 			try {
 				if ($admins->count() > 0) {
-					Notification::send($admins, new PaymentNotification($payment, $post));
+					if ($isPromoting) {
+						Notification::send($admins, new PaymentNotification($payment, $payable));
+					}
+					if ($isSubscripting) {
+						Notification::send($admins, new SubscriptionNotification($payment, $payable));
+					}
 				}
-			} catch (\Exception $e) {
+			} catch (\Throwable $e) {
 				// Not Necessary To Notify
 			}
 		}
@@ -230,50 +280,46 @@ class Payment
 	}
 	
 	/**
-	 * Remove the ad for public - If there are no free packages
+	 * Remove the listing for public - If there are no free packages
 	 *
-	 * @param Post $post
+	 * @param \App\Models\Post|\App\Models\User $payable
 	 * @return bool
-	 * @throws \Exception
 	 */
-	public static function removeEntry(Post $post): bool
+	public static function removeEntry(Post|User $payable): bool
 	{
-		if (empty($post)) {
+		// Get the payable full name with namespace
+		$payableType = get_class($payable);
+		
+		// $isPromoting = (str_ends_with($payableType, 'Post'));
+		$isSubscripting = (str_ends_with($payableType, 'User'));
+		
+		// For User
+		// Don't delete user during the subscription process
+		if ($isSubscripting) {
 			return false;
 		}
 		
-		// Don't delete the ad when user try to UPGRADE her ads
-		if (empty($post->tmp_token)) {
+		// For Post
+		// Don't delete the listing when a user tries to UPGRADE her listings
+		if (empty($payable->tmp_token)) {
 			return false;
 		}
 		
 		$guard = isFromApi() ? 'sanctum' : null;
 		
 		if (auth($guard)->check()) {
-			// Delete the ad if user is logged in and there are no free package
-			if (Package::where('price', 0)->count() == 0) {
-				// But! User can access to the ad from her area to UPGRADE it!
+			// Delete the listing if user is logged in and there is no free package
+			$countPackages = Package::promotion()->where('price', 0)->count();
+			if ($countPackages == 0) {
+				// But! User can access to the listing from her area to UPGRADE it!
 				// You can UNCOMMENT the line below if you don't want the feature above.
-				// $post->delete();
+				// $payable->delete();
 			}
 		} else {
-			// Delete the ad if user is a guest
-			$post->delete();
+			// Delete the listing if user is a guest
+			$payable->delete();
 		}
 		
 		return true;
-	}
-	
-	/**
-	 * Set the right URLs
-	 *
-	 * @param array $resData
-	 */
-	public static function setRightUrls($resData)
-	{
-		self::$uri['previousUrl'] = $resData['extra']['previousUrl'] ?? self::$uri['previousUrl'];
-		self::$uri['nextUrl'] = $resData['extra']['nextUrl'] ?? self::$uri['nextUrl'];
-		self::$uri['paymentCancelUrl'] = $resData['extra']['paymentCancelUrl'] ?? self::$uri['paymentCancelUrl'];
-		self::$uri['paymentReturnUrl'] = $resData['extra']['paymentReturnUrl'] ?? self::$uri['paymentReturnUrl'];
 	}
 }

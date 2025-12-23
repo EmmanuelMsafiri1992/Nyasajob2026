@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Models\PaymentMethod;
@@ -17,31 +32,40 @@ class PaymentMethodController extends BaseController
 	 * @queryParam sort string The sorting parameter (Order by DESC with the given column. Use "-" as prefix to order by ASC). Possible values: lft. Example: -lft
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$paymentMethods = PaymentMethod::query()->whereIn('name', array_keys((array)config('plugins.installed')));
+		$plugins = array_keys((array)config('plugins.installed'));
+		$countryCode = getAsStringOrNull(request()->input('countryCode'));
 		
-		if (request()->filled('countryCode')) {
-			$countryCode = request()->get('countryCode');
-			$paymentMethods->where(function ($query) use ($countryCode) {
-				$query->whereRaw('FIND_IN_SET("' . $countryCode . '", LOWER(countries)) > 0')
-					->orWhereNull('countries')->orWhere('countries', '');
-			});
-		}
+		// Cache ID
+		$cachePluginsId = !empty($plugins) ? '.plugins.' . implode(',', $plugins) : '';
+		$cacheId = $countryCode . '.paymentMethods.all' . $cachePluginsId;
 		
-		// Sorting
-		$paymentMethods = $this->applySorting($paymentMethods, ['lft']);
-		
-		$paymentMethods = $paymentMethods->get();
+		// Cached Query
+		$paymentMethods = cache()->remember($cacheId, $this->cacheExpiration, function () use ($plugins, $countryCode) {
+			$paymentMethods = PaymentMethod::query()->whereIn('name', $plugins);
+			
+			if (!empty($countryCode)) {
+				$countryCode = strtolower($countryCode);
+				$findInSet = 'FIND_IN_SET("' . $countryCode . '", LOWER(countries)) > 0';
+				
+				$paymentMethods->where(function ($query) use ($findInSet) {
+					$query->whereRaw($findInSet)->orWhere(fn ($query) => $query->columnIsEmpty('countries'));
+				});
+			}
+			
+			// Sorting
+			$paymentMethods = $this->applySorting($paymentMethods, ['lft']);
+			
+			return $paymentMethods->get();
+		});
 		
 		$resourceCollection = new EntityCollection(class_basename($this), $paymentMethods);
 		
 		$message = ($paymentMethods->count() <= 0) ? t('no_payment_methods_found') : null;
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -54,11 +78,14 @@ class PaymentMethodController extends BaseController
 	 */
 	public function show(int|string $id): \Illuminate\Http\JsonResponse
 	{
-		if (is_numeric($id)) {
-			$paymentMethod = PaymentMethod::query()->where('id', $id);
-		} else {
-			$paymentMethod = PaymentMethod::query()->where('name', $id);
-		}
+		$idColumn = is_numeric($id) ? 'id' : 'name';
+		
+		$cacheId = 'paymentMethod.' . $idColumn . '.' . $id;
+		$paymentMethod = cache()->remember($cacheId, $this->cacheExpiration, function () use ($idColumn, $id) {
+			$paymentMethod = PaymentMethod::query()->where($idColumn, $id);
+			
+			return $paymentMethod->first();
+		});
 		
 		$paymentMethod = $paymentMethod->first();
 		
@@ -66,6 +93,6 @@ class PaymentMethodController extends BaseController
 		
 		$resource = new PaymentMethodResource($paymentMethod);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

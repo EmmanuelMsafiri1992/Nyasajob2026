@@ -1,10 +1,24 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers\Traits;
 
 use App\Helpers\Categories\AdjacentToNested;
 use App\Models\Category;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 
 trait CategoryTrait
 {
@@ -19,7 +33,7 @@ trait CategoryTrait
 		// Find new left position & new depth
 		$newLft = 0;
 		$newDepth = 0;
-		if (isset($category->parent_id) && !empty($category->parent_id)) {
+		if (!empty($category->parent_id)) {
 			// Node (will) have a parent
 			$parent = Category::find($category->parent_id);
 			
@@ -182,6 +196,8 @@ trait CategoryTrait
 	 * NOTE: Need to use adjacent list model to add, update or delete nodes
 	 *
 	 * @param $category
+	 * @return void
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
 	protected function adjacentToNestedByItem($category)
 	{
@@ -199,13 +215,9 @@ trait CategoryTrait
 		
 		$transformer = new AdjacentToNested($params);
 		
-		try {
-			$transformer->getAndSetAdjacentItemsIds();
-			$transformer->convertChildrenRecursively(0);
-			$transformer->setNodesDepth();
-		} catch (\Exception $e) {
-			dd($e->getMessage());
-		}
+		$transformer->getAndSetAdjacentItemsIds();
+		$transformer->convertChildrenRecursively(0);
+		$transformer->setNodesDepth();
 	}
 	
 	/**
@@ -218,7 +230,7 @@ trait CategoryTrait
 	{
 		// The 'type' column is a not nullable enum, so required
 		if (isset($category->type) && empty($category->type)) {
-			if (isset($category->parent) && !empty($category->parent)) {
+			if (!empty($category->parent)) {
 				if (!empty($category->parent->type)) {
 					$category->type = $category->parent->type;
 				}
@@ -243,9 +255,9 @@ trait CategoryTrait
 		// - LanguageController (all methods)
 		if (
 			request()->is('*/reorder')
-			|| str_contains(Route::currentRouteAction(), 'Admin\CategoryController@reorder')
-			|| str_contains(Route::currentRouteAction(), 'Admin\CategoryController@saveReorder')
-			|| str_contains(Route::currentRouteAction(), 'Admin\LanguageController')
+			|| str_contains(currentRouteAction(), 'Admin\CategoryController@reorder')
+			|| str_contains(currentRouteAction(), 'Admin\CategoryController@saveReorder')
+			|| str_contains(currentRouteAction(), 'Admin\LanguageController')
 		) {
 			return true;
 		}

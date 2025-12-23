@@ -8,10 +8,10 @@
 		
 		@foreach($dateRevisions as $history)
 		<li class="timeline-item-wrap">
-			<i class="fa fa-calendar bg-default"></i>
+			<i class="fa-regular fa-calendar bg-default"></i>
 			<div class="timeline-item">
 				<span class="time">
-					<i class="fa fa-clock-o"></i> {{ date('h:ia', strtotime($history->created_at)) }}
+					<i class="fa-solid fa-lock-open"></i> {{ date('h:ia', strtotime($history->created_at)) }}
 				</span>
 				@if($history->key == 'created_at' && !$history->old_value)
 					<h3 class="timeline-header">
@@ -54,7 +54,7 @@
 									data-revision-id="{{ $history->id }}"
 									onclick="onRestoreClick(event)"
 							>
-								<i class="fa fa-undo"></i> {{ trans('admin.undo') }}
+								<i class="fa-solid fa-rotate-left"></i> {{ trans('admin.undo') }}
 							</button>
 						</form>
 					</div>

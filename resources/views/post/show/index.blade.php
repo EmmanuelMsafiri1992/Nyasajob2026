@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -9,9 +22,6 @@
 @endphp
 
 @section('content')
-	{!! csrf_field() !!}
-	<input type="hidden" id="postId" name="post_id" value="{{ data_get($post, 'id') }}">
-	
 	@if (session()->has('flash_notification'))
 		@includeFirst([config('larapen.core.customizedViewPath') . 'common.spacer', 'common.spacer'])
 		@php
@@ -64,7 +74,7 @@
 					
 					<nav aria-label="breadcrumb" role="navigation" class="float-start">
 						<ol class="breadcrumb">
-							<li class="breadcrumb-item"><a href="{{ url('/') }}"><i class="fas fa-home"></i></a></li>
+							<li class="breadcrumb-item"><a href="{{ url('/') }}"><i class="fa-solid fa-house"></i></a></li>
 							<li class="breadcrumb-item"><a href="{{ url('/') }}">{{ config('country.name') }}</a></li>
 							@if (is_array($catBreadcrumb) && count($catBreadcrumb) > 0)
 								@foreach($catBreadcrumb as $key => $value)
@@ -80,7 +90,9 @@
 					</nav>
 					
 					<div class="float-end backtolist">
-						<a href="{{ rawurldecode(url()->previous()) }}"><i class="fa fa-angle-double-left"></i> {{ t('back_to_results') }}</a>
+						<a href="{{ rawurldecode(url()->previous()) }}">
+							<i class="fa-solid fa-angles-left"></i> {{ t('back_to_results') }}
+						</a>
 					</div>
 					
 				</div>
@@ -97,20 +109,22 @@
                                     {{ data_get($post, 'title') }}
                                 </a>
                             </strong>
-							<small class="label label-default adlistingtype">{{ t('_type_job', ['type' => data_get($post, 'postType.name')]) }}</small>
-							@if (data_get($post, 'featured') == 1 && !empty(data_get($post, 'latestPayment.package')))
-								<i class="fas fa-check-circle"
-								   style="color: {{ data_get($post, 'latestPayment.package.ribbon') }};"
+							<small class="label label-default adlistingtype">
+								{{ t('_type_job', ['type' => data_get($post, 'postType.name')]) }}
+							</small>
+							@if (data_get($post, 'featured') == 1 && !empty(data_get($post, 'payment.package')))
+								&nbsp;<i class="fa-solid fa-circle-check"
+								   style="color: {{ data_get($post, 'payment.package.ribbon') }};"
 								   data-bs-placement="bottom"
 								   data-bs-toggle="tooltip"
-								   title="{{ data_get($post, 'latestPayment.package.short_name') }}"
+								   title="{{ data_get($post, 'payment.package.short_name') }}"
 								></i>
 							@endif
 						</h1>
 						<span class="info-row">
-							@if (!config('settings.single.hide_dates'))
+							@if (!config('settings.listing_page.hide_date'))
 							<span class="date"{!! (config('lang.direction')=='rtl') ? ' dir="rtl"' : '' !!}>
-								<i class="far fa-clock"></i> {!! data_get($post, 'created_at_formatted') !!}
+								<i class="fa-regular fa-clock"></i> {!! data_get($post, 'created_at_formatted') !!}
 							</span>&nbsp;
 							@endif
 							<span class="category"{!! (config('lang.direction')=='rtl') ? ' dir="rtl"' : '' !!}>
@@ -120,14 +134,10 @@
 								<i class="bi bi-geo-alt"></i> {{ data_get($post, 'city.name') }}
 							</span>&nbsp;
 							<span class="category"{!! (config('lang.direction')=='rtl') ? ' dir="rtl"' : '' !!}>
-								<i class="bi bi-eye"></i> {{
-									\App\Helpers\Number::short(data_get($post, 'visits'))
-									. ' '
-									. trans_choice('global.count_views', getPlural(data_get($post, 'visits')), [], config('app.locale'))
-									}}
+								<i class="bi bi-eye"></i> {{ data_get($post, 'visits_formatted') }}
 							</span>
 							<span class="category float-md-end"{!! (config('lang.direction')=='rtl') ? ' dir="rtl"' : '' !!}>
-								{{ t('reference') }}: {{ hashId(data_get($post, 'id'), false, false) }}
+								{{ t('reference') }}: {{ data_get($post, 'reference') }}
 							</span>
 						</span>
 						
@@ -142,9 +152,9 @@
 
 		</div>
 		
-		@if (config('settings.single.similar_listings') == '1' || config('settings.single.similar_listings') == '2')
+		@if (config('settings.listing_page.similar_listings') == '1' || config('settings.listing_page.similar_listings') == '2')
 			@php
-				$widgetType = (config('settings.single.similar_listings_in_carousel') ? 'carousel' : 'normal');
+				$widgetType = (config('settings.listing_page.similar_listings_in_carousel') ? 'carousel' : 'normal');
 			@endphp
 			@includeFirst([
 					config('larapen.core.customizedViewPath') . 'search.inc.posts.widget.' . $widgetType,
@@ -177,13 +187,12 @@
 @endphp
 
 @section('modal_message')
-	@if (auth()->check() || config('settings.single.guests_can_contact_authors')=='1')
+	@if (auth()->check() || config('settings.listing_page.guest_can_contact_authors')=='1')
 		@includeFirst([config('larapen.core.customizedViewPath') . 'account.messenger.modal.create', 'account.messenger.modal.create'])
 	@endif
 @endsection
 
 @section('after_styles')
-	@includeFirst([config('larapen.core.customizedViewPath') . 'post.show.inc.structured-data', 'post.show.inc.structured-data'])
 @endsection
 
 @section('after_scripts')
@@ -201,8 +210,8 @@
             loginToSaveSearch: "{!! t('Please log in to save your search') !!}"
         };
 		
-		$(document).ready(function () {
-			@if (config('settings.single.show_listing_on_googlemap'))
+		onDocumentReady((event) => {
+			@if (config('settings.listing_page.show_listing_on_googlemap'))
 				{{--
 				let mapUrl = '{{ addslashes($mapUrl) }}';
 				let iframe = document.getElementById('googleMaps');

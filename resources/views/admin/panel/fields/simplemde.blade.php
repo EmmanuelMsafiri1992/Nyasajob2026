@@ -1,6 +1,11 @@
 <!-- Simple MDE - Markdown Editor -->
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+	    {!! $field['label'] !!}
+	    @if (isset($field['required']) && $field['required'])
+		    <span class="text-danger">*</span>
+	    @endif
+    </label>
 	@include('admin.panel.fields.inc.translatable_icon')
     <textarea
             id="simplemde_{{ $field['name'] }}"
@@ -22,7 +27,7 @@
     
     {{-- FIELD CSS - will be loaded in the after_styles section --}}
     @push('crud_fields_styles')
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/plugins/simplemde/1.11.2/simplemde.min.css') }}">
     <style type="text/css">
         .CodeMirror-fullscreen, .editor-toolbar.fullscreen {
             z-index: 9999 !important;
@@ -35,7 +40,7 @@
     
     {{-- FIELD JS - will be loaded in the after_scripts section --}}
     @push('crud_fields_scripts')
-    <script src="//cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+    <script src="{{ asset('assets/plugins/simplemde/1.11.2/simplemde.min.js') }}"></script>
     @endpush
 
 @endif

@@ -1,4 +1,17 @@
-
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 /* Prevent errors, If these variables are missing. */
 if (typeof countryCode === 'undefined') {
@@ -22,10 +35,13 @@ if (typeof langLayout !== 'undefined' && typeof langLayout.select2 !== 'undefine
 	select2Language = langLayout.select2;
 }
 
-$(document).ready(function () {
+onDocumentReady((event) => {
 	
 	/* The adminType possible values are: 0, 1 or 2. Check the 'admin_type' enum column in 'countries' table in DB */
-	if ([0, 1, 2].includes(adminType) !== true && ['0', '1', '2'].includes(adminType) !== true) {
+	if (
+		[0, 1, 2].includes(adminType) !== true &&
+		['0', '1', '2'].includes(adminType) !== true
+	) {
 		adminType = 0;
 	}
 	
@@ -39,20 +55,20 @@ $(document).ready(function () {
 	});
 	
 	/* Get and Bind the selected city */
-	if (adminType == 0) {
+	if (adminType === 0 || adminType === '0') {
 		getSelectedCity(countryCode, cityId);
 	}
 	
 	/* Get AJAX's URL */
 	let url = function () {
 		/* Get the current country code */
-		var selectedCountryCode = $('#countryCode').val();
+		let selectedCountryCode = $('#countryCode').val();
 		if (typeof selectedCountryCode !== "undefined") {
 			countryCode = selectedCountryCode;
 		}
 		
 		/* Get the current admin code */
-		var selectedAdminCode = $('#adminCode').val();
+		let selectedAdminCode = $('#adminCode').val();
 		if (typeof selectedAdminCode === "undefined") {
 			selectedAdminCode = 0;
 		}
@@ -91,7 +107,7 @@ $(document).ready(function () {
 				};
 			},
 			error: function (jqXHR, status, error) {
-				showErrorModal(jqXHR, error);
+				bsModalAlert(jqXHR, error);
 				
 				return { results: [] }; /* Return dataset to load after error */
 			},
@@ -123,10 +139,13 @@ $(document).ready(function () {
 function getAdminDivisions(countryCode, adminType, selectedAdminCode, countryChanged = false) {
 	if (countryCode === 0 || countryCode === '') return false;
 	
+	let adminElOptions = {'0': lang.select.admin};
+	let cityElOptions = {'0': lang.select.city};
+	
 	let locationBoxEl = $('#locationBox');
-	if (isDefined(locationBoxEl)  && locationBoxEl != null) {
+	if (isElDefined(locationBoxEl)) {
 		if ([1, 2].includes(adminType) !== true && ['1', '2'].includes(adminType) !== true) {
-			$('#adminCode').empty().append('<option value="0">' + lang.select.admin + '</option>').val('0').trigger('change');
+			updateSelect2Options('#adminCode', adminElOptions, '0');
 			locationBoxEl.hide();
 			
 			return 0;
@@ -137,19 +156,16 @@ function getAdminDivisions(countryCode, adminType, selectedAdminCode, countryCha
 	
 	let url = siteUrl + '/ajax/countries/' + strToLower(countryCode) + '/admins/' + adminType + '?languageCode=' + languageCode;
 	
-	let ajax = $.ajax({
-		method: 'GET',
-		url: url
-	});
+	let ajax = $.ajax({method: 'GET', url: url});
 	ajax.done(function (xhr) {
 		/* Init. */
-		let adminCodeEl = $('#adminCode');
-		adminCodeEl.empty().append('<option value="0">' + lang.select.admin + '</option>').val('0').trigger('change');
-		$('#cityId').empty().append('<option value="0">' + lang.select.city + '</option>').val('0').trigger('change');
+		updateSelect2Options('#adminCode', adminElOptions, '0');
+		updateSelect2Options('#cityId', cityElOptions, '0');
 		
 		/* Bind data into Select list */
+		let adminCodeEl = $('#adminCode');
 		if (typeof xhr.error !== 'undefined') {
-			adminCodeEl.find('option').remove().end().append('<option value="0"> ' + xhr.error.message + ' </option>');
+			updateSelect2Options('#adminCode', {'0': xhr.error.message}, '0');
 			adminCodeEl.addClass('is-invalid');
 			return false;
 		} else {
@@ -159,19 +175,17 @@ function getAdminDivisions(countryCode, adminType, selectedAdminCode, countryCha
 		if (typeof xhr.data === 'undefined') {
 			return false;
 		}
-		$.each(xhr.data, function (key, item) {
-			if (selectedAdminCode == item.code) {
-				adminCodeEl.append('<option value="' + item.code + '" selected="selected">' + item.name + '</option>');
-			} else {
-				adminCodeEl.append('<option value="' + item.code + '">' + item.name + '</option>');
-			}
-		});
+		
+		let xhrData = assocObjectToKeyValue(xhr.data, 'name', 'code');
+		adminElOptions = {...adminElOptions, ...xhrData};
+		
+		updateSelect2Options('#adminCode', adminElOptions, selectedAdminCode);
 		
 		/* Get and Bind the selected city */
 		getSelectedCity(countryCode, cityId, countryChanged);
 	});
 	ajax.fail(function(xhr) {
-		let message = getJqueryAjaxError(xhr);
+		let message = getErrorMessageFromXhr(xhr);
 		if (message !== null) {
 			jsAlert(message, 'error');
 		}
@@ -189,9 +203,11 @@ function getAdminDivisions(countryCode, adminType, selectedAdminCode, countryCha
  * @returns {number}
  */
 function getSelectedCity(countryCode, cityId, countryChanged = false) {
+	let cityElOptions = {'0': lang.select.city};
+	
 	/* Clear by administrative divisions selection */
 	$('#adminCode').on('click, change', function () {
-		$('#cityId').empty().append('<option value="0">' + lang.select.city + '</option>').val('0').trigger('change');
+		updateSelect2Options('#cityId', cityElOptions, '0');
 	});
 	
 	if (isEmpty(cityId) || countryChanged) {
@@ -200,18 +216,16 @@ function getSelectedCity(countryCode, cityId, countryChanged = false) {
 	
 	let url = siteUrl + '/ajax/countries/' + strToLower(countryCode) + '/cities/' + cityId + '?languageCode=' + languageCode;
 	
-	let ajax = $.ajax({
-		method: 'GET',
-		url: url
-	});
+	let ajax = $.ajax({method: 'GET', url: url});
 	ajax.done(function (xhr) {
-		$('#cityId').empty().append('<option value="' + xhr.id + '">' + xhr.text + '</option>').val(xhr.id).trigger('change');
+		updateSelect2Options('#cityId', {[xhr.id]: xhr.text}, xhr.id);
+		
 		return xhr.id;
 	});
 	ajax.fail(function (xhr) {
-		$('#cityId').empty().append('<option value="0">' + lang.select.city + '</option>').val('0').trigger('change');
+		updateSelect2Options('#cityId', cityElOptions, '0');
 		
-		let message = getJqueryAjaxError(xhr);
+		let message = getErrorMessageFromXhr(xhr);
 		if (message !== null) {
 			jsAlert(message, 'error');
 		}

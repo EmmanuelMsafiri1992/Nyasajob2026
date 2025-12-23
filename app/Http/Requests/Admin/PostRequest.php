@@ -1,7 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Requests\Admin;
 
-use App\Helpers\Number;
+use App\Helpers\Num;
 use App\Rules\BetweenRule;
 use App\Rules\BlacklistTitleRule;
 use App\Rules\BlacklistWordRule;
@@ -25,9 +40,11 @@ class PostRequest extends Request
 				// If field's value contains only numbers and dot,
 				// Then decimal separator is set as dot.
 				if (preg_match('/^[0-9.]*$/', $input['salary_min'])) {
-					$input['salary_min'] = Number::formatForDb($input['salary_min'], '.');
+					$input['salary_min'] = Num::formatForDb($input['salary_min'], '.');
 				} else {
-					$input['salary_min'] = Number::formatForDb($input['salary_min'], config('currency.decimal_separator', '.'));
+					if ($this->filled('currency_decimal_separator')) {
+						$input['salary_min'] = Num::formatForDb($input['salary_min'], $this->input('currency_decimal_separator'));
+					}
 				}
 			} else {
 				$input['salary_min'] = null;
@@ -41,13 +58,20 @@ class PostRequest extends Request
 				// If field's value contains only numbers and dot,
 				// Then decimal separator is set as dot.
 				if (preg_match('/^[0-9.]*$/', $input['salary_max'])) {
-					$input['salary_max'] = Number::formatForDb($input['salary_max'], '.');
+					$input['salary_max'] = Num::formatForDb($input['salary_max'], '.');
 				} else {
-					$input['salary_max'] = Number::formatForDb($input['salary_max'], config('currency.decimal_separator', '.'));
+					if ($this->filled('currency_decimal_separator')) {
+						$input['salary_max'] = Num::formatForDb($input['salary_max'], $this->input('currency_decimal_separator'));
+					}
 				}
 			} else {
 				$input['salary_max'] = null;
 			}
+		}
+		
+		// currency_code (Not implemented)
+		if ($this->filled('currency_code')) {
+			$input['currency_code'] = $this->input('currency_code');
 		}
 		
 		// auth_field
@@ -89,15 +113,15 @@ class PostRequest extends Request
 		$rules['title'] = [
 			'required',
 			new BetweenRule(
-				(int)config('settings.single.title_min_length', 2),
-				(int)config('settings.single.title_max_length', 150)
+				(int)config('settings.listing_form.title_min_length', 2),
+				(int)config('settings.listing_form.title_max_length', 150)
 			),
 		];
 		$rules['description'] = [
 			'required',
 			new BetweenRule(
-				(int)config('settings.single.description_min_length', 5),
-				(int)config('settings.single.description_max_length', 12000)
+				(int)config('settings.listing_form.description_min_length', 5),
+				(int)config('settings.listing_form.description_max_length', 12000)
 			),
 		];
 		$rules['contact_name'] = ['required', new BetweenRule(3, 200)];

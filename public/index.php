@@ -1,8 +1,23 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 $valid = true;
 $error = '';
 
-// Server components verification to prevent error during the installation process
+// Server components verification to prevent error during the installation process,
 // These verifications are always make, including during the installation process
 if (!extension_loaded('json')) {
 	$error .= "<strong>ERROR:</strong> The requested PHP extension json is missing from your system.<br />";
@@ -12,6 +27,16 @@ if ($valid) {
 	$requiredPhpVersion = _getComposerRequiredPhpVersion();
 	if (!version_compare(PHP_VERSION, $requiredPhpVersion, '>=')) {
 		$error .= "<strong>ERROR:</strong> PHP " . $requiredPhpVersion . " or higher is required.<br />";
+		$valid = false;
+	}
+}
+if ($valid) {
+	$requiredCurlVersion = '7.34.0';
+	$currentCurlVersion = (extension_loaded('curl') && function_exists('curl_version'))
+		? curl_version()['version'] ?? '1.0.0'
+		: '1.0.0';
+	if (!extension_loaded('curl') || !version_compare($currentCurlVersion, $requiredCurlVersion, '>=')) {
+		$error .= "<strong>ERROR:</strong> PHP curl extention v" . $requiredCurlVersion . " or higher is required.<br />";
 		$valid = false;
 	}
 }
@@ -56,10 +81,11 @@ require 'main.php';
 /**
  * Get the composer.json required PHP version
  *
- * @return array|string|string[]|null
+ * @return string
  */
-function _getComposerRequiredPhpVersion()
+function _getComposerRequiredPhpVersion(): string
 {
+	$defaultVersion = '8.2';
 	$version = null;
 	
 	$filePath = realpath(__DIR__ . '/../composer.json');
@@ -68,14 +94,14 @@ function _getComposerRequiredPhpVersion()
 		$content = file_get_contents($filePath);
 		$array = json_decode($content, true);
 		
-		if (isset($array['require']) && isset($array['require']['php'])) {
+		if (isset($array['require']['php'])) {
 			$version = $array['require']['php'];
 		}
 	} catch (\Exception $e) {
 	}
 	
 	if (empty($version)) {
-		$version = _getRequiredPhpVersion();
+		$version = _getRequiredPhpVersion($defaultVersion);
 	}
 	
 	// String to Float
@@ -83,28 +109,20 @@ function _getComposerRequiredPhpVersion()
 	$version = strtr($version, [' ' => '']);
 	$version = preg_replace('/ +/', '', $version);
 	$version = str_replace(',', '.', $version);
+	$version = preg_replace('/[^\d.]/', '', $version);
 	
-	return preg_replace('/[^\d.]/', '', $version);
+	return is_string($version) ? $version : $defaultVersion;
 }
 
 /**
- * Get the required PHP version (from config/app.php)
+ * Get the required PHP version (from config/version.php)
  *
- * @return mixed|string
+ * @param string|null $default
+ * @return string|null
  */
-function _getRequiredPhpVersion()
+function _getRequiredPhpVersion(?string $default = null): ?string
 {
-	$configFilePath = realpath(__DIR__ . '/../config/app.php');
-	
-	$version = '8.0';
-	if (file_exists($configFilePath)) {
-		$array = include($configFilePath);
-		if (isset($array['phpVersion'])) {
-			$version = $array['phpVersion'];
-		}
-	}
-	
-	return $version;
+	return _getVersionValue('php', $default);
 }
 
 /**
@@ -129,9 +147,9 @@ function _updateIsAvailable(): bool
 /**
  * Get the current version value
  *
- * @return mixed|string
+ * @return string
  */
-function _getCurrentVersion()
+function _getCurrentVersion(): string
 {
 	// Get the Current Version
 	$version = _getDotEnvValue('APP_VERSION');
@@ -142,48 +160,74 @@ function _getCurrentVersion()
 /**
  * Get the latest version value
  *
- * @return mixed|string|null
+ * @return string|null
  */
-function _getLatestVersion()
+function _getLatestVersion(): ?string
 {
-	$configFilePath = realpath(__DIR__ . '/../config/app.php');
-	
-	$version = null;
-	if (file_exists($configFilePath)) {
-		$array = include($configFilePath);
-		if (isset($array['appVersion'])) {
-			$version = _checkAndUseSemVer($array['appVersion']);
-		}
-	}
-	
-	return $version;
+	return _getVersionValue('app');
 }
 
 /**
  * Check and use semver version num format
  *
- * @param $version
- * @return mixed|string
+ * @param string|null $version
+ * @return string
  */
-function _checkAndUseSemVer($version)
+function _checkAndUseSemVer(?string $version): string
 {
-	$semver = '0.0.0';
-	if (!empty($version)) {
-		$numPattern = '(\d+)';
-		if (preg_match('#^' . $numPattern . '\.' . $numPattern . '\.' . $numPattern . '$#', $version)) {
-			$semver = $version;
-		} else {
-			if (preg_match('#^' . $numPattern . '\.' . $numPattern . '$#', $version)) {
-				$semver = $version . '.0';
-			} else {
-				if (preg_match('#^' . $numPattern . '$#', $version)) {
-					$semver = $version . '.0.0';
-				}
-			}
-		}
+	$defaultSemver = '0.0.0';
+	
+	if (empty($version)) {
+		return $defaultSemver;
+	}
+	
+	$semver = null;
+	
+	if (empty($semver)) {
+		$numPattern = '([0-9]+)';
+		$hasValidFormat = preg_match('#^' . $numPattern . '\.' . $numPattern . '\.' . $numPattern . '$#', $version);
+		$semver = $hasValidFormat ? $version : $semver;
+	}
+	if (empty($semver)) {
+		$hasValidFormat = preg_match('#^' . $numPattern . '\.' . $numPattern . '$#', $version);
+		$semver = $hasValidFormat ? $version . '.0' : $semver;
+	}
+	if (empty($semver)) {
+		$hasValidFormat = preg_match('#^' . $numPattern . '$#', $version);
+		$semver = $hasValidFormat ? $version . '.0.0' : $semver;
+	}
+	if (empty($semver)) {
+		$semver = $defaultSemver;
 	}
 	
 	return $semver;
+}
+
+/**
+ * Convert multidimensional array to array with keys with dot notation
+ *
+ * @param array|null $array
+ * @param string|null $parentKey
+ * @return array
+ */
+function _arrayToDotNotation(?array $array, ?string $parentKey = ''): array
+{
+	$result = [];
+	
+	if (empty($array)) {
+		return $result;
+	}
+	
+	foreach ($array as $key => $value) {
+		$newKey = $parentKey ? $parentKey . '.' . $key : $key;
+		if (is_array($value)) {
+			$result += _arrayToDotNotation($value, $newKey);
+		} else {
+			$result[$newKey] = $value;
+		}
+	}
+	
+	return $result;
 }
 
 /**
@@ -194,23 +238,49 @@ function _checkAndUseSemVer($version)
  */
 function _getDotEnvValue($key): ?string
 {
-	if (empty($key)) {
-		return null;
-	}
+	if (empty($key)) return null;
 	
 	$value = null;
 	
 	$filePath = realpath(__DIR__ . '/../.env');
 	if (file_exists($filePath)) {
 		$content = file_get_contents($filePath);
-		$tmp = [];
-		preg_match('/' . $key . '=(.*)[^\n]*/', $content, $tmp);
-		if (isset($tmp[1]) && trim($tmp[1]) != '') {
-			$value = trim($tmp[1]);
-		}
+		$matches = [];
+		preg_match('/' . $key . '=(.*)[^\n]*/', $content, $matches);
+		$value = $matches[1] ?? null;
+		$value = is_string($value) ? trim($value) : null;
 	}
 	
 	return $value;
+}
+
+/**
+ * Get entity's version (from config/version.php)
+ * Supports dot notation keys
+ *
+ * @param string $key
+ * @param string|null $default
+ * @return string|null
+ */
+function _getVersionValue(string $key, ?string $default = null): ?string
+{
+	$versionFilePath = realpath(__DIR__ . '/../config/version.php');
+	
+	$version = null;
+	if (file_exists($versionFilePath)) {
+		$array = include($versionFilePath);
+		$array = _arrayToDotNotation($array);
+		if (isset($array[$key])) {
+			$version = (is_string($array[$key])) ? $array[$key] : null;
+			$version = _checkAndUseSemVer($version);
+		}
+	}
+	
+	if (empty($version) && !empty($default)) {
+		$version = $default;
+	}
+	
+	return $version;
 }
 
 /**
@@ -223,69 +293,7 @@ function _appInstallFilesExist(): bool
 	$envFile = realpath(__DIR__ . '/../.env');
 	$installedFile = realpath(__DIR__ . '/../storage/installed');
 	
-	// Check if the '.env' and 'storage/installed' files exist
-	if (file_exists($envFile) && file_exists($installedFile)) {
-		return true;
-	}
-	
-	return false;
-}
-
-/**
- * "catch" max execution time error in php
- * Usage: register_shutdown_function(fn() => _hasTimeoutOccurred());
- *
- * @return void
- */
-function _hasTimeoutOccurred(): void
-{
-	$lastError = error_get_last();
-	
-	if (empty($lastError)) {
-		return;
-	}
-	
-	$errorFound = (isset($lastError['message']) && str_starts_with($lastError['message'], 'Maximum execution time'));
-	
-	if ($errorFound) {
-		if (_isFromApi()) {
-			$data = [
-				'success'    => false,
-				'message'    => $lastError['message'],
-				'exception'  => $lastError['type'] ?? 'Fatal Error',
-				'error_code' => $lastError['line'] ?? 500,
-			];
-			
-			header('Content-Type: application/json; charset=utf-8');
-			echo json_encode($data);
-		} else {
-			echo '<pre>' . $lastError['message'] . '</pre>';
-		}
-		exit();
-	}
-}
-
-/**
- * Check if the current request is from the API
- *
- * @return bool
- */
-function _isFromApi(): bool
-{
-	$isFromApi = false;
-	
-	$requestPath = strtok($_SERVER['REQUEST_URI'], '?');
-	$segments = explode('/', $requestPath);
-	$firstSegment = $segments[1] ?? null;
-	
-	if (
-		$firstSegment == 'api'
-		|| (isset($_SERVER['X-API-CALLED']) && $_SERVER['X-API-CALLED'])
-	) {
-		$isFromApi = true;
-	}
-	
-	return $isFromApi;
+	return (file_exists($envFile) && file_exists($installedFile));
 }
 
 // ==========================================================================================

@@ -1,8 +1,8 @@
-<?php
-// Clear Filter Button
-$clearMinSalaryFilterBtn = \App\Helpers\UrlGen::getMinSalaryFilterClearLink($cat ?? null, $city ?? null);
-$clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat ?? null, $city ?? null);
-?>
+@php
+	// Clear Filter Button
+	$clearMinSalaryFilterBtn = \App\Helpers\UrlGen::getMinSalaryFilterClearLink($cat ?? null, $city ?? null);
+	$clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat ?? null, $city ?? null);
+@endphp
 {{-- Salary (Min) --}}
 <div class="list-filter">
 	<h5 class="list-title">
@@ -37,7 +37,7 @@ $clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat
 						   name="minSalary[min]"
 						   class="form-control"
 						   placeholder="{{ t('Min') }}"
-						   value="{{ request()->get('minSalary')['min'] ?? null }}"
+						   value="{{ request()->query('minSalary')['min'] ?? null }}"
 					>
 				</div>
 				<div class="col-lg-4 col-md-12 col-sm-12">
@@ -47,7 +47,7 @@ $clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat
 						   name="minSalary[max]"
 						   class="form-control"
 						   placeholder="{{ t('Max') }}"
-						   value="{{ request()->get('minSalary')['max'] ?? null }}"
+						   value="{{ request()->query('minSalary')['max'] ?? null }}"
 					>
 				</div>
 				<div class="col-lg-4 col-md-12 col-sm-12">
@@ -93,7 +93,7 @@ $clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat
 						   name="maxSalary[min]"
 						   class="form-control"
 						   placeholder="{{ t('Min') }}"
-						   value="{{ request()->get('maxSalary')['min'] ?? null }}"
+						   value="{{ request()->query('maxSalary')['min'] ?? null }}"
 					>
 				</div>
 				<div class="col-lg-4 col-md-12 col-sm-12">
@@ -103,7 +103,7 @@ $clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat
 						   name="maxSalary[max]"
 						   class="form-control"
 						   placeholder="{{ t('Max') }}"
-						   value="{{ request()->get('maxSalary')['max'] ?? null }}"
+						   value="{{ request()->query('maxSalary')['max'] ?? null }}"
 					>
 				</div>
 				<div class="col-lg-4 col-md-12 col-sm-12">
@@ -136,18 +136,17 @@ $clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat
 	@parent
 	<script src="{{ url('assets/plugins/noUiSlider/15.5.0/nouislider.js') }}"></script>
 	@php
-		$minSalary = (int)config('settings.list.min_salary', 0);
-		$maxSalary = (int)config('settings.list.max_salary', 10000);
-		$salarySliderStep = (int)config('settings.list.salary_slider_step', 50);
+		$minSalary = (int)config('settings.listings_list.min_salary', 0);
+		$maxSalary = (int)config('settings.listings_list.max_salary', 10000);
+		$salarySliderStep = (int)config('settings.listings_list.salary_slider_step', 50);
 		
-		$startMinSalary = (int)(request()->get('minSalary')['min'] ?? $minSalary);
-		$endMinSalary = (int)(request()->get('minSalary')['max'] ?? $maxSalary);
-		$startMaxSalary = (int)(request()->get('maxSalary')['min'] ?? $minSalary);
-		$endMaxSalary = (int)(request()->get('maxSalary')['max'] ?? $maxSalary);
+		$startMinSalary = (int)(request()->query('minSalary')['min'] ?? $minSalary);
+		$endMinSalary = (int)(request()->query('minSalary')['max'] ?? $maxSalary);
+		$startMaxSalary = (int)(request()->query('maxSalary')['min'] ?? $minSalary);
+		$endMaxSalary = (int)(request()->query('maxSalary')['max'] ?? $maxSalary);
 	@endphp
 	<script>
-		$(document).ready(function ()
-		{
+		onDocumentReady((event) => {
 			let minSalary = {{ $minSalary }};
 			let maxSalary = {{ $maxSalary }};
 			let salarySliderStep = {{ $salarySliderStep }};
@@ -157,80 +156,84 @@ $clearMaxSalaryFilterBtn = \App\Helpers\UrlGen::getMaxSalaryFilterClearLink($cat
 			let endMinSalary = {{ $endMinSalary }};
 			
 			let minSalaryRangeSliderEl = document.getElementById('minSalaryRangeSlider');
-			noUiSlider.create(minSalaryRangeSliderEl, {
-				connect: true,
-				start: [startMinSalary, endMinSalary],
-				step: salarySliderStep,
-				keyboardSupport: true,     			  /* Default true */
-				keyboardDefaultStep: 5,    			  /* Default 10 */
-				keyboardPageMultiplier: 5, 			  /* Default 5 */
-				keyboardMultiplier: salarySliderStep, /* Default 1 */
-				range: {
-					'min': minSalary,
-					'max': maxSalary
-				}
-			});
-			
-			let minSalaryMinEl = document.getElementById('minSalaryMin');
-			let minSalaryMaxEl = document.getElementById('minSalaryMax');
-			
-			minSalaryRangeSliderEl.noUiSlider.on('update', function (values, handle) {
-				let value = values[handle];
+			if (minSalaryRangeSliderEl) {
+				noUiSlider.create(minSalaryRangeSliderEl, {
+					connect: true,
+					start: [startMinSalary, endMinSalary],
+					step: salarySliderStep,
+					keyboardSupport: true,     			  /* Default true */
+					keyboardDefaultStep: 5,    			  /* Default 10 */
+					keyboardPageMultiplier: 5, 			  /* Default 5 */
+					keyboardMultiplier: salarySliderStep, /* Default 1 */
+					range: {
+						'min': minSalary,
+						'max': maxSalary
+					}
+				});
 				
-				if (handle) {
-					minSalaryMaxEl.value = Math.round(value);
-				} else {
-					minSalaryMinEl.value = Math.round(value);
-				}
-			});
-			minSalaryMinEl.addEventListener('change', function () {
-				minSalaryRangeSliderEl.noUiSlider.set([this.value, null]);
-			});
-			minSalaryMaxEl.addEventListener('change', function () {
-				if (this.value <= maxSalary) {
-					minSalaryRangeSliderEl.noUiSlider.set([null, this.value]);
-				}
-			});
+				let minSalaryMinEl = document.getElementById('minSalaryMin');
+				let minSalaryMaxEl = document.getElementById('minSalaryMax');
+				
+				minSalaryRangeSliderEl.noUiSlider.on('update', (values, handle) => {
+					let value = values[handle];
+					
+					if (handle) {
+						minSalaryMaxEl.value = Math.round(value);
+					} else {
+						minSalaryMinEl.value = Math.round(value);
+					}
+				});
+				minSalaryMinEl.addEventListener('change', (e) => {
+					minSalaryRangeSliderEl.noUiSlider.set([e.target.value, null]);
+				});
+				minSalaryMaxEl.addEventListener('change', (e) => {
+					if (e.target.value <= maxSalary) {
+						minSalaryRangeSliderEl.noUiSlider.set([null, e.target.value]);
+					}
+				});
+			}
 			
 			{{-- Max Salary --}}
 			let startMaxSalary = {{ $startMaxSalary }};
 			let endMaxSalary = {{ $endMaxSalary }};
 			
 			let maxSalaryRangeSliderEl = document.getElementById('maxSalaryRangeSlider');
-			noUiSlider.create(maxSalaryRangeSliderEl, {
-				connect: true,
-				start: [startMaxSalary, endMaxSalary],
-				step: salarySliderStep,
-				keyboardSupport: true,     			  /* Default true */
-				keyboardDefaultStep: 5,    			  /* Default 10 */
-				keyboardPageMultiplier: 5, 			  /* Default 5 */
-				keyboardMultiplier: salarySliderStep, /* Default 1 */
-				range: {
-					'min': minSalary,
-					'max': maxSalary
-				}
-			});
-			
-			let maxSalaryMinEl = document.getElementById('maxSalaryMin');
-			let maxSalaryMaxEl = document.getElementById('maxSalaryMax');
-			
-			maxSalaryRangeSliderEl.noUiSlider.on('update', function (values, handle) {
-				let value = values[handle];
+			if (maxSalaryRangeSliderEl) {
+				noUiSlider.create(maxSalaryRangeSliderEl, {
+					connect: true,
+					start: [startMaxSalary, endMaxSalary],
+					step: salarySliderStep,
+					keyboardSupport: true,     			  /* Default true */
+					keyboardDefaultStep: 5,    			  /* Default 10 */
+					keyboardPageMultiplier: 5, 			  /* Default 5 */
+					keyboardMultiplier: salarySliderStep, /* Default 1 */
+					range: {
+						'min': minSalary,
+						'max': maxSalary
+					}
+				});
 				
-				if (handle) {
-					maxSalaryMaxEl.value = Math.round(value);
-				} else {
-					maxSalaryMinEl.value = Math.round(value);
-				}
-			});
-			maxSalaryMinEl.addEventListener('change', function () {
-				maxSalaryRangeSliderEl.noUiSlider.set([this.value, null]);
-			});
-			maxSalaryMaxEl.addEventListener('change', function () {
-				if (this.value <= maxSalary) {
-					maxSalaryRangeSliderEl.noUiSlider.set([null, this.value]);
-				}
-			});
+				let maxSalaryMinEl = document.getElementById('maxSalaryMin');
+				let maxSalaryMaxEl = document.getElementById('maxSalaryMax');
+				
+				maxSalaryRangeSliderEl.noUiSlider.on('update', (values, handle) => {
+					let value = values[handle];
+					
+					if (handle) {
+						maxSalaryMaxEl.value = Math.round(value);
+					} else {
+						maxSalaryMinEl.value = Math.round(value);
+					}
+				});
+				maxSalaryMinEl.addEventListener('change', (e) => {
+					maxSalaryRangeSliderEl.noUiSlider.set([e.target.value, null]);
+				});
+				maxSalaryMaxEl.addEventListener('change', (e) => {
+					if (e.target.value <= maxSalary) {
+						maxSalaryRangeSliderEl.noUiSlider.set([null, e.target.value]);
+					}
+				});
+			}
 		});
 	</script>
 @endsection

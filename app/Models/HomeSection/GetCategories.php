@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\HomeSection;
 
 class GetCategories
@@ -77,11 +92,7 @@ class GetCategories
 				'wrapperAttributes' => [
 					'class' => 'col-md-6 normal-type',
 				],
-			],
-			[
-				'name'  => 'separator_clear_1',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
+				'newline'           => true,
 			],
 			[
 				'name'              => 'max_sub_cats',
@@ -125,7 +136,7 @@ class GetCategories
 				'name'  => 'javascript',
 				'type'  => 'custom_html',
 				'value' => '<script>
-docReady(function() {
+onDocumentReady((event) => {
 	let catDisplayTypeEl = document.querySelector("#catDisplayType");
 	getCatDisplayTypeFields(catDisplayTypeEl);
 });
@@ -133,7 +144,7 @@ docReady(function() {
 function getCatDisplayTypeFields(catDisplayTypeEl) {
 	let catDisplayTypeElValue = catDisplayTypeEl.value;
 	
-	hideEl(document.querySelectorAll(".normal-type, .nested-type"));
+	setElementsVisibility("hide", ".normal-type, .nested-type");
 	
 	if (
 		catDisplayTypeElValue === "c_normal_list"
@@ -141,10 +152,10 @@ function getCatDisplayTypeFields(catDisplayTypeEl) {
 		|| catDisplayTypeElValue === "c_bigIcon_list"
 		|| catDisplayTypeElValue === "c_picture_list"
 	) {
-		showEl(document.querySelectorAll(".normal-type"));
+		setElementsVisibility("show", ".normal-type");
 	}
 	if (catDisplayTypeElValue === "cc_normal_list" || catDisplayTypeElValue === "cc_normal_list_s") {
-		showEl(document.querySelectorAll(".nested-type"));
+		setElementsVisibility("show", ".nested-type");
 	}
 }
 </script>',

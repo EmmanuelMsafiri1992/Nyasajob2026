@@ -3,30 +3,30 @@
 <style>
 /* === Body === */
 
-<?php
-// Logo Max Sizes
-$logoMaxWidth = config('larapen.core.logoSize.max.width', 430);
-$logoMaxHeight = config('larapen.core.logoSize.max.height', 80);
-if (!empty(config('settings.style.header_height'))) {
-	$logoMaxHeight = strToDigit(config('settings.style.header_height'), $logoMaxHeight);
-}
-
-// Logo Sizes
-$logoWidth = strToDigit(config('settings.style.logo_width'), 216);
-$logoHeight = strToDigit(config('settings.style.logo_height'), 40);
-if (config('settings.style.logo_aspect_ratio')) {
-	if ($logoHeight <= $logoWidth) {
-		$logoWidth = 'auto';
-		$logoHeight = $logoHeight . 'px';
+@php
+	// Logo Max Sizes
+	$logoMaxWidth = config('larapen.media.resize.namedOptions.logo-max.width', 430);
+	$logoMaxHeight = config('larapen.media.resize.namedOptions.logo-max.height', 80);
+	if (!empty(config('settings.style.header_height'))) {
+		$logoMaxHeight = forceToInt(config('settings.style.header_height'), $logoMaxHeight);
+	}
+	
+	// Logo Sizes
+	$logoWidth = forceToInt(config('settings.style.logo_width'), 216);
+	$logoHeight = forceToInt(config('settings.style.logo_height'), 40);
+	if (config('settings.style.logo_aspect_ratio')) {
+		if ($logoHeight <= $logoWidth) {
+			$logoWidth = 'auto';
+			$logoHeight = $logoHeight . 'px';
+		} else {
+			$logoWidth = $logoWidth . 'px';
+			$logoHeight = 'auto';
+		}
 	} else {
 		$logoWidth = $logoWidth . 'px';
-		$logoHeight = 'auto';
+		$logoHeight = $logoHeight . 'px';
 	}
-} else {
-	$logoWidth = $logoWidth . 'px';
-	$logoHeight = $logoHeight . 'px';
-}
-?>
+@endphp
 .main-logo {
 	width: {{ $logoWidth }};
 	height: {{ $logoHeight }};
@@ -34,7 +34,7 @@ if (config('settings.style.logo_aspect_ratio')) {
 	max-height: {{ $logoMaxHeight }}px !important;
 }
 @if (!empty(config('settings.style.page_width')))
-	<?php $pageWidth = strToDigit(config('settings.style.page_width')) . 'px'; ?>
+	<?php $pageWidth = forceToInt(config('settings.style.page_width')) . 'px'; ?>
 	@media (min-width: 1200px) {
 		.container {
 			max-width: {{ $pageWidth }};
@@ -100,29 +100,29 @@ if (config('settings.style.logo_aspect_ratio')) {
 	}
 @endif
 @if (!empty(config('settings.style.header_height')))
-	<?php
-	// Default values
-	$defaultHeight = 80;
-	$defaultPadding = 20;
-	$defaultMargin = 0;
-	
-	// Get known value from Settings
-	$headerHeight = strToDigit(config('settings.style.header_height'));
-	
-	$headerBottomBorderSize = 0;
-	if (!empty(config('settings.style.header_bottom_border_width'))) {
-		$headerBottomBorderSize = strToDigit(config('settings.style.header_bottom_border_width'));
-	}
-	$wrapperPaddingTop = $headerHeight + $headerBottomBorderSize;
-	
-	// Calculate unknown values
-	$padding = floor(($headerHeight * $defaultPadding) / $defaultHeight);
-	$margin = floor(($headerHeight * $defaultMargin) / $defaultHeight);
-	$padding = abs(($padding - ($defaultPadding / 2)) * 2);
-	$margin = abs(($margin - ($defaultMargin / 2)) * 2);
-	
-	// $wrapperPaddingTop + 4 for default margin/padding values
-	?>
+	@php
+		// Default values
+		$defaultHeight = 80;
+		$defaultPadding = 20;
+		$defaultMargin = 0;
+		
+		// Get known value from Settings
+		$headerHeight = forceToInt(config('settings.style.header_height'));
+		
+		$headerBottomBorderSize = 0;
+		if (!empty(config('settings.style.header_bottom_border_width'))) {
+			$headerBottomBorderSize = forceToInt(config('settings.style.header_bottom_border_width'));
+		}
+		$wrapperPaddingTop = $headerHeight + $headerBottomBorderSize;
+		
+		// Calculate unknown values
+		$padding = floor(($headerHeight * $defaultPadding) / $defaultHeight);
+		$margin = floor(($headerHeight * $defaultMargin) / $defaultHeight);
+		$padding = abs(($padding - ($defaultPadding / 2)) * 2);
+		$margin = abs(($margin - ($defaultMargin / 2)) * 2);
+		
+		// $wrapperPaddingTop + 4 for default margin/padding values
+	@endphp
 	#wrapper {
 		padding-top: {{ ($wrapperPaddingTop + 4) }}px;
 	}
@@ -179,7 +179,7 @@ if (config('settings.style.logo_aspect_ratio')) {
 	}
 @endif
 @if (!empty(config('settings.style.header_bottom_border_width')))
-	<?php $headerBottomBorderSize = strToDigit(config('settings.style.header_bottom_border_width')) . 'px'; ?>
+	<?php $headerBottomBorderSize = forceToInt(config('settings.style.header_bottom_border_width')) . 'px'; ?>
 	.navbar.navbar-site {
 		border-bottom-width: {{ $headerBottomBorderSize }} !important;
 		border-bottom-style: solid !important;
@@ -243,7 +243,7 @@ if (config('settings.style.logo_aspect_ratio')) {
 	}
 @endif
 @if (!empty(config('settings.style.payment_icon_top_border_width')))
-	<?php $paymentIconTopBorderSize = strToDigit(config('settings.style.payment_icon_top_border_width')) . 'px'; ?>
+	<?php $paymentIconTopBorderSize = forceToInt(config('settings.style.payment_icon_top_border_width')) . 'px'; ?>
 	.payment-method-logo {
 		border-top-width: {{ $paymentIconTopBorderSize }};
 	}
@@ -260,7 +260,7 @@ if (config('settings.style.logo_aspect_ratio')) {
 	}
 @endif
 @if (!empty(config('settings.style.payment_icon_bottom_border_width')))
-	<?php $paymentIconBottomBorderSize = strToDigit(config('settings.style.payment_icon_bottom_border_width')) . 'px'; ?>
+	<?php $paymentIconBottomBorderSize = forceToInt(config('settings.style.payment_icon_bottom_border_width')) . 'px'; ?>
 	.payment-method-logo {
 		border-bottom-width: {{ $paymentIconBottomBorderSize }};
 	}
@@ -307,16 +307,16 @@ if (config('settings.style.logo_aspect_ratio')) {
 	}
 @endif
 @if (!empty(config('settings.style.btn_listing_bg_top_color_hover')) || !empty(config('settings.style.btn_listing_bg_bottom_color_hover')))
-	<?php
-	$btnBackgroundTopColorHover = '#fff860';
-	$btnBackgroundBottomColorHover = '#ffeb43';
-	if (!empty(config('settings.style.btn_listing_bg_top_color_hover'))) {
-		$btnBackgroundTopColorHover = config('settings.style.btn_listing_bg_top_color_hover');
-	}
-	if (!empty(config('settings.style.btn_listing_bg_bottom_color_hover'))) {
-		$btnBackgroundBottomColorHover = config('settings.style.btn_listing_bg_bottom_color_hover');
-	}
-	?>
+	@php
+		$btnBackgroundTopColorHover = '#fff860';
+		$btnBackgroundBottomColorHover = '#ffeb43';
+		if (!empty(config('settings.style.btn_listing_bg_top_color_hover'))) {
+			$btnBackgroundTopColorHover = config('settings.style.btn_listing_bg_top_color_hover');
+		}
+		if (!empty(config('settings.style.btn_listing_bg_bottom_color_hover'))) {
+			$btnBackgroundBottomColorHover = config('settings.style.btn_listing_bg_bottom_color_hover');
+		}
+	@endphp
 	a.btn-listing:hover,
 	a.btn-listing:focus,
 	button.btn-listing:hover,
@@ -354,11 +354,11 @@ if (config('settings.style.logo_aspect_ratio')) {
 @endif
 
 /* === Other: Grid View Columns === */
-@if (!empty(config('settings.list.grid_view_cols')))
-	<?php
-	$gridViewCols = config('settings.list.grid_view_cols');
-	$gridWidth = round_val(100 / $gridViewCols, 2);
-	?>
+@if (!empty(config('settings.listings_list.grid_view_cols')))
+	@php
+		$gridViewCols = config('settings.listings_list.grid_view_cols');
+		$gridWidth = roundVal(100 / $gridViewCols, 2);
+	@endphp
 	@if (config('lang.direction') == 'rtl')
 		.make-grid .item-list {
 			width: {{ $gridWidth }}% !important;

@@ -9,7 +9,7 @@
     	@foreach($field['value'] as $key => $file_path)
     		<div class="file-preview">
 	    		<a target="_blank" href="{{ isset($field['disk'])?asset(\Storage::disk($field['disk'])->url($file_path)):asset($file_path) }}">{{ $file_path }}</a>
-		    	<a id="{{ $field['name'] }}_{{ $key }}_clear_button" href="#" class="btn btn-secondary btn-xs float-end file-clear-button" title="Clear file" data-filename="{{ $file_path }}"><i class="fa fa-remove"></i></a>
+		    	<a id="{{ $field['name'] }}_{{ $key }}_clear_button" href="#" class="btn btn-secondary btn-xs float-end file-clear-button" title="Clear file" data-filename="{{ $file_path }}"><i class="fa-solid fa-xmark"></i></a>
 		    	<div class="clearfix"></div>
 	    	</div>
     	@endforeach

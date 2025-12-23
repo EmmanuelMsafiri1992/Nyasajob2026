@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Notifications;
 
 use App\Helpers\UrlGen;
@@ -7,16 +22,15 @@ use App\Models\PaymentMethod;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
-class PaymentNotification extends Notification implements ShouldQueue
+class PaymentNotification extends Notification
 {
 	use Queueable;
 	
 	protected $payment;
 	protected $post;
-	protected $package;
-	protected $paymentMethod;
+	protected Package $package;
+	protected PaymentMethod $paymentMethod;
 	
 	public function __construct($payment, $post)
 	{
@@ -41,15 +55,15 @@ class PaymentNotification extends Notification implements ShouldQueue
 			->line(trans('mail.payment_notification_content_2', [
 				'advertiserName' => $this->post->contact_name,
 				'postUrl'        => $postUrl,
-				'title'          => $this->post->title
+				'title'          => $this->post->title,
 			]))
 			->line('<br>')
 			->line(trans('mail.payment_notification_content_3', [
-				'adId'              => $this->post->id,
-				'packageName'       => (!empty($this->package->short_name)) ? $this->package->short_name : $this->package->name,
+				'postId'            => $this->post->id,
+				'packageName'       => !empty($this->package->short_name) ? $this->package->short_name : $this->package->name,
 				'amount'            => $this->package->price,
 				'currency'          => $this->package->currency_code,
-				'paymentMethodName' => $this->paymentMethod->display_name
+				'paymentMethodName' => $this->paymentMethod->display_name,
 			]))
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
 	}

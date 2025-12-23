@@ -1,4 +1,18 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 namespace App\Helpers;
 
@@ -64,9 +78,14 @@ class GeoIP
 	 */
 	public function getDriver($driver = null)
 	{
-		$defaultDriver = $defaultDriver ?? config('geoip.default', '');
+		$defaultDriver = $driver ?? config('geoip.default', '');
 		
-		$driverClass = '\App\Helpers\GeoIP\Drivers\\' . str($defaultDriver)->camel()->ucfirst();
+		$namespace = '\App\Helpers\GeoIP\Drivers\\';
+		$driverClass = str($defaultDriver)
+			->camel()
+			->ucfirst()
+			->prepend($namespace)
+			->toString();
 		
 		if (!class_exists($driverClass)) {
 			throw new \Exception(sprintf('Driver [%s] not supported.', $defaultDriver));

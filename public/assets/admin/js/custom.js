@@ -52,8 +52,10 @@ $(function () {
     /* Tooltip */
     /* ======= */
     $(function () {
-        /* $('[data-bs-toggle="tooltip"]').tooltip(); */
-    
+        /* tooltip in Bootstrap 4.x or lower requires jQuery */
+        /* $('[data-bs-toggle="tooltip-bj"]').tooltip(); */
+        
+        /* tooltip in Bootstrap 5.x requires vanilla JavaScript */
         /* Enable tooltips everywhere (Default trigger: 'hover focus') */
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -70,11 +72,15 @@ $(function () {
             });
         });
     });
+    
     /* ======= */
     /* Popover */
     /* ======= */
     $(function () {
-        /* $('[data-bs-toggle="popover"]').popover(); */
+        /* popovers in Bootstrap 4.x or lower requires jQuery */
+        $('[data-bs-toggle="popover-bj"]').popover({html: true});
+        
+        /* popovers in Bootstrap 5.x requires vanilla JavaScript */
         var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
         var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
             return new bootstrap.Popover(popoverTriggerEl, {

@@ -1,17 +1,39 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Files\Storage\StorageDisk;
 use App\Models\Scopes\ActiveScope;
 use App\Models\Scopes\LocalizedScope;
+use App\Models\Traits\Common\AppendsTrait;
 use App\Observers\ResumeObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy([ResumeObserver::class])]
+#[ScopedBy([ActiveScope::class, LocalizedScope::class])]
 class Resume extends BaseModel
 {
-	use Crud, HasFactory;
+	use Crud, AppendsTrait, HasFactory;
 	
 	/**
 	 * The table associated with the model.
@@ -21,11 +43,8 @@ class Resume extends BaseModel
 	protected $table = 'resumes';
 	
 	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
+	 * @var array<int, string>
 	 */
-	// protected $primaryKey = 'id';
 	protected $appends = ['country_flag_url'];
 	
 	/**
@@ -38,44 +57,33 @@ class Resume extends BaseModel
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = ['country_code', 'user_id', 'name', 'filename', 'active'];
-	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'updated_at'];
 	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
+	/**
+	 * Get the attributes that should be cast.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function casts(): array
 	{
-		parent::boot();
-		
-		Resume::observe(ResumeObserver::class);
-		
-		static::addGlobalScope(new ActiveScope());
-		static::addGlobalScope(new LocalizedScope());
+		return [
+			'created_at' => 'datetime',
+			'updated_at' => 'datetime',
+		];
 	}
 	
 	/*
@@ -83,12 +91,12 @@ class Resume extends BaseModel
 	| RELATIONS
 	|--------------------------------------------------------------------------
 	*/
-	public function posts()
+	public function posts(): HasMany
 	{
 		return $this->hasMany(Post::class);
 	}
 	
-	public function user()
+	public function user(): BelongsToMany
 	{
 		return $this->belongsToMany(User::class, 'user_id', 'id');
 	}
@@ -157,14 +165,7 @@ class Resume extends BaseModel
 	{
 		return Attribute::make(
 			get: function ($value) {
-				$flagUrl = null;
-				
-				$flagPath = 'images/flags/16/' . strtolower($this->country_code) . '.png';
-				if (file_exists(public_path($flagPath))) {
-					$flagUrl = url($flagPath);
-				}
-				
-				return $flagUrl;
+				return getCountryFlagUrl($this->country_code);
 			},
 		);
 	}

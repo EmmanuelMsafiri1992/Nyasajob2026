@@ -1,26 +1,41 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
+use App\Models\Traits\Common\AppendsTrait;
 use Illuminate\Notifications\Notifiable;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 
 class PasswordReset extends BaseModel
 {
-	use Crud, Notifiable;
+	use Crud, AppendsTrait, Notifiable;
 	
 	/**
 	 * The table associated with the model.
 	 *
 	 * @var string
 	 */
-	protected $table = 'password_resets';
+	protected $table = 'password_reset_tokens';
 	
 	/**
 	 * The primary key for the model.
 	 *
 	 * @var string
 	 */
-	// protected $primaryKey = 'id';
 	protected $primaryKey = 'token';
 	public $incrementing = false;
 	
@@ -32,41 +47,27 @@ class PasswordReset extends BaseModel
 	public $timestamps = false;
 	
 	/**
-	 * The attributes that aren't mass assignable.
-	 *
-	 * @var array
-	 */
-	// protected $guarded = ['id'];
-	
-	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = ['email', 'phone', 'phone_country', 'token', 'created_at'];
-	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at'];
 	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
+	/**
+	 * Get the attributes that should be cast.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function casts(): array
 	{
-		parent::boot();
+		return [
+			'created_at' => 'datetime',
+		];
 	}
 	
 	public function routeNotificationForMail()

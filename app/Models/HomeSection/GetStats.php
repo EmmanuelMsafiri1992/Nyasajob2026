@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\HomeSection;
 
 class GetStats
@@ -7,22 +22,22 @@ class GetStats
 	{
 		if (empty($value)) {
 			
-			$value['icon_count_posts'] = 'fas fa-briefcase';
-			$value['icon_count_users'] = 'fas fa-users';
-			$value['icon_count_locations'] = 'far fa-map';
+			$value['icon_count_posts'] = 'fa-solid fa-briefcase';
+			$value['icon_count_users'] = 'fa-solid fa-users';
+			$value['icon_count_locations'] = 'fa-regular fa-map';
 			$value['counter_up_delay'] = 10;
 			$value['counter_up_time'] = 2000;
 			
 		} else {
 			
 			if (!isset($value['icon_count_posts'])) {
-				$value['icon_count_posts'] = 'fas fa-briefcase';
+				$value['icon_count_posts'] = 'fa-solid fa-briefcase';
 			}
 			if (!isset($value['icon_count_users'])) {
-				$value['icon_count_users'] = 'fas fa-users';
+				$value['icon_count_users'] = 'fa-solid fa-users';
 			}
 			if (!isset($value['icon_count_locations'])) {
-				$value['icon_count_locations'] = 'far fa-map';
+				$value['icon_count_locations'] = 'fa-regular fa-map';
 			}
 			if (!isset($value['counter_up_delay'])) {
 				$value['counter_up_delay'] = 10;
@@ -43,6 +58,7 @@ class GetStats
 	
 	public static function getFields($diskName)
 	{
+		$defaultFontIconSet = config('larapen.core.defaultFontIconSet', 'bootstrap');
 		$fields = [
 			[
 				'name'  => 'count_posts',
@@ -53,8 +69,8 @@ class GetStats
 				'name'              => 'icon_count_posts',
 				'label'             => trans('admin.Icon'),
 				'type'              => 'icon_picker',
-				'iconset'           => 'fontawesome5',
-				'version'           => '5.15.4',
+				'iconset'           => config('larapen.core.fontIconSet.' . $defaultFontIconSet . '.key'),
+				'version'           => config('larapen.core.fontIconSet.' . $defaultFontIconSet . '.version'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-2',
 				],
@@ -101,8 +117,8 @@ class GetStats
 				'name'              => 'icon_count_users',
 				'label'             => trans('admin.Icon'),
 				'type'              => 'icon_picker',
-				'iconset'           => 'fontawesome5',
-				'version'           => '5.15.4',
+				'iconset'           => config('larapen.core.fontIconSet.' . $defaultFontIconSet . '.key'),
+				'version'           => config('larapen.core.fontIconSet.' . $defaultFontIconSet . '.version'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-2',
 				],
@@ -149,8 +165,8 @@ class GetStats
 				'name'              => 'icon_count_locations',
 				'label'             => trans('admin.Icon'),
 				'type'              => 'icon_picker',
-				'iconset'           => 'fontawesome5',
-				'version'           => '5.15.4',
+				'iconset'           => config('larapen.core.fontIconSet.' . $defaultFontIconSet . '.key'),
+				'version'           => config('larapen.core.fontIconSet.' . $defaultFontIconSet . '.version'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-2',
 				],

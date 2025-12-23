@@ -69,7 +69,7 @@
         <div class="col-sm-12{{ $colMd }}">
             @if ($xPanel->hasAccess('list'))
                 <a href="{{ url($xPanel->route) }}" class="btn btn-primary shadow">
-                    <i class="fa fa-angle-double-left"></i> {{ trans('admin.back_to_all') }}
+                    <i class="fa-solid fa-angles-left"></i> {{ trans('admin.back_to_all') }}
                     <span class="text-lowercase">{!! $xPanel->entityNamePlural !!}</span>
                 </a>
                 <br><br>
@@ -113,7 +113,7 @@
                             </ol>
                             
                             <button id="toArray" class="btn btn-primary shadow ladda-button" data-style="zoom-in">
-                                <span class="ladda-label"><i class="fa fa-save"></i> {{ trans('admin.save') }}</span>
+                                <span class="ladda-label"><i class="fa-regular fa-floppy-disk"></i> {{ trans('admin.save') }}</span>
                             </button>
                             
                         </div>
@@ -134,7 +134,7 @@
     <script src="{{ url('assets/plugins/nestedSortable/jquery.mjs.nestedSortable2.js') }}" type="text/javascript"></script>
 
     <script type="text/javascript">
-        jQuery(document).ready(function($) {
+        onDocumentReady((event) => {
 
             // initialize the nested sortable plugin
             $('.sortable').nestedSortable({

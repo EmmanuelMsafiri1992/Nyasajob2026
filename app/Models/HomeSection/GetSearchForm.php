@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\HomeSection;
 
 use App\Helpers\Files\Upload;
@@ -12,10 +27,10 @@ class GetSearchForm
 			[
 				'attribute' => 'background_image',
 				'destPath'  => 'app/logo',
-				'width'     => (int)config('larapen.core.picture.otherTypes.bgHeader.width', 2000),
-				'height'    => (int)config('larapen.core.picture.otherTypes.bgHeader.height', 1000),
-				'ratio'     => config('larapen.core.picture.otherTypes.bgHeader.ratio', '1'),
-				'upsize'    => config('larapen.core.picture.otherTypes.bgHeader.upsize', '0'),
+				'width'     => (int)config('larapen.media.resize.namedOptions.bg-header.width', 2000),
+				'height'    => (int)config('larapen.media.resize.namedOptions.bg-header.height', 1000),
+				'ratio'     => config('larapen.media.resize.namedOptions.bg-header.ratio', '1'),
+				'upsize'    => config('larapen.media.resize.namedOptions.bg-header.upsize', '0'),
 				'filename'  => 'header-',
 				'quality'   => 100,
 			],
@@ -48,8 +63,8 @@ class GetSearchForm
 			
 			if ($languages->count() > 0) {
 				foreach ($languages as $language) {
-					$value['title_' . $language->abbr] = t('homepage_title_text', [], 'global', $language->abbr);
-					$value['sub_title_' . $language->abbr] = t('simple_fast_and_efficient', [], 'global', $language->abbr);
+					$value['title_' . $language->code] = t('homepage_title_text', [], 'global', $language->code);
+					$value['sub_title_' . $language->code] = t('simple_fast_and_efficient', [], 'global', $language->code);
 				}
 			}
 			
@@ -67,11 +82,11 @@ class GetSearchForm
 			
 			if ($languages->count() > 0) {
 				foreach ($languages as $language) {
-					if (!isset($value['title_' . $language->abbr])) {
-						$value['title_' . $language->abbr] = t('homepage_title_text', [], 'global', $language->abbr);
+					if (!isset($value['title_' . $language->code])) {
+						$value['title_' . $language->code] = t('homepage_title_text', [], 'global', $language->code);
 					}
-					if (!isset($value['sub_title_' . $language->abbr])) {
-						$value['sub_title_' . $language->abbr] = t('simple_fast_and_efficient', [], 'global', $language->abbr);
+					if (!isset($value['sub_title_' . $language->code])) {
+						$value['sub_title_' . $language->code] = t('simple_fast_and_efficient', [], 'global', $language->code);
 					}
 				}
 			}
@@ -81,7 +96,7 @@ class GetSearchForm
 		// Append files URLs
 		// background_image_url
 		$backgroundImage = $value['background_image'] ?? null;
-		$value['background_image_url'] = !empty($backgroundImage) ? imgUrl($backgroundImage, 'bgHeader') : null;
+		$value['background_image_url'] = !empty($backgroundImage) ? imgUrl($backgroundImage, 'bg-header') : null;
 		
 		return $value;
 	}
@@ -113,17 +128,14 @@ class GetSearchForm
 				],
 			],
 			[
-				'name'                => 'background_color',
-				'label'               => trans('admin.Background Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'background_color',
+				'label'             => trans('admin.Background Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#444',
 				],
-				'hint'                => trans('admin.Enter a RGB color code'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.Enter a RGB color code'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-12 extended',
 				],
 			],
@@ -192,17 +204,14 @@ class GetSearchForm
 				],
 			],
 			[
-				'name'                => 'form_border_color',
-				'label'               => trans('admin.Form Border Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'form_border_color',
+				'label'             => trans('admin.Form Border Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#7324bc',
 				],
-				'hint'                => trans('admin.Enter a RGB color code'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.Enter a RGB color code'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
@@ -237,32 +246,26 @@ class GetSearchForm
 				],
 			],
 			[
-				'name'                => 'form_btn_background_color',
-				'label'               => trans('admin.Form Button Background Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'form_btn_background_color',
+				'label'             => trans('admin.Form Button Background Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#7324bc',
 				],
-				'hint'                => trans('admin.Enter a RGB color code'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.Enter a RGB color code'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'                => 'form_btn_text_color',
-				'label'               => trans('admin.Form Button Text Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'form_btn_text_color',
+				'label'             => trans('admin.Form Button Text Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#FFF',
 				],
-				'hint'                => trans('admin.Enter a RGB color code'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.Enter a RGB color code'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
@@ -305,20 +308,20 @@ class GetSearchForm
 			$titlesFields = [];
 			foreach ($languages as $language) {
 				$titlesFields[] = [
-					'name'              => 'title_' . $language->abbr,
+					'name'              => 'title_' . $language->code,
 					'label'             => mb_ucfirst(trans('admin.title')) . ' (' . $language->name . ')',
 					'attributes'        => [
-						'placeholder' => t('homepage_title_text', [], 'global', $language->abbr),
+						'placeholder' => t('homepage_title_text', [], 'global', $language->code),
 					],
 					'wrapperAttributes' => [
 						'class' => 'col-md-6 extended',
 					],
 				];
 				$titlesFields[] = [
-					'name'              => 'sub_title_' . $language->abbr,
+					'name'              => 'sub_title_' . $language->code,
 					'label'             => trans('admin.Sub Title') . ' (' . $language->name . ')',
 					'attributes'        => [
-						'placeholder' => t('simple_fast_and_efficient', [], 'global', $language->abbr),
+						'placeholder' => t('simple_fast_and_efficient', [], 'global', $language->code),
 					],
 					'wrapperAttributes' => [
 						'class' => 'col-md-6 extended',
@@ -339,32 +342,26 @@ class GetSearchForm
 				],
 			],
 			[
-				'name'                => 'big_title_color',
-				'label'               => trans('admin.Big Title Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'big_title_color',
+				'label'             => trans('admin.Big Title Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#FFF',
 				],
-				'hint'                => trans('admin.Enter a RGB color code'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.Enter a RGB color code'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-6 extended',
 				],
 			],
 			[
-				'name'                => 'sub_title_color',
-				'label'               => trans('admin.Sub Title Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'sub_title_color',
+				'label'             => trans('admin.Sub Title Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#FFF',
 				],
-				'hint'                => trans('admin.Enter a RGB color code'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.Enter a RGB color code'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-6 extended',
 				],
 			],
@@ -389,17 +386,14 @@ class GetSearchForm
 				'name'  => 'javascript',
 				'type'  => 'custom_html',
 				'value' => '<script>
-docReady(function() {
+onDocumentReady((event) => {
 	let extFormEl = document.querySelector("#extendedForm");
 	getExtendedFields(extFormEl);
 });
 
 function getExtendedFields(extFormEl) {
-	if (extFormEl.checked) {
-		showEl(document.querySelectorAll(".extended"));
-	} else {
-		hideEl(document.querySelectorAll(".extended"));
-	}
+	let action = extFormEl.checked ? "show" : "hide";
+	setElementsVisibility(action, ".extended");
 }
 </script>',
 			],

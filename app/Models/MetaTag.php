@@ -1,14 +1,36 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Models\Scopes\ActiveScope;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\MetaTagTrait;
 use App\Observers\MetaTagObserver;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 
+#[ObservedBy([MetaTagObserver::class])]
+#[ScopedBy([ActiveScope::class])]
 class MetaTag extends BaseModel
 {
-	use Crud, HasTranslations;
+	use Crud, AppendsTrait, HasTranslations;
+	use MetaTagTrait;
 	
 	/**
 	 * The table associated with the model.
@@ -16,13 +38,6 @@ class MetaTag extends BaseModel
 	 * @var string
 	 */
 	protected $table = 'meta_tags';
-	
-	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
-	 */
-	// protected $primaryKey = 'id';
 	
 	/**
 	 * Indicates if the model should be timestamped.
@@ -34,84 +49,27 @@ class MetaTag extends BaseModel
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = ['page', 'title', 'description', 'keywords', 'active'];
-	public $translatable = ['title', 'description', 'keywords'];
 	
 	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	// protected $dates = [];
-	
-	// Default Pages
-	private static $defaultPages = [
-		'home'           => 'Homepage',
-		'search'         => 'Search (Default)',
-		'searchCategory' => 'Search (Category)',
-		'searchLocation' => 'Search (Location)',
-		'searchProfile'  => 'Search (Profile)',
-		'searchTag'      => 'Search (Tag)',
-		'listingDetails' => 'Ad Details',
-		'register'       => 'Register',
-		'login'          => 'Login',
-		'create'         => 'Ads Creation',
-		'countries'      => 'Countries',
-		'contact'        => 'Contact',
-		'sitemap'        => 'Sitemap',
-		'password'       => 'Password',
-		'pricing'        => 'Pricing',
-		'staticPage'     => 'Page (Static)',
-	];
+	public array $translatable = ['title', 'description', 'keywords'];
 	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
-	{
-		parent::boot();
-		
-		MetaTag::observe(MetaTagObserver::class);
-		
-		static::addGlobalScope(new ActiveScope());
-	}
-	
-	public static function getDefaultPages()
-	{
-		return self::$defaultPages;
-	}
-	
-	public function getPageHtml()
-	{
-		$entries = self::getDefaultPages();
-		
-		// Get Page Name
-		$out = $this->page;
-		if (isset($entries[$this->page])) {
-			$url = admin_url('meta_tags/' . $this->id . '/edit');
-			$out = '<a href="' . $url . '">' . $entries[$this->page] . '</a>';
-		}
-		
-		return $out;
-	}
 	
 	/*
 	|--------------------------------------------------------------------------

@@ -4,13 +4,13 @@
         @if ( isset( $column['options'][1] ) )
             {{ $column['options'][1] }}
         @else
-            {{ Lang::has('admin.messages.yes')?trans('admin.yes'):'Yes' }}
+            {{ trans()->has('admin.messages.yes') ? trans('admin.yes') : 'Yes' }}
         @endif
     @else
         @if ( isset( $column['options'][0] ) )
             {{ $column['options'][0] }}
         @else
-            {{ Lang::has('admin.messages.no')?trans('admin.no'):'No' }}
+            {{ trans()->has('admin.messages.no') ? trans('admin.no') : 'No' }}
         @endif
     @endif
 </td>

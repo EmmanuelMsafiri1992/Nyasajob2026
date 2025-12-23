@@ -4293,7 +4293,7 @@ class CountrySeeder extends Seeder
 				'iso3'                 => 'PSE',
 				'iso_numeric'          => '275',
 				'fips'                 => 'WE',
-				'name'                 => ['en' => 'Palestinian Territory'],
+				'name'                 => ['en' => 'Palestine'],
 				'capital'              => 'East Jerusalem',
 				'area'                 => '5970',
 				'population'           => '3800000',

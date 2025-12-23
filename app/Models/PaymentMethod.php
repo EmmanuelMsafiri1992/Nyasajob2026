@@ -1,15 +1,40 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Models\Scopes\ActiveScope;
 use App\Models\Scopes\CompatibleApiScope;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\PaymentMethodTrait;
 use App\Observers\PaymentMethodObserver;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy([PaymentMethodObserver::class])]
+#[ScopedBy([ActiveScope::class, CompatibleApiScope::class])]
 class PaymentMethod extends BaseModel
 {
-	use Crud;
+	use Crud, AppendsTrait, HasFactory;
+	use PaymentMethodTrait;
 	
 	/**
 	 * The table associated with the model.
@@ -17,13 +42,6 @@ class PaymentMethod extends BaseModel
 	 * @var string
 	 */
 	protected $table = 'payment_methods';
-	
-	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
-	 */
-	// protected $primaryKey = 'id';
 	
 	/**
 	 * Indicates if the model should be timestamped.
@@ -35,14 +53,14 @@ class PaymentMethod extends BaseModel
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'id',
@@ -59,52 +77,18 @@ class PaymentMethod extends BaseModel
 		'parent_id',
 	];
 	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	// protected $dates = [];
-	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
-	{
-		parent::boot();
-		
-		PaymentMethod::observe(PaymentMethodObserver::class);
-		
-		static::addGlobalScope(new ActiveScope());
-		static::addGlobalScope(new CompatibleApiScope());
-	}
-	
-	public function getCountriesHtml()
-	{
-		$out = strtoupper(trans('admin.All'));
-		if (isset($this->countries) && !empty($this->countries)) {
-			$countriesCropped = str($this->countries)->limit(50, ' [...]');
-			$out = '<div title="' . $this->countries . '">' . $countriesCropped . '</div>';
-		}
-		
-		return $out;
-	}
 	
 	/*
 	|--------------------------------------------------------------------------
 	| RELATIONS
 	|--------------------------------------------------------------------------
 	*/
-	public function payment()
+	public function payment(): HasMany
 	{
 		return $this->hasMany(Payment::class, 'payment_method_id');
 	}
@@ -114,7 +98,7 @@ class PaymentMethod extends BaseModel
 	| SCOPES
 	|--------------------------------------------------------------------------
 	*/
-	public function scopeActive($builder)
+	public function scopeActive(Builder $builder): Builder
 	{
 		return $builder->where('active', 1);
 	}
@@ -156,8 +140,6 @@ class PaymentMethod extends BaseModel
 				if (empty($value) || $value == strtolower(trans('admin.All'))) {
 					$value = null;
 				}
-				
-				$this->attributes['countries'] = $value;
 				
 				return $value;
 			},

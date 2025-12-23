@@ -1,14 +1,29 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Search\Traits\Filters;
 
 use App\Helpers\DBTool;
-use App\Helpers\Number;
+use App\Helpers\Num;
 use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 
 trait KeywordFilter
 {
-	protected $searchableColumns = [
+	protected array $searchableColumns = [
 		// Post
 		'title'                    => 10,
 		'{postsTable}.description' => 10,
@@ -18,29 +33,22 @@ trait KeywordFilter
 		'tParentCat.name'          => 2,
 	];
 	
-	protected $forceAverage = true; // Force relevance's average
-	protected $average = 1;         // Set relevance's average
-	public static $queryLength = 1; // Minimum query characters
+	protected bool $forceAverage = true; // Force relevance's average
+	protected int $average = 1;         // Set relevance's average
+	public static int $queryLength = 1; // Minimum query characters
 	
 	// Ban this words in query search
-	// protected $bannedWords = ['sell', 'buy', 'vendre', 'vente', 'achat', 'acheter', 'ses', 'sur', 'de', 'la', 'le', 'les', 'des', 'pour', 'latest'];
-	protected $bannedWords = [];
+	// protected $bannedWords = ['sell', 'buy', 'the', 'of', 'any', 'some', 'for', 'it', 'latest'];
+	protected array $bannedWords = [];
 	
-	/**
-	 * Keyword Filter
-	 */
-	protected function applyKeywordFilter()
+	protected function applyKeywordFilter(): void
 	{
 		if (!(isset($this->posts) && isset($this->postsTable) && isset($this->having) && isset($this->groupBy) && isset($this->orderBy))) {
 			return;
 		}
 		
-		if (!request()->filled('q')) {
-			return;
-		}
-		
-		$keywords = request()->get('q');
-		$keywords = (is_string($keywords)) ? $keywords : null;
+		$keywords = request()->input('q');
+		$keywords = is_string($keywords) ? $keywords : null;
 		
 		if (trim($keywords) == '') {
 			return;
@@ -58,14 +66,14 @@ trait KeywordFilter
 		})->toArray();
 		
 		// Ban the Country's name from keywords
-		array_push($this->bannedWords, strtolower(config('country.name')));
+		$this->bannedWords[] = strtolower(config('country.name'));
 		
 		// Query search SELECT array
 		$select = [];
 		$bindings = [];
 		
 		// Get all keywords in array
-		$wordsArray = preg_split('/[\s,\+]+/', $keywords);
+		$wordsArray = preg_split('/[\s,+]+/', $keywords);
 		
 		//-- If third parameter is set as true, it will check if the column starts with the search
 		//-- if then it adds relevance * 30
@@ -168,7 +176,7 @@ trait KeywordFilter
 		
 		//-- Select
 		$this->posts->addSelect(DB::raw("(" . implode("+\n", $select) . ") AS relevance"));
-		if (count($bindings) > 0) {
+		if (!empty($bindings)) {
 			foreach ($bindings as $binding) {
 				$this->posts->addBinding($binding, 'select');
 			}
@@ -176,10 +184,10 @@ trait KeywordFilter
 		
 		//-- Having
 		//-- Selects only the rows that have more than
-		//-- the sum of all attributes relevances and divided by count of attributes
+		//-- the sum of all attributes relevance and divided by count of attributes
 		//-- e.i. (20 + 5 + 2) / 4 = 6.75
 		$average = array_sum($searchableColumns) / count($searchableColumns);
-		$average = Number::toFloat($average);
+		$average = Num::toFloat($average);
 		if ($this->forceAverage) {
 			$average = $this->average;
 		}

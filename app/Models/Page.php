@@ -1,19 +1,43 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Files\Storage\StorageDisk;
-use App\Helpers\UrlGen;
 use App\Models\Scopes\ActiveScope;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\PageTrait;
 use App\Observers\PageObserver;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy([PageObserver::class])]
+#[ScopedBy([ActiveScope::class])]
 class Page extends BaseModel
 {
-	use Crud, Sluggable, SluggableScopeHelpers, HasTranslations;
+	use Crud, AppendsTrait, HasFactory, Sluggable, SluggableScopeHelpers, HasTranslations;
+	use PageTrait;
 	
 	/**
 	 * The table associated with the model.
@@ -23,31 +47,21 @@ class Page extends BaseModel
 	protected $table = 'pages';
 	
 	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
+	 * @var array<int, string>
 	 */
-	// protected $primaryKey = 'id';
 	protected $appends = ['picture_url'];
-	
-	/**
-	 * Indicates if the model should be timestamped.
-	 *
-	 * @var boolean
-	 */
-	// public $timestamps = false;
 	
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'parent_id',
@@ -70,53 +84,28 @@ class Page extends BaseModel
 		'rgt',
 		'depth',
 	];
-	public $translatable = ['name', 'title', 'content', 'seo_title', 'seo_description', 'seo_keywords'];
 	
 	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'updated_at'];
+	public array $translatable = ['name', 'title', 'content', 'seo_title', 'seo_description', 'seo_keywords'];
 	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
-	{
-		parent::boot();
-		
-		Page::observe(PageObserver::class);
-		
-		static::addGlobalScope(new ActiveScope());
-	}
-	
 	/**
-	 * Return the sluggable configuration array for this model.
+	 * Get the attributes that should be cast.
 	 *
-	 * @return array
+	 * @return array<string, string>
 	 */
-	public function sluggable(): array
+	protected function casts(): array
 	{
 		return [
-			'slug' => [
-				'source' => ['slug', 'name'],
-			],
+			'created_at' => 'datetime',
+			'updated_at' => 'datetime',
 		];
-	}
-	
-	public function getNameHtml(): string
-	{
-		return '<a href="' . UrlGen::page($this) . '" target="_blank">' . $this->name . '</a>';
 	}
 	
 	/*
@@ -124,7 +113,7 @@ class Page extends BaseModel
 	| RELATIONS
 	|--------------------------------------------------------------------------
 	*/
-	public function parent()
+	public function parent(): BelongsTo
 	{
 		return $this->belongsTo(Page::class, 'parent_id');
 	}
@@ -134,7 +123,7 @@ class Page extends BaseModel
 	| SCOPES
 	|--------------------------------------------------------------------------
 	*/
-	public function scopeType($builder, $type)
+	public function scopeType(Builder $builder, $type): Builder
 	{
 		return $builder->where('type', $type)->orderByDesc('id');
 	}
@@ -168,11 +157,9 @@ class Page extends BaseModel
 				return $value;
 			},
 			set: function ($value) {
-				if (!empty($value)) {
-					$this->attributes['title'] = $value;
-				} else {
-					$this->attributes['title'] = $this->name;
-				}
+				$name = $this->name ?? null;
+				
+				return empty($value) ? $name : $value;
 			},
 		);
 	}
@@ -222,7 +209,7 @@ class Page extends BaseModel
 					return null;
 				}
 				
-				return imgUrl($this->picture, 'bgHeader');
+				return imgUrl($this->picture, 'bg-header');
 			},
 		);
 	}

@@ -13,14 +13,14 @@ $clearFilterBtn = \App\Helpers\UrlGen::getDateFilterClearLink($cat ?? null, $cit
 <div class="block-content list-filter">
 	<div class="filter-date filter-content">
 		<ul>
-			@if (isset($periodsList) && !empty($periodsList))
-				@foreach($periodsList as $key => $value)
+			@if (isset($periodList) && !empty($periodList))
+				@foreach($periodList as $key => $value)
 					<li class="form-check">
 						<input type="radio"
 							   name="postedDate"
 							   value="{{ $key }}"
 							   id="postedDate_{{ $key }}"
-							   class="form-check-input" {{ (request()->get('postedDate')==$key) ? 'checked="checked"' : '' }}
+							   class="form-check-input" {{ (request()->query('postedDate')==$key) ? 'checked="checked"' : '' }}
 						>
 						<label class="form-check-label" for="postedDate_{{ $key }}">{{ $value }}</label>
 					</li>
@@ -36,19 +36,22 @@ $clearFilterBtn = \App\Helpers\UrlGen::getDateFilterClearLink($cat ?? null, $cit
 	@parent
 	
 	<script>
-		$(document).ready(function ()
-		{
-			$('input[type=radio][name=postedDate]').click(function() {
-				let postedQueryString = $('#postedQueryString').val();
-				
-				if (postedQueryString !== '') {
-					postedQueryString = postedQueryString + '&';
-				}
-				postedQueryString = postedQueryString + 'postedDate=' + $(this).val();
-				
-				let searchUrl = baseUrl + '?' + postedQueryString;
-				redirect(searchUrl);
-			});
+		onDocumentReady((event) => {
+			const postedDateEls = document.querySelectorAll('input[type=radio][name=postedDate]');
+			if (postedDateEls.length > 0) {
+				postedDateEls.forEach((element) => {
+					element.addEventListener('click', (e) => {
+						const queryStringEl = document.getElementById('postedQueryString');
+						
+						let queryString = queryStringEl.value;
+						queryString += (queryString !== '') ? '&' : '';
+						queryString = queryString + 'postedDate=' + e.target.value;
+						
+						let searchUrl = baseUrl + '?' + queryString;
+						redirect(searchUrl);
+					});
+				});
+			}
 		});
 	</script>
 @endsection

@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @section('content')
@@ -27,11 +40,14 @@
 				@endif
 				
 				@includeFirst([config('larapen.core.customizedViewPath') . 'auth.login.inc.social', 'auth.login.inc.social'], ['boxedCol' => 8])
-				<?php $mtAuth = !socialLoginIsEnabled() ? ' mt-2' : ' mt-1'; ?>
 				
+				@php
+					$mtAuth = !isSocialAuthEnabled() ? ' mt-2' : ' mt-1';
+				@endphp
 				<div class="col-lg-5 col-md-8 col-sm-10 col-12 login-box{{ $mtAuth }}">
 					<form id="loginForm" role="form" method="POST" action="{{ url()->current() }}">
 						{!! csrf_field() !!}
+						@honeypot
 						<input type="hidden" name="country" value="{{ config('country.code') }}">
 						<div class="card card-default">
 							
@@ -59,10 +75,11 @@
 											</div>
 										@endif
 									</div>
-									<div class="input-group">
-										<span class="input-group-text"><i class="fas fa-user"></i></span>
+									<div class="input-group{{ $emailError }}">
+										<span class="input-group-text"><i class="fa-solid fa-user"></i></span>
 										<input id="email" name="email"
 											   type="text"
+											   data-valid-type="email"
 											   placeholder="{{ t('email_or_username') }}"
 											   class="form-control{{ $emailError }}"
 											   value="{{ $emailValue }}"
@@ -97,21 +114,23 @@
 								<input name="auth_field" type="hidden" value="{{ old('auth_field', getAuthField()) }}">
 								
 								{{-- password --}}
-								<?php $passwordError = (isset($errors) && $errors->has('password')) ? ' is-invalid' : ''; ?>
+								@php
+									$passwordError = (isset($errors) && $errors->has('password')) ? ' is-invalid' : '';
+								@endphp
 								<div class="mb-3">
 									<label for="password" class="col-form-label">{{ t('password') }}:</label>
-									<div class="input-group show-pwd-group">
-										<span class="input-group-text"><i class="fas fa-lock"></i></span>
+									<div class="input-group required toggle-password-wrapper{{ $passwordError }}">
+										<span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
 										<input id="password" name="password"
 											   type="password"
 											   class="form-control{{ $passwordError }}"
 											   placeholder="{{ t('password') }}"
 											   autocomplete="new-password"
 										>
-										<span class="icon-append show-pwd">
-											<button type="button" class="eyeOfPwd">
-												<i class="far fa-eye-slash"></i>
-											</button>
+										<span class="input-group-text">
+											<a class="toggle-password-link" href="#">
+												<i class="fa-regular fa-eye-slash"></i>
+											</a>
 										</span>
 									</div>
 								</div>
@@ -120,7 +139,7 @@
 								
 								{{-- Submit --}}
 								<div class="mb-1">
-									<button id="loginBtn" class="btn btn-primary btn-block"> {{ t('log_in') }} </button>
+									<button type="submit" id="loginBtn" class="btn btn-primary btn-block"> {{ t('log_in') }} </button>
 								</div>
 							</div>
 							
@@ -153,14 +172,9 @@
 
 @section('after_scripts')
 	<script>
-		$(document).ready(function () {
-			{{-- Submit Form --}}
-			$(document).on('click', '#loginBtn', function(e) {
-				e.preventDefault();
-				$("#loginForm").submit();
-				
-				return false;
-			});
+		onDocumentReady((event) => {
+			{{-- Validate & Submit Form --}}
+			formValidate('#loginForm', formValidateOptions);
 		});
 	</script>
 @endsection

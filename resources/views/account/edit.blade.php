@@ -1,14 +1,30 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
-	$stats ??= [];
-	$countThreads = data_get($stats, 'threads.all') ?? 0;
-	$postsVisits = data_get($stats, 'posts.visits') ?? 0;
-	$countPosts = (data_get($stats, 'posts.published') ?? 0)
-		+ (data_get($stats, 'posts.archived') ?? 0)
-		+ (data_get($stats, 'posts.pendingApproval') ?? 0);
-	$countFavoritePosts = data_get($stats, 'posts.favourite') ?? 0;
+	$authUserIsAdmin ??= false;
+	$userStats ??= [];
+	$countThreads = data_get($userStats, 'threads.all') ?? 0;
+	$postsVisits = data_get($userStats, 'posts.visits') ?? 0;
+	$countPosts = (data_get($userStats, 'posts.published') ?? 0)
+		+ (data_get($userStats, 'posts.archived') ?? 0)
+		+ (data_get($userStats, 'posts.pendingApproval') ?? 0);
+	$countFavoritePosts = data_get($userStats, 'posts.favourite') ?? 0;
+	
+	$fiTheme = config('larapen.core.fileinput.theme', 'bs5');
 @endphp
 
 @section('content')
@@ -19,18 +35,18 @@
 				<div class="col-md-3 page-sidebar">
 					@include('account.inc.sidebar')
 				</div>
-
+				
 				<div class="col-md-9 page-content">
-
+					
 					@include('flash::message')
-
+					
 					@if (isset($errors) && $errors->any())
 						<div class="alert alert-danger alert-dismissible">
 							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ t('Close') }}"></button>
-							<h5><strong>{{ t('oops_an_error_has_occurred') }}</strong></h5>
+							<h5><strong>{{ t('validation_errors_title') }}</strong></h5>
 							<ul class="list list-check">
 								@foreach ($errors->all() as $error)
-									<li>{{ $error }}</li>
+									<li>{!! $error !!}</li>
 								@endforeach
 							</ul>
 						</div>
@@ -44,8 +60,8 @@
 							<div class="col-md-5 col-sm-4 col-12">
 								<h3 class="no-padding text-center-480 useradmin">
 									<a href="">
-										<img id="userImg" class="userImg" src="{{ $user->photo_url }}" alt="user">&nbsp;
-										{{ $user->name }}
+										<img id="userImg" class="userImg" src="{{ $authUser->photo_url }}" alt="user">&nbsp;
+										{{ $authUser->name }}
 									</a>
 								</h3>
 							</div>
@@ -54,13 +70,13 @@
 									{{-- Threads Stats --}}
 									<div class="hdata">
 										<div class="mcol-left">
-											<i class="fas fa-envelope ln-shadow"></i>
+											<i class="fa-solid fa-envelope ln-shadow"></i>
 										</div>
 										<div class="mcol-right">
 											{{-- Number of messages --}}
 											<p>
 												<a href="{{ url('account/messages') }}">
-													{{ \App\Helpers\Number::short($countThreads ?? 0) }}
+													{{ \App\Helpers\Num::short($countThreads ?? 0) }}
 													<em>{{ trans_choice('global.count_mails', getPlural($countThreads ?? 0), [], config('app.locale')) }}</em>
 												</a>
 											</p>
@@ -68,71 +84,98 @@
 										<div class="clearfix"></div>
 									</div>
 									
-									@if (isset($user) && in_array($user->user_type_id, [1]))
-									{{-- Traffic Stats --}}
-									<div class="hdata">
-										<div class="mcol-left">
-											<i class="fa fa-eye ln-shadow"></i>
+									@if (isset($user) && in_array($authUser->user_type_id, [1]))
+										{{-- Traffic Stats --}}
+										<div class="hdata">
+											<div class="mcol-left">
+												<i class="fa-regular fa-eye ln-shadow"></i>
+											</div>
+											<div class="mcol-right">
+												{{-- Number of visitors --}}
+												<p>
+													<a href="{{ url('account/posts/list') }}">
+														{{ \App\Helpers\Num::short($postsVisits ?? 0) }}
+														<em>{{ trans_choice('global.count_visits', getPlural($postsVisits ?? 0), [], config('app.locale')) }}</em>
+													</a>
+												</p>
+											</div>
+											<div class="clearfix"></div>
 										</div>
-										<div class="mcol-right">
-											{{-- Number of visitors --}}
-											<p>
-												<a href="{{ url('account/posts/list') }}">
-                                                    {{ \App\Helpers\Number::short($postsVisits ?? 0) }}
-												    <em>{{ trans_choice('global.count_visits', getPlural($postsVisits ?? 0), [], config('app.locale')) }}</em>
-                                                </a>
-											</p>
+										
+										{{-- Ads Stats --}}
+										<div class="hdata">
+											<div class="mcol-left">
+												<i class="fa-solid fa-bullhorn ln-shadow"></i>
+											</div>
+											<div class="mcol-right">
+												{{-- Number of ads --}}
+												<p>
+													<a href="{{ url('account/posts/list') }}">
+														{{ \App\Helpers\Num::short($countPosts ?? 0) }}
+														<em>{{ trans_choice('global.count_posts', getPlural($countPosts ?? 0), [], config('app.locale')) }}</em>
+													</a>
+												</p>
+											</div>
+											<div class="clearfix"></div>
 										</div>
-										<div class="clearfix"></div>
-									</div>
-									
-									{{-- Ads Stats --}}
-									<div class="hdata">
-										<div class="mcol-left">
-											<i class="fas fa-bullhorn ln-shadow"></i>
-										</div>
-										<div class="mcol-right">
-											{{-- Number of ads --}}
-											<p>
-												<a href="{{ url('account/posts/list') }}">
-                                                    {{ \App\Helpers\Number::short($countPosts ?? 0) }}
-												    <em>{{ trans_choice('global.count_posts', getPlural($countPosts ?? 0), [], config('app.locale')) }}</em>
-                                                </a>
-											</p>
-										</div>
-										<div class="clearfix"></div>
-									</div>
 									@endif
-                                    
-                                    @if (isset($user) && in_array($user->user_type_id, [2]))
-									{{-- Favorites Stats --}}
-									<div class="hdata">
-										<div class="mcol-left">
-											<i class="fa fa-user ln-shadow"></i>
+									
+									@if (isset($user) && in_array($authUser->user_type_id, [2]))
+										{{-- Favorites Stats --}}
+										<div class="hdata">
+											<div class="mcol-left">
+												<i class="fa-regular fa-user ln-shadow"></i>
+											</div>
+											<div class="mcol-right">
+												{{-- Number of favorites --}}
+												<p>
+													<a href="{{ url('account/posts/favourite') }}">
+														{{ \App\Helpers\Num::short($countFavoritePosts ?? 0) }}
+														<em>
+															{{ trans_choice(
+																	'global.count_favorites',
+																	getPlural($countFavoritePosts ?? 0),
+																	[],
+																	config('app.locale')
+															) }}
+														</em>
+													</a>
+												</p>
+											</div>
+											<div class="clearfix"></div>
 										</div>
-										<div class="mcol-right">
-											{{-- Number of favorites --}}
-											<p>
-												<a href="{{ url('account/posts/favourite') }}">
-                                                    {{ \App\Helpers\Number::short($countFavoritePosts ?? 0) }}
-												    <em>{{ trans_choice('global.count_favorites', getPlural($countFavoritePosts ?? 0), [], config('app.locale')) }} </em>
-                                                </a>
-											</p>
-										</div>
-										<div class="clearfix"></div>
-									</div>
-                                    @endif
+									@endif
 								</div>
 							</div>
 						</div>
 					</div>
-
+					
 					<div class="inner-box default-inner-box" style="overflow: visible;">
-						<div class="welcome-msg">
-							<h3 class="page-sub-header2 clearfix no-padding">{{ t('Hello') }} {{ $user->name }} ! </h3>
-							<span class="page-sub-header-sub small">
-                                {{ t('You last logged in at') }}: {{ \App\Helpers\Date::format($user->last_login_at, 'datetime') }}
-                            </span>
+						<div class="row">
+							<div class="col-8">
+								<div class="welcome-msg">
+									<h3 class="page-sub-header2 clearfix no-padding">{{ t('Hello') }} {{ $authUser->name }} ! </h3>
+									<span class="page-sub-header-sub small">
+		                                {{ t('You last logged in at') }}: {{ \App\Helpers\Date::format($authUser->last_login_at, 'datetime') }}
+		                            </span>
+								</div>
+							</div>
+							<div class="col-4 d-flex align-items-center justify-content-end">
+								@if (config('settings.app.dark_mode') == '1')
+									@php
+										$themeSwitcherActive = isDarkModeEnabledForCurrentUser() ? ' active' : '';
+									@endphp
+									<label class="theme-switcher theme-switcher-left-right{{ $themeSwitcherActive }}"
+									       data-user-id="{{ $authUser->id }}"
+									>
+										<span class="theme-switcher-label"
+										      data-on="{{ t('dark_mode_on') }}"
+										      data-off="{{ t('dark_mode_off') }}"
+										></span>
+										<span class="theme-switcher-handle"></span>
+									</label>
+								@endif
+							</div>
 						</div>
 						
 						<div id="accordion" class="panel-group">
@@ -146,9 +189,9 @@
 								@php
 									$photoPanelClass = '';
 									$photoPanelClass = request()->filled('panel')
-										? (request()->get('panel') == 'photo' ? 'show' : $photoPanelClass)
+										? (request()->query('panel') == 'photo' ? 'show' : $photoPanelClass)
 										: ((old('panel')=='' || old('panel') =='photo') ? 'show' : $photoPanelClass);
-									$photoPanelClass = empty($user->user_type_id) ? '' : $photoPanelClass;
+									$photoPanelClass = empty($authUser->user_type_id) ? '' : $photoPanelClass;
 								@endphp
 								<div class="panel-collapse collapse {{ $photoPanelClass }}" id="photoPanel">
 									<div class="card-body">
@@ -156,7 +199,7 @@
 											<div class="row">
 												<div class="col-xl-12 text-center">
 													
-													<?php $photoError = (isset($errors) and $errors->has('photo')) ? ' is-invalid' : ''; ?>
+													<?php $photoError = (isset($errors) && $errors->has('photo')) ? ' is-invalid' : ''; ?>
 													<div class="photo-field">
 														<div class="file-loading">
 															<input id="photoField" name="photo" type="file" class="file {{ $photoError }}">
@@ -173,90 +216,100 @@
 							{{-- USER --}}
 							<div class="card card-default">
 								<div class="card-header">
-									<h4 class="card-title"><a href="#userPanel" data-bs-toggle="collapse" data-parent="#accordion">{{ t('Account Details') }}</a></h4>
+									<h4 class="card-title">
+										<a href="#userPanel" data-bs-toggle="collapse" data-parent="#accordion">
+											{{ t('Account Details') }}
+										</a>
+									</h4>
 								</div>
 								@php
 									$userPanelClass = '';
 									$userPanelClass = request()->filled('panel')
-										? (request()->get('panel') == 'user' ? 'show' : $userPanelClass)
+										? (request()->query('panel') == 'user' ? 'show' : $userPanelClass)
 										: ((old('panel') == '' || old('panel') == 'user') ? 'show' : $userPanelClass);
 								@endphp
 								<div class="panel-collapse collapse {{ $userPanelClass }}" id="userPanel">
 									<div class="card-body">
 										<form name="details"
-											  class="form-horizontal"
-											  role="form"
-											  method="POST"
-											  action="{{ url('account') }}"
-											  enctype="multipart/form-data"
+										      class="form-horizontal"
+										      role="form"
+										      method="POST"
+										      action="{{ url('account') }}"
+										      enctype="multipart/form-data"
 										>
 											{!! csrf_field() !!}
 											<input name="_method" type="hidden" value="PUT">
 											<input name="panel" type="hidden" value="user">
-                                            
-                                            @if (empty($user->user_type_id) || $user->user_type_id == 0)
+											
+											@if (empty($authUser->user_type_id) || $authUser->user_type_id == 0)
 												
 												{{-- user_type_id --}}
 												<?php $userTypeIdError = (isset($errors) && $errors->has('user_type_id')) ? ' is-invalid' : ''; ?>
-                                                <div class="row mb-3 required">
-                                                    <label class="col-md-3 col-form-label{{ $userTypeIdError }}" for="user_type_id">{{ t('you_are_a') }} <sup>*</sup></label>
-                                                    <div class="col-md-9">
-                                                        <select name="user_type_id" id="userTypeId" class="form-control selecter{{ $userTypeIdError }}">
-                                                            <option value="0" @selected(empty(old('user_type_id')))>
-                                                                {{ t('Select') }}
-                                                            </option>
-                                                            @foreach ($userTypes as $type)
-                                                                <option value="{{ $type->id }}" @selected(old('user_type_id', $user->user_type_id) == $type->id)>
-                                                                    {{ t($type->name) }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                    
-                                            @else
+												<div class="row mb-3 required">
+													<label class="col-md-3 col-form-label{{ $userTypeIdError }}" for="user_type_id">{{ t('you_are_a') }}
+														<sup>*</sup></label>
+													<div class="col-md-9">
+														<select name="user_type_id" id="userTypeId" class="form-control selecter{{ $userTypeIdError }}">
+															<option value="0" @selected(empty(old('user_type_id')))>
+																{{ t('Select') }}
+															</option>
+															@foreach ($userTypes as $type)
+																<option value="{{ data_get($type, 'id') }}"
+																		@selected(old('user_type_id', $authUser->user_type_id) == data_get($type, 'id'))
+																>
+																	{{ data_get($type, 'label') }}
+																</option>
+															@endforeach
+														</select>
+													</div>
+												</div>
+											
+											@else
 												
 												{{-- gender_id --}}
 												<?php $genderIdError = (isset($errors) && $errors->has('gender_id')) ? ' is-invalid' : ''; ?>
-                                                <div class="row mb-3 required">
-                                                    <label class="col-md-3 col-form-label" for="gender_id">{{ t('gender') }} <sup>*</sup></label>
+												<div class="row mb-3 required">
+													<label class="col-md-3 col-form-label" for="gender_id">{{ t('gender') }} <sup>*</sup></label>
 													<div class="col-md-9 col-lg-8 col-xl-6">
 														<select name="gender_id" id="genderId" class="form-control selecter{{ $genderIdError }}">
 															<option value="0" @selected(empty(old('gender_id')))>
 																{{ t('Select') }}
 															</option>
-															@if ($genders->count() > 0)
+															@if (!empty($genders))
 																@foreach ($genders as $gender)
-																	<option value="{{ $gender->id }}" @selected(old('gender_id', $user->gender_id) == $gender->id)>
-																		{{ $gender->name }}
+																	<option value="{{ data_get($gender, 'id') }}"
+																			@selected(old('gender_id', $authUser->gender_id) == data_get($gender, 'id'))
+																	>
+																		{{ data_get($gender, 'title') }}
 																	</option>
 																@endforeach
 															@endif
 														</select>
 													</div>
-                                                </div>
+												</div>
 												
 												{{-- name --}}
 												<?php $nameError = (isset($errors) && $errors->has('name')) ? ' is-invalid' : ''; ?>
-                                                <div class="row mb-3 required">
-                                                    <label class="col-md-3 col-form-label{{ $nameError }}" for="name">{{ t('Name') }} <sup>*</sup></label>
-                                                    <div class="col-md-9 col-lg-8 col-xl-6">
-                                                        <input name="name" type="text" class="form-control{{ $nameError }}" placeholder="" value="{{ old('name', $user->name) }}">
-                                                    </div>
-                                                </div>
+												<div class="row mb-3 required">
+													<label class="col-md-3 col-form-label{{ $nameError }}" for="name">{{ t('Name') }} <sup>*</sup></label>
+													<div class="col-md-9 col-lg-8 col-xl-6">
+														<input name="name" type="text" class="form-control{{ $nameError }}" placeholder=""
+														       value="{{ old('name', $authUser->name) }}">
+													</div>
+												</div>
 												
 												{{-- username --}}
 												<?php $usernameError = (isset($errors) && $errors->has('username')) ? ' is-invalid' : ''; ?>
 												<div class="row mb-3 required">
 													<label class="col-md-3 col-form-label{{ $usernameError }}" for="username">{{ t('Username') }}</label>
 													<div class="col-md-9 col-lg-8 col-xl-6">
-														<div class="input-group">
-															<span class="input-group-text"><i class="far fa-user"></i></span>
+														<div class="input-group{{ $usernameError }}">
+															<span class="input-group-text"><i class="fa-regular fa-user"></i></span>
 															<input id="username" name="username"
-																   type="text"
-																   class="form-control{{ $usernameError }}"
-																   placeholder="{{ t('Username') }}"
-																   value="{{ old('username', $user->username) }}"
+															       type="text"
+															       class="form-control{{ $usernameError }}"
+															       placeholder="{{ t('Username') }}"
+															       value="{{ old('username', $authUser->username) }}"
 															>
 														</div>
 													</div>
@@ -267,20 +320,21 @@
 													$authFields = getAuthFields(true);
 													$authFieldError = (isset($errors) && $errors->has('auth_field')) ? ' is-invalid' : '';
 													$usersCanChooseNotifyChannel = isUsersCanChooseNotifyChannel(true);
-													$authFieldValue = $user->auth_field ?? getAuthField();
+													$authFieldValue = $authUser->auth_field ?? getAuthField();
 													$authFieldValue = ($usersCanChooseNotifyChannel) ? old('auth_field', $authFieldValue) : $authFieldValue;
 												@endphp
 												@if ($usersCanChooseNotifyChannel)
 													<div class="row mb-3 required">
-														<label class="col-md-3 col-form-label" for="auth_field">{{ t('notifications_channel') }} <sup>*</sup></label>
+														<label class="col-md-3 col-form-label" for="auth_field">{{ t('notifications_channel') }}
+															<sup>*</sup></label>
 														<div class="col-md-9">
 															@foreach ($authFields as $iAuthField => $notificationType)
 																<div class="form-check form-check-inline pt-2">
 																	<input name="auth_field"
-																		   id="{{ $iAuthField }}AuthField"
-																		   value="{{ $iAuthField }}"
-																		   class="form-check-input auth-field-input{{ $authFieldError }}"
-																		   type="radio" @checked($authFieldValue == $iAuthField)
+																	       id="{{ $iAuthField }}AuthField"
+																	       value="{{ $iAuthField }}"
+																	       class="form-check-input auth-field-input{{ $authFieldError }}"
+																	       type="radio" @checked($authFieldValue == $iAuthField)
 																	>
 																	<label class="form-check-label mb-0" for="auth_field_{{ $iAuthField }}">
 																		{{ $notificationType }}
@@ -304,61 +358,62 @@
 												@php
 													$emailError = (isset($errors) && $errors->has('email')) ? ' is-invalid' : '';
 												@endphp
-                                                <div class="row mb-3 auth-field-item required{{ $forceToDisplay }}">
-                                                    <label class="col-md-3 col-form-label{{ $emailError }}" for="email">{{ t('email') }}
+												<div class="row mb-3 auth-field-item required{{ $forceToDisplay }}">
+													<label class="col-md-3 col-form-label{{ $emailError }}" for="email">{{ t('email') }}
 														@if (getAuthField() == 'email')
 															<sup>*</sup>
 														@endif
 													</label>
 													<div class="col-md-9 col-lg-8 col-xl-6">
-														<div class="input-group">
-															<span class="input-group-text"><i class="far fa-envelope"></i></span>
+														<div class="input-group{{ $emailError }}">
+															<span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
 															<input id="email" name="email"
-																   type="email"
-																   class="form-control{{ $emailError }}"
-																   placeholder="{{ t('email_address') }}"
-																   value="{{ old('email', $user->email) }}"
+															       type="email"
+															       data-valid-type="email"
+															       class="form-control{{ $emailError }}"
+															       placeholder="{{ t('email_address') }}"
+															       value="{{ old('email', $authUser->email) }}"
 															>
 														</div>
 													</div>
-                                                </div>
+												</div>
 												
 												{{-- phone --}}
 												@php
 													$phoneError = (isset($errors) && $errors->has('phone')) ? ' is-invalid' : '';
-													$phoneValue = $user->phone ?? null;
-													$phoneCountryValue = $user->phone_country ?? config('country.code');
+													$phoneValue = $authUser->phone ?? null;
+													$phoneCountryValue = $authUser->phone_country ?? config('country.code');
 													$phoneValue = phoneE164($phoneValue, $phoneCountryValue);
 													$phoneValueOld = phoneE164(old('phone', $phoneValue), old('phone_country', $phoneCountryValue));
 												@endphp
-                                                <div class="row mb-3 auth-field-item required{{ $forceToDisplay }}">
-                                                    <label class="col-md-3 col-form-label{{ $phoneError }}" for="phone">{{ t('phone') }}
+												<div class="row mb-3 auth-field-item required{{ $forceToDisplay }}">
+													<label class="col-md-3 col-form-label{{ $phoneError }}" for="phone">{{ t('phone') }}
 														@if (getAuthField() == 'phone')
 															<sup>*</sup>
 														@endif
 													</label>
 													<div class="col-md-9 col-lg-8 col-xl-6">
-														<div class="input-group">
+														<div class="input-group{{ $phoneError }}">
 															<input id="phone" name="phone"
-																   type="tel"
-																   class="form-control{{ $phoneError }}"
-																   value="{{ $phoneValueOld }}"
+															       type="tel"
+															       class="form-control{{ $phoneError }}"
+															       value="{{ $phoneValueOld }}"
 															>
 															<span class="input-group-text iti-group-text">
 																<input name="phone_hidden" id="phoneHidden" type="checkbox"
-																	   value="1" @checked(old('phone_hidden', $user->phone_hidden) == '1')>&nbsp;
+																       value="1" @checked(old('phone_hidden', $authUser->phone_hidden) == '1')>&nbsp;
 																<small>{{ t('Hide') }}</small>
 															</span>
 														</div>
 														<input name="phone_country" type="hidden" value="{{ old('phone_country', $phoneCountryValue) }}">
 													</div>
-                                                </div>
+												</div>
 												
 												{{-- country_code --}}
-												<input name="country_code" type="hidden" value="{{ $user->country_code }}">
-                                                
-                                            @endif
-
+												<input name="country_code" type="hidden" value="{{ $authUser->country_code }}">
+											
+											@endif
+											
 											<div class="row mb-3">
 												<div class="offset-md-3 col-md-9"></div>
 											</div>
@@ -377,43 +432,44 @@
 							{{-- SETTINGS --}}
 							<div class="card card-default">
 								<div class="card-header">
-									<h4 class="card-title"><a href="#settingsPanel" data-bs-toggle="collapse" data-parent="#accordion">{{ t('Settings') }}</a></h4>
+									<h4 class="card-title"><a href="#settingsPanel" data-bs-toggle="collapse" data-parent="#accordion">{{ t('Settings') }}</a>
+									</h4>
 								</div>
 								@php
 									$settingsPanelClass = '';
 									$settingsPanelClass = request()->filled('panel')
-										? (request()->get('panel') == 'settings' ? 'show' : $settingsPanelClass)
+										? (request()->query('panel') == 'settings' ? 'show' : $settingsPanelClass)
 										: ((old('panel') == 'settings') ? 'show' : $settingsPanelClass);
 								@endphp
 								<div class="panel-collapse collapse {{ $settingsPanelClass }}" id="settingsPanel">
 									<div class="card-body">
 										<form name="settings"
-											  class="form-horizontal"
-											  role="form"
-											  method="POST"
-											  action="{{ url('account/settings') }}"
-											  enctype="multipart/form-data"
+										      class="form-horizontal"
+										      role="form"
+										      method="POST"
+										      action="{{ url('account/settings') }}"
+										      enctype="multipart/form-data"
 										>
 											{!! csrf_field() !!}
 											<input name="_method" type="hidden" value="PUT">
 											<input name="panel" type="hidden" value="settings">
 											
-											<input name="gender_id" type="hidden" value="{{ $user->gender_id }}">
-											<input name="name" type="hidden" value="{{ $user->name }}">
-											<input name="phone" type="hidden" value="{{ $user->phone }}">
-											<input name="phone_country" type="hidden" value="{{ $user->phone_country }}">
-											<input name="email" type="hidden" value="{{ $user->email }}">
-										
-											@if (config('settings.single.activation_facebook_comments') && config('services.facebook.client_id'))
+											<input name="gender_id" type="hidden" value="{{ $authUser->gender_id }}">
+											<input name="name" type="hidden" value="{{ $authUser->name }}">
+											<input name="phone" type="hidden" value="{{ $authUser->phone }}">
+											<input name="phone_country" type="hidden" value="{{ $authUser->phone_country }}">
+											<input name="email" type="hidden" value="{{ $authUser->email }}">
+											
+											@if (config('settings.listing_page.activation_facebook_comments') && config('services.facebook.client_id'))
 												{{-- disable_comments --}}
 												<div class="row mb-3">
 													<label class="col-md-3 col-form-label"></label>
 													<div class="col-md-9">
 														<div class="form-check pt-2">
 															<input id="disableComments" name="disable_comments"
-																   class="form-check-input"
-																   value="1"
-																   type="checkbox" @checked($user->disable_comments == 1)
+															       class="form-check-input"
+															       value="1"
+															       type="checkbox" @checked($authUser->disable_comments == 1)
 															>
 															<label class="form-check-label" for="disable_comments" style="font-weight: normal;">
 																{{ t('Disable comments on my ads') }}
@@ -429,10 +485,10 @@
 												<label class="col-md-3 col-form-label{{ $passwordError }}">{{ t('New Password') }}</label>
 												<div class="col-md-9 col-lg-8 col-xl-6">
 													<input id="password" name="password"
-														   type="password"
-														   class="form-control{{ $passwordError }}"
-														   placeholder="{{ t('password') }}"
-														   autocomplete="new-password"
+													       type="password"
+													       class="form-control{{ $passwordError }}"
+													       placeholder="{{ t('password') }}"
+													       autocomplete="new-password"
 													>
 												</div>
 											</div>
@@ -443,24 +499,24 @@
 												<label class="col-md-3 col-form-label{{ $passwordError }}">{{ t('Confirm Password') }}</label>
 												<div class="col-md-9 col-lg-8 col-xl-6">
 													<input id="password_confirmation" name="password_confirmation"
-														   type="password"
-														   class="form-control{{ $passwordError }}"
-														   placeholder="{{ t('Confirm Password') }}"
+													       type="password"
+													       class="form-control{{ $passwordError }}"
+													       placeholder="{{ t('Confirm Password') }}"
 													>
 												</div>
 											</div>
 											
-											@if ($user->accept_terms != 1)
+											@if ($authUser->accept_terms != 1)
 												{{-- accept_terms --}}
-												<?php $acceptTermsError = (isset($errors) && $errors->has('accept_terms')) ? ' is-invalid' : ''; ?>
+													<?php $acceptTermsError = (isset($errors) && $errors->has('accept_terms')) ? ' is-invalid' : ''; ?>
 												<div class="row mb-3 required">
 													<label class="col-md-3 col-form-label"></label>
 													<div class="col-md-9">
 														<div class="form-check">
 															<input name="accept_terms" id="acceptTerms"
-																   class="form-check-input{{ $acceptTermsError }}"
-																   value="1"
-																   type="checkbox" @checked(old('accept_terms', $user->accept_terms) == '1')
+															       class="form-check-input{{ $acceptTermsError }}"
+															       value="1"
+															       type="checkbox" @checked(old('accept_terms', $authUser->accept_terms) == '1')
 															>
 															<label class="form-check-label" for="acceptTerms" style="font-weight: normal;">
 																{!! t('accept_terms_label', ['attributes' => getUrlPageByType('terms')]) !!}
@@ -470,7 +526,7 @@
 													</div>
 												</div>
 												
-												<input type="hidden" name="user_accept_terms" value="{{ (int)$user->accept_terms }}">
+												<input type="hidden" name="user_accept_terms" value="{{ (int)$authUser->accept_terms }}">
 											@endif
 											
 											{{-- accept_marketing_offers --}}
@@ -480,9 +536,9 @@
 												<div class="col-md-9">
 													<div class="form-check">
 														<input name="accept_marketing_offers" id="acceptMarketingOffers"
-															   class="form-check-input{{ $acceptMarketingOffersError }}"
-															   value="1"
-															   type="checkbox" @checked(old('accept_marketing_offers', $user->accept_marketing_offers) == '1')
+														       class="form-check-input{{ $acceptMarketingOffersError }}"
+														       value="1"
+														       type="checkbox" @checked(old('accept_marketing_offers', $authUser->accept_marketing_offers) == '1')
 														>
 														<label class="form-check-label" for="acceptMarketingOffers" style="font-weight: normal;">
 															{!! t('accept_marketing_offers_label') !!}
@@ -504,7 +560,7 @@
 															{{ t('select_a_time_zone') }}
 														</option>
 														@php
-															$tz = !empty($user->time_zone) ? $user->time_zone : '';
+															$tz = !empty($authUser->time_zone) ? $authUser->time_zone : '';
 														@endphp
 														@foreach (\App\Helpers\Date::getTimeZones() as $key => $item)
 															<option value="{{ $key }}" @selected(old('time_zone', $tz) == $key)>
@@ -513,7 +569,7 @@
 														@endforeach
 													</select>
 													<div class="form-text text-muted">
-														@if (auth()->user()->can(\App\Models\Permission::getStaffPermissions()))
+														@if ($authUserIsAdmin)
 															{!! t('admin_preferred_time_zone_info', [
 																	'frontTz' => config('country.time_zone'),
 																	'country' => config('country.name'),
@@ -539,9 +595,9 @@
 									</div>
 								</div>
 							</div>
-
+						
 						</div>
-
+					
 					</div>
 				</div>
 			</div>
@@ -554,10 +610,14 @@
 	@if (config('lang.direction') == 'rtl')
 		<link href="{{ url('assets/plugins/bootstrap-fileinput/css/fileinput-rtl.min.css') }}" rel="stylesheet">
 	@endif
+	@if (str_starts_with($fiTheme, 'explorer'))
+		<link href="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.min.css') }}" rel="stylesheet">
+	@endif
 	<style>
 		.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
 			box-shadow: 0 0 5px 0 #666666;
 		}
+		
 		.file-loading:before {
 			content: " {{ t('loading_wd') }}";
 		}
@@ -568,6 +628,7 @@
 			display: inline-block;
 			vertical-align: middle;
 		}
+		
 		.photo-field .krajee-default.file-preview-frame,
 		.photo-field .krajee-default.file-preview-frame:hover {
 			margin: 0;
@@ -576,14 +637,17 @@
 			box-shadow: none;
 			text-align: center;
 		}
+		
 		.photo-field .file-input {
 			display: table-cell;
 			width: 150px;
 		}
+		
 		.photo-field .krajee-default.file-preview-frame .kv-file-content {
 			width: 150px;
 			height: 160px;
 		}
+		
 		.kv-reqd {
 			color: red;
 			font-family: monospace;
@@ -593,10 +657,12 @@
 		.file-preview {
 			padding: 2px;
 		}
+		
 		.file-drop-zone {
 			margin: 2px;
 			min-height: 100px;
 		}
+		
 		.file-drop-zone .file-preview-thumbnails {
 			cursor: pointer;
 		}
@@ -609,6 +675,7 @@
 		.file-drop-zone {
 			padding: 20px;
 		}
+		
 		.file-drop-zone .kv-file-content {
 			padding: 0
 		}
@@ -618,141 +685,129 @@
 @section('after_scripts')
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/plugins/sortable.min.js') }}" type="text/javascript"></script>
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/fileinput.min.js') }}" type="text/javascript"></script>
-	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/fas/theme.js') }}" type="text/javascript"></script>
+	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.js') }}" type="text/javascript"></script>
 	<script src="{{ url('common/js/fileinput/locales/' . config('app.locale') . '.js') }}" type="text/javascript"></script>
 	<script>
 		phoneCountry = '{{ old('phone_country', ($phoneCountryValue ?? '')) }}';
 		
-		var uploadExtraData = {
-			_token:'{{ csrf_token() }}',
-			_method:'PUT',
-			name:'{{ $user->name }}',
-			phone:'{{ $user->phone }}',
-			phone_country:'{{ $user->phone_country }}',
-			email:'{{ $user->email }}'
+		let defaultAvatarUrl = '{{ imgUrl(config('larapen.media.avatar')) }}';
+		let defaultAvatarAlt = '{{ t('Your Photo or Avatar') }}';
+		let uploadHint = '<h6 class="text-muted pb-0">{{ t('Click to select') }}</h6>';
+		
+		let options = {};
+		options.theme = '{{ $fiTheme }}';
+		options.language = '{{ config('app.locale') }}';
+		options.rtl = {{ (config('lang.direction') == 'rtl') ? 'true' : 'false' }};
+		options.overwriteInitial = true;
+		options.showCaption = false;
+		options.showPreview = true;
+		options.allowedFileExtensions = {!! getUploadFileTypes('image', true) !!};
+		options.uploadUrl = '{{ url('account/photo') }}';
+		options.uploadExtraData = {
+			_token: '{{ csrf_token() }}',
+			_method: 'PUT'
 		};
-		var initialPreviewConfigExtra = uploadExtraData;
-		initialPreviewConfigExtra.remove_photo = 1; {{-- Parameter for user's photo deleting --}}
+		options.showClose = false;
+		options.showBrowse = true;
+		options.browseClass = 'btn btn-primary';
+		options.minFileSize = {{ (int)config('settings.upload.min_image_size', 0) }};
+		options.maxFileSize = {{ (int)config('settings.upload.max_image_size', 1000) }};
+		options.uploadAsync = false;
+		options.browseOnZoneClick = true;
+		options.minFileCount = 0;
+		options.maxFileCount = 1;
+		options.validateInitialCount = true;
+		options.defaultPreviewContent = '<img src="' + defaultAvatarUrl + '" alt="' + defaultAvatarAlt + '">' + uploadHint;
+		options.initialPreview = [];
+		options.initialPreviewAsData = true;
+		options.initialPreviewFileType = 'image';
+		options.initialPreviewConfig = [];
+		options.fileActionSettings = {
+			showDrag: false,
+			showRemove: true,
+			removeClass: 'btn btn-outline-danger btn-sm',
+			showZoom: true,
+			zoomClass: 'btn btn-outline-secondary btn-sm'
+		};
+		options.elErrorContainer = '#avatarUploadError';
+		options.msgErrorClass = 'alert alert-block alert-danger';
+		options.layoutTemplates = {
+			main2: '{preview}\n<div class="kv-upload-progress hide"></div>\n{browse}',
+			footer: '<div class="file-thumbnail-footer pt-2">\n{actions}\n</div>',
+			actions: '<div class="file-actions">\n'
+				+ '<div class="file-footer-buttons">\n{delete} {zoom}</div>\n'
+				+ '<div class="clearfix"></div>\n'
+				+ '</div>'
+		};
 		
-		var photoInfo = '<h6 class="text-muted pb-0">{{ t('Click to select') }}</h6>';
-		var footerPreview = '<div class="file-thumbnail-footer pt-2">\n' +
-			'    {actions}\n' +
-			'</div>';
-		
-		$('#photoField').fileinput(
-			{
-				theme: 'fas',
-				language: '{{ config('app.locale') }}',
-				@if (config('lang.direction') == 'rtl')
-				rtl: true,
-				@endif
-				overwriteInitial: true,
-				showCaption: false,
-				showPreview: true,
-				allowedFileExtensions: {!! getUploadFileTypes('image', true) !!},
-				uploadUrl: '{{ url('account/photo') }}',
-				uploadExtraData: uploadExtraData,
-				uploadAsync: false,
-				showBrowse: false,
-				showCancel: true,
-				showUpload: false,
-				showRemove: false,
-				minFileSize: {{ (int)config('settings.upload.min_image_size', 0) }}, {{-- in KB --}}
-				maxFileSize: {{ (int)config('settings.upload.max_image_size', 1000) }}, {{-- in KB --}}
-				browseOnZoneClick: true,
-				minFileCount: 0,
-				maxFileCount: 1,
-				validateInitialCount: true,
-				uploadClass: 'btn btn-primary',
-				defaultPreviewContent: '<img src="{{ imgUrl(config('larapen.core.avatar.default')) }}" alt="{{ t('Your Photo or Avatar') }}">' + photoInfo,
-				/* Retrieve current images */
-				/* Setup initial preview with data keys */
-				initialPreview: [
-					@if (isset($user->photo_url) && !empty($user->photo_url))
-						'{{ $user->photo_url }}'
-					@endif
-				],
-				initialPreviewAsData: true,
-				initialPreviewFileType: 'image',
-				/* Initial preview configuration */
-				initialPreviewConfig: [
-					{
-						<?php
-							// Get the file size
-							try {
-								$fileSize = (isset($disk) && !empty($user->photo) && $disk->exists($user->photo)) ? (int)$disk->size($user->photo) : 0;
-							} catch (\Throwable $e) {
-								$fileSize = 0;
-							}
-							?>
-								@if (isset($user->photo) && !empty($user->photo))
-						caption: '{{ basename($user->photo) }}',
-						size: {{ $fileSize }},
-						url: '{{ url('account/photo/delete') }}',
-						key: {{ (int)$user->id }},
-						extra: initialPreviewConfigExtra
-						@endif
-					}
-				],
-				
-				showClose: false,
-				fileActionSettings: {
-					showDrag: false, /* Show/hide move (rearrange) icon */
-					removeIcon: '<i class="far fa-trash-alt"></i>',
-					removeClass: 'btn btn-danger btn-sm',
-					zoomClass: 'btn btn-outline-secondary btn-sm',
-					removeTitle: '{{ t('Remove file') }}'
-				},
-				
-				elErrorContainer: '#avatarUploadError',
-				msgErrorClass: 'alert alert-block alert-danger',
-				
-				layoutTemplates: {main2: '{preview} {remove} {browse}', footer: footerPreview}
-			});
-		
-		/* Auto-upload added file */
-		$('#photoField').on('filebatchselected', function(event, data, id, index) {
-			$(this).fileinput('upload');
-		});
-		
-		/* Show upload status message */
-		$('#photoField').on('filebatchpreupload', function(event, data, id, index) {
-			$('#avatarUploadSuccess').html('<ul></ul>').hide();
-		});
-		
-		/* Show success upload message */
-		$('#photoField').on('filebatchuploadsuccess', function(event, data, previewId, index) {
-			/* Show uploads success messages */
-			var out = '';
-			$.each(data.files, function(key, file) {
-				if (typeof file !== 'undefined') {
-					var fname = file.name;
-					out = out + {!! t('Uploaded file X successfully') !!};
+		@if (!empty($authUser->photo) && !empty($authUser->photo_url))
+			@php
+				try {
+					$fileSize = (isset($disk) && $disk->exists($authUser->photo)) ? (int)$disk->size($authUser->photo) : 0;
+				} catch (\Throwable $e) {
+					$fileSize = 0;
 				}
+			@endphp
+			options.initialPreview[0] = '{{ $authUser->photo_url }}';
+			options.initialPreviewConfig[0] = {};
+			options.initialPreviewConfig[0].key = {{ (int)$authUser->id }};
+			options.initialPreviewConfig[0].caption = '{{ basename($authUser->photo) }}';
+			options.initialPreviewConfig[0].size = {{ $fileSize }};
+			options.initialPreviewConfig[0].url = '{{ url('account/photo/delete') }}';
+			options.initialPreviewConfig[0].extra = options.uploadExtraData;
+		@endif
+		
+		onDocumentReady((event) => {
+			{{-- fileinput --}}
+			let photoFieldEl = $('#photoField');
+			photoFieldEl.fileinput(options);
+			
+			/* Auto-upload added file */
+			photoFieldEl.on('filebatchselected', function (event, files) {
+				$(this).fileinput('upload');
 			});
-			$('#avatarUploadSuccess ul').append(out);
-			$('#avatarUploadSuccess').fadeIn('slow');
 			
-			$('#userImg').attr({'src':$('.photo-field .kv-file-content .file-preview-image').attr('src')});
-		});
-		
-		/* Delete picture */
-		$('#photoField').on('filepredelete', function(xhr) {
-			var abort = true;
-			if (confirm("{{ t('Are you sure you want to delete this picture') }}")) {
-				abort = false;
-			}
+			/* Show the upload status message */
+			photoFieldEl.on('filebatchpreupload', function (event, data) {
+				$('#avatarUploadSuccess').html('<ul></ul>').hide();
+			});
 			
-			return abort;
-		});
-		
-		$('#photoField').on('filedeleted', function() {
-			$('#userImg').attr({'src':'{!! imgUrl(config('larapen.core.avatar.default')) !!}'});
+			/* Show the success upload message */
+			photoFieldEl.on('filebatchuploadsuccess', function (event, data) {
+				/* Show uploads success messages */
+				let out = '';
+				$.each(data.files, function (key, file) {
+					if (typeof file !== 'undefined') {
+						let fname = file.name;
+						out = out + {!! t('fileinput_file_uploaded_successfully') !!};
+					}
+				});
+				let avatarUploadSuccessEl = $('#avatarUploadSuccess');
+				avatarUploadSuccessEl.find('ul').append(out);
+				avatarUploadSuccessEl.fadeIn('slow');
+				
+				$('#userImg').attr({'src': $('.photo-field .kv-file-content .file-preview-image').attr('src')});
+			});
 			
-			var out = "{{ t('Your photo or avatar has been deleted') }}";
-			$('#avatarUploadSuccess').html('<ul><li></li></ul>').hide();
-			$('#avatarUploadSuccess ul li').append(out);
-			$('#avatarUploadSuccess').fadeIn('slow');
+			/* Delete picture */
+			photoFieldEl.on('filepredelete', function (event, key, jqXHR, data) {
+				let abort = true;
+				if (confirm("{{ t('Are you sure you want to delete this picture') }}")) {
+					abort = false;
+				}
+				
+				return abort;
+			});
+			
+			photoFieldEl.on('filedeleted', function (event, key, jqXHR, data) {
+				$('#userImg').attr({'src': defaultAvatarUrl});
+				
+				let out = "{{ t('Your photo or avatar has been deleted') }}";
+				let avatarUploadSuccessEl = $('#avatarUploadSuccess');
+				avatarUploadSuccessEl.html('<ul><li></li></ul>').hide();
+				avatarUploadSuccessEl.find('ul li').append(out);
+				avatarUploadSuccessEl.fadeIn('slow');
+			});
 		});
 	</script>
 @endsection

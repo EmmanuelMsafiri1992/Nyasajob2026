@@ -1,16 +1,16 @@
-<?php
-$sectionOptions = $getCategoriesOp ?? [];
-$sectionData ??= [];
-$categories = (array)data_get($sectionData, 'categories');
-$subCategories = (array)data_get($sectionData, 'subCategories');
-$countPostsPerCat = (array)data_get($sectionData, 'countPostsPerCat');
-$countPostsPerCat = collect($countPostsPerCat)->keyBy('id')->toArray();
-
-$hideOnMobile = (data_get($sectionOptions, 'hide_on_mobile') == '1') ? ' hidden-sm' : '';
-
-$catDisplayType = data_get($sectionOptions, 'cat_display_type');
-$maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
-?>
+@php
+	$sectionOptions = $getCategoriesOp ?? [];
+	$sectionData ??= [];
+	$categories = (array)data_get($sectionData, 'categories');
+	$subCategories = (array)data_get($sectionData, 'subCategories');
+	$countPostsPerCat = (array)data_get($sectionData, 'countPostsPerCat');
+	$countPostsPerCat = collect($countPostsPerCat)->keyBy('id')->toArray();
+	
+	$hideOnMobile = (data_get($sectionOptions, 'hide_on_mobile') == '1') ? ' hidden-sm' : '';
+	
+	$catDisplayType = data_get($sectionOptions, 'cat_display_type');
+	$maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
+@endphp
 @includeFirst([config('larapen.core.customizedViewPath') . 'home.inc.spacer', 'home.inc.spacer'], ['hideOnMobile' => $hideOnMobile])
 <div class="container{{ $hideOnMobile }}">
 	<div class="col-xl-12 content-box layout-section">
@@ -20,7 +20,7 @@ $maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
 					<h2>
 						<span class="title-3">{{ t('Browse by') }} <span style="font-weight: bold;">{{ t('category') }}</span></span>
 						<a href="{{ \App\Helpers\UrlGen::sitemap() }}" class="sell-your-item">
-							{{ t('View more') }} <i class="fas fa-bars"></i>
+							{{ t('View more') }} <i class="fa-solid fa-bars"></i>
 						</a>
 					</h2>
 				</div>
@@ -35,7 +35,7 @@ $maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
 								<img src="{{ data_get($cat, 'picture_url') }}" class="img-fluid" alt="{{ data_get($cat, 'name') }}">
 								<h6>
 									{{ data_get($cat, 'name') }}
-									@if (config('settings.list.count_categories_listings'))
+									@if (config('settings.listings_list.count_categories_listings'))
 										&nbsp;({{ $countPostsPerCat[data_get($cat, 'id')]['total'] ?? 0 }})
 									@endif
 								</h6>
@@ -50,12 +50,12 @@ $maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
 					@foreach($categories as $key => $cat)
 						<div class="col-lg-2 col-md-3 col-sm-4 col-6 f-category">
 							<a href="{{ \App\Helpers\UrlGen::category($cat) }}">
-								@if (in_array(config('settings.list.show_category_icon'), [2, 6, 7, 8]))
-									<i class="{{ data_get($cat, 'icon_class') ?? 'fas fa-folder' }}"></i>
+								@if (in_array(config('settings.listings_list.show_category_icon'), [2, 6, 7, 8]))
+									<i class="{{ data_get($cat, 'icon_class') ?? 'fa-regular fa-folder' }}"></i>
 								@endif
 								<h6>
 									{{ data_get($cat, 'name') }}
-									@if (config('settings.list.count_categories_listings'))
+									@if (config('settings.listings_list.count_categories_listings'))
 										&nbsp;({{ $countPostsPerCat[data_get($cat, 'id')]['total'] ?? 0 }})
 									@endif
 								</h6>
@@ -83,12 +83,12 @@ $maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
 										
 											<div class="cat-list">
 												<h3 class="cat-title rounded">
-													@if (in_array(config('settings.list.show_category_icon'), [2, 6, 7, 8]))
-														<i class="{{ data_get($iCat, 'icon_class') ?? 'fas fa-check' }}"></i>&nbsp;
+													@if (in_array(config('settings.listings_list.show_category_icon'), [2, 6, 7, 8]))
+														<i class="{{ data_get($iCat, 'icon_class') ?? 'fa-solid fa-check' }}"></i>&nbsp;
 													@endif
 													<a href="{{ \App\Helpers\UrlGen::category($iCat) }}">
 														{{ data_get($iCat, 'name') }}
-														@if (config('settings.list.count_categories_listings'))
+														@if (config('settings.listings_list.count_categories_listings'))
 															&nbsp;({{ $countPostsPerCat[data_get($iCat, 'id')]['total'] ?? 0 }})
 														@endif
 													</a>
@@ -108,7 +108,7 @@ $maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
 																<a href="{{ \App\Helpers\UrlGen::category($iSubCat) }}">
 																	{{ data_get($iSubCat, 'name') }}
 																</a>
-																@if (config('settings.list.count_categories_listings'))
+																@if (config('settings.listings_list.count_categories_listings'))
 																	&nbsp;({{ $countPostsPerCat[data_get($iSubCat, 'id')]['total'] ?? 0 }})
 																@endif
 															</li>
@@ -142,13 +142,13 @@ $maxSubCats = (int)data_get($sectionOptions, 'max_sub_cats');
 									<ul class="cat-list {{ $catListClass }} col-md-4 {{ (count($categories) == $key+1) ? 'cat-list-border' : '' }}">
 										@foreach ($items as $k => $cat)
 											<li>
-												@if (in_array(config('settings.list.show_category_icon'), [2, 6, 7, 8]))
-													<i class="{{ data_get($cat, 'icon_class') ?? 'fas fa-check' }}"></i>&nbsp;
+												@if (in_array(config('settings.listings_list.show_category_icon'), [2, 6, 7, 8]))
+													<i class="{{ data_get($cat, 'icon_class') ?? 'fa-solid fa-check' }}"></i>&nbsp;
 												@endif
 												<a href="{{ \App\Helpers\UrlGen::category($cat) }}">
 													{{ data_get($cat, 'name') }}
 												</a>
-												@if (config('settings.list.count_categories_listings'))
+												@if (config('settings.listings_list.count_categories_listings'))
 													&nbsp;({{ $countPostsPerCat[data_get($cat, 'id')]['total'] ?? 0 }})
 												@endif
 											</li>

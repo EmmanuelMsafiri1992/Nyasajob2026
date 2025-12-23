@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\SubAdmin1Resource;
@@ -14,6 +29,7 @@ class SubAdmin1Controller extends BaseController
 	 * List admin. divisions (1)
 	 *
 	 * @queryParam embed string Comma-separated list of the administrative division (1) relationships for Eager Loading - Possible values: country. Example: null
+	 * @queryParam q string Get the administrative division list related to the entered keyword. Example: null
 	 * @queryParam sort string The sorting parameter (Order by DESC with the given column. Use "-" as prefix to order by ASC). Possible values: name. Example: -name
 	 * @queryParam perPage int Items per page. Can be defined globally from the admin settings. Cannot be exceeded 100. Example: 2
 	 * @queryParam page int Items page number. From 1 to ("total items" divided by "items per page value - perPage"). Example: 1
@@ -22,25 +38,26 @@ class SubAdmin1Controller extends BaseController
 	 *
 	 * @param $countryCode
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index($countryCode): \Illuminate\Http\JsonResponse
 	{
-		$embed = explode(',', request()->get('embed'));
-		$keyword = request()->get('q');
+		$embed = explode(',', request()->input('embed'));
+		$keyword = request()->input('q');
 		$locale = config('app.locale');
+		$perPage = getNumberOfItemsPerPage('subadmin1', request()->integer('perPage'));
 		$page = request()->integer('page');
 		
 		// Cache ID
-		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->get('embed') : '';
+		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
 		$cacheFiltersId = '.filters.' . $keyword;
-		$cachePageId = '.page.' . $page . '.of.' . $this->perPage;
+		$cachePageId = '.page.' . $page . '.of.' . $perPage;
 		$cacheId = $countryCode . '.admins1.' . $cacheEmbedId . $cacheFiltersId . $cachePageId . '.' . $locale;
 		$cacheId = md5($cacheId);
 		
 		// Cached Query
-		$admins1 = cache()->remember($cacheId, $this->cacheExpiration, function () use ($embed, $countryCode, $keyword) {
+		$admins1 = cache()->remember($cacheId, $this->cacheExpiration, function () use (
+			$perPage, $embed, $countryCode, $keyword
+		) {
 			$admins1 = SubAdmin1::query();
 			
 			if (in_array('country', $embed)) {
@@ -49,13 +66,13 @@ class SubAdmin1Controller extends BaseController
 			
 			$admins1->where('country_code', $countryCode);
 			if (!empty($keyword)) {
-				$admins1->transWhere('name', 'LIKE', '%' . $keyword . '%');
+				$admins1->where('name', 'LIKE', '%' . $keyword . '%');
 			}
 			
 			// Sorting
 			$admins1 = $this->applySorting($admins1, ['name']);
 			
-			return $admins1->paginate($this->perPage);
+			return $admins1->paginate($perPage);
 		});
 		
 		// If the request is made from the app's Web environment,
@@ -66,7 +83,7 @@ class SubAdmin1Controller extends BaseController
 		
 		$message = ($admins1->count() <= 0) ? t('no_admin_divisions_found') : null;
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -78,15 +95,13 @@ class SubAdmin1Controller extends BaseController
 	 *
 	 * @param $code
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function show($code): \Illuminate\Http\JsonResponse
 	{
-		$embed = explode(',', request()->get('embed'));
+		$embed = explode(',', request()->input('embed'));
 		
 		// Cache ID
-		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->get('embed') : '';
+		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
 		$cacheId = 'admin1.' . $code . $cacheEmbedId;
 		
 		// Cached Query
@@ -104,6 +119,6 @@ class SubAdmin1Controller extends BaseController
 		
 		$resource = new SubAdmin1Resource($admin1);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

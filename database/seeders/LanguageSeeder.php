@@ -17,12 +17,11 @@ class LanguageSeeder extends Seeder
 	{
 		$entries = [
 			[
-				'abbr'                  => 'en',
-				'locale'                => 'en_US',
+				'code'                  => 'en',
+				'locale'                => $this->getUtf8Locale('en_US'),
 				'name'                  => 'English',
 				'native'                => 'English',
 				'flag'                  => 'flag-icon-gb',
-				'app_name'              => 'english',
 				'script'                => 'Latn',
 				'direction'             => 'ltr',
 				'russian_pluralization' => '0',
@@ -39,12 +38,11 @@ class LanguageSeeder extends Seeder
 				'updated_at'            => now()->format('Y-m-d H:i:s'),
 			],
 			[
-				'abbr'                  => 'fr',
-				'locale'                => 'fr_FR',
+				'code'                  => 'fr',
+				'locale'                => $this->getUtf8Locale('fr_FR'),
 				'name'                  => 'French',
 				'native'                => 'Français',
 				'flag'                  => 'flag-icon-fr',
-				'app_name'              => 'french',
 				'script'                => 'Latn',
 				'direction'             => 'ltr',
 				'russian_pluralization' => '0',
@@ -61,12 +59,11 @@ class LanguageSeeder extends Seeder
 				'updated_at'            => now()->format('Y-m-d H:i:s'),
 			],
 			[
-				'abbr'                  => 'es',
-				'locale'                => 'es_ES',
+				'code'                  => 'es',
+				'locale'                => $this->getUtf8Locale('es_ES'),
 				'name'                  => 'Spanish',
 				'native'                => 'Español',
 				'flag'                  => 'flag-icon-es',
-				'app_name'              => 'spanish',
 				'script'                => 'Latn',
 				'direction'             => 'ltr',
 				'russian_pluralization' => '0',
@@ -83,12 +80,11 @@ class LanguageSeeder extends Seeder
 				'updated_at'            => now()->format('Y-m-d H:i:s'),
 			],
 			[
-				'abbr'                  => 'ar',
-				'locale'                => 'ar_SA',
+				'code'                  => 'ar',
+				'locale'                => $this->getUtf8Locale('ar_SA'),
 				'name'                  => 'Arabic',
 				'native'                => 'العربية',
 				'flag'                  => 'flag-icon-sa',
-				'app_name'              => 'arabic',
 				'script'                => 'Arab',
 				'direction'             => 'rtl',
 				'russian_pluralization' => '0',
@@ -110,5 +106,57 @@ class LanguageSeeder extends Seeder
 		foreach ($entries as $entry) {
 			DB::table($tableName)->insert($entry);
 		}
+	}
+	
+	/**
+	 * @param string $locale
+	 * @return string
+	 */
+	private function getUtf8Locale(string $locale): string
+	{
+		// Limit the use of this method only for locales which often produce malfunctions
+		// when they don't have their UTF-8 format. e.g. the Turkish language (tr_TR).
+		$localesToFix = ['tr_TR'];
+		if (!in_array($locale, $localesToFix)) {
+			return $locale;
+		}
+		
+		$localesList = getLocales('installed');
+		
+		// Return the given locale, if installed locales list cannot be retrieved from the server
+		if (empty($localesList)) {
+			return $locale;
+		}
+		
+		// Return given locale, if the database charset is not utf-8
+		$dbCharset = config('database.connections.' . config('database.default') . '.charset');
+		if (!str_starts_with($dbCharset, 'utf8')) {
+			return $locale;
+		}
+		
+		$utf8LocaleFound = false;
+		
+		$codesetList = ['UTF-8', 'utf8'];
+		foreach ($codesetList as $codeset) {
+			$tmpLocale = $locale . '.' . $codeset;
+			if (in_array($tmpLocale, $localesList, true)) {
+				$locale = $tmpLocale;
+				$utf8LocaleFound = true;
+				break;
+			}
+		}
+		
+		if (!$utf8LocaleFound) {
+			$codesetList = ['utf-8', 'UTF8'];
+			foreach ($codesetList as $codeset) {
+				$tmpLocale = $locale . '.' . $codeset;
+				if (in_array($tmpLocale, $localesList, true)) {
+					$locale = $tmpLocale;
+					break;
+				}
+			}
+		}
+		
+		return $locale;
 	}
 }

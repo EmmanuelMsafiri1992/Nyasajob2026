@@ -1,22 +1,37 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\Api\Auth\Traits\CheckIfAuthFieldIsVerified;
 use App\Helpers\UrlGen;
-use App\Http\Controllers\Api\Base\ApiResponseTrait;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class IsVerifiedUser
 {
-	use ApiResponseTrait, CheckIfAuthFieldIsVerified;
+	use CheckIfAuthFieldIsVerified;
 	
 	/**
 	 * Handle an incoming request.
 	 *
 	 * @param \Illuminate\Http\Request $request
 	 * @param \Closure $next
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector|mixed
+	 * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|mixed
 	 */
 	public function handle(Request $request, Closure $next)
 	{
@@ -46,10 +61,10 @@ class IsVerifiedUser
 				'extra'   => $tmpData['extra'] ?? [],
 			];
 			
-			return $this->apiResponse($data, 403);
+			return apiResponse()->json($data, Response::HTTP_FORBIDDEN);
 		} else {
 			if ($request->expectsJson()) {
-				abort(403, $errorMessage);
+				abort(Response::HTTP_FORBIDDEN, $errorMessage);
 			} else {
 				$isForAuthenticate = ($request->url() == UrlGen::login());
 				$isForPhoneVerification = str_contains($request->url(), '/verify/phone');
@@ -61,7 +76,7 @@ class IsVerifiedUser
 				}
 				
 				if (!$isForAuthenticate && !$isForPhoneVerification) {
-					return redirect(UrlGen::login());
+					return redirect()->to(UrlGen::login());
 				}
 			}
 		}

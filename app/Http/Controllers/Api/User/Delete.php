@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\User;
 
 use App\Models\Permission;
@@ -19,7 +34,7 @@ trait Delete
 		$user = User::withoutGlobalScopes([VerifiedScope::class])->where('id', $id)->first();
 		
 		if (empty($user)) {
-			return $this->respondNotFound(t('user_not_found'));
+			return apiResponse()->notFound(t('user_not_found'));
 		}
 		
 		$authUser = request()->user() ?? auth('sanctum')->user();
@@ -29,18 +44,18 @@ trait Delete
 		$personalAccess = $authUser->tokens()->where('id', getApiAuthToken())->first();
 		if (!empty($personalAccess)) {
 			if ($personalAccess->tokenable_id != $user->id) {
-				return $this->respondUnauthorized();
+				return apiResponse()->unauthorized();
 			}
 		} else {
-			$validUserFromGuard = (auth('sanctum')->check() && auth('sanctum')->user()->id == $user->id);
+			$validUserFromGuard = (auth('sanctum')->check() && auth('sanctum')->user()->getAuthIdentifier() == $user->id);
 			if (!$validUserFromGuard) {
-				return $this->respondUnauthorized();
+				return apiResponse()->unauthorized();
 			}
 		}
 		
-		// Admin users can not be deleted by this way
+		// This way can not delete admin users
 		if ($user->can(Permission::getStaffPermissions())) {
-			return $this->respondUnAuthorized(t('admin_users_cannot_be_deleted'));
+			return apiResponse()->forbidden(t('admin_users_cannot_be_deleted'));
 		}
 		
 		// Close User's session (by revoking all the user's tokens)
@@ -51,6 +66,6 @@ trait Delete
 		
 		$message = t('your_account_has_been_deleted_1');
 		
-		return $this->respondNoContentResource($message);
+		return apiResponse()->noContentResource($message);
 	}
 }

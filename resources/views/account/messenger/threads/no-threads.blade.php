@@ -1,9 +1,9 @@
 <div class="alert alert-info" role="alert">
-	@if (request()->get('filter') == 'unread')
+	@if (request()->query('filter') == 'unread')
 		{{ t('No new thread or with new messages') }}
-	@elseif (request()->get('filter') == 'started')
+	@elseif (request()->query('filter') == 'started')
 		{{ t('No thread started by you') }}
-	@elseif (request()->get('filter') == 'important')
+	@elseif (request()->query('filter') == 'important')
 		{{ t('No message marked as important') }}
 	@else
 		{{ t('No message received') }}

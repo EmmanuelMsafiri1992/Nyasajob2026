@@ -27,7 +27,7 @@
 			{{-- Default box --}}
 			@if ($xPanel->hasAccess('list'))
 				<a href="{{ url($xPanel->route) }}" class="btn btn-primary shadow">
-					<i class="fa fa-angle-double-left"></i> {{ trans('admin.back_to_all') }}
+					<i class="fa-solid fa-angles-left"></i> {{ trans('admin.back_to_all') }}
 					<span class="text-lowercase">{{ $xPanel->entityNamePlural }}</span>
 				</a>
 				<br><br>

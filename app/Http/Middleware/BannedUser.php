@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use App\Helpers\UrlGen;
@@ -6,8 +21,7 @@ use App\Models\Blacklist;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Prologue\Alerts\Facades\Alert;
+use Illuminate\Http\Response;
 
 class BannedUser
 {
@@ -16,91 +30,104 @@ class BannedUser
 	/**
 	 * @param \Illuminate\Http\Request $request
 	 * @param \Closure $next
-	 * @param null $guard
-	 * @return \Illuminate\Http\RedirectResponse
+	 * @param $guard
+	 * @return mixed
 	 */
 	public function handle(Request $request, Closure $next, $guard = null)
 	{
 		// Exception for Install & Upgrade Routes
-		if (
-			str_contains(Route::currentRouteAction(), 'InstallController')
-			|| str_contains(Route::currentRouteAction(), 'UpgradeController')
-		) {
+		if (isFromInstallOrUpgradeProcess()) {
+			return $next($request);
+		}
+		
+		$guard = isFromApi() ? 'sanctum' : $guard;
+		$authUser = auth($guard)->user();
+		
+		if (empty($authUser)) {
 			return $next($request);
 		}
 		
 		$this->message = t($this->message);
 		
-		if (auth()->check()) {
-			// Block the access if User is blocked (as registered User)
-			$this->invalidateBlockedUser($request, $guard);
+		// Block the access if a User is blocked (as registered User)
+		if ($this->doesUserIsBlocked($request, $authUser)) {
+			if (isFromApi()) {
+				return apiResponse()->forbidden($this->message);
+			}
 			
-			// Block & Delete the access if User is banned (from Blacklist with its email address)
-			$this->invalidateBannedUser($request);
+			if (isFromAjax($request)) {
+				return ajaxResponse()->text($this->message, Response::HTTP_UNAUTHORIZED);
+			}
+			
+			notification($this->message, 'error');
+			
+			$loginUrl = isAdminPanel() ? admin_uri('login') : UrlGen::loginPath();
+			
+			return redirect()->guest($loginUrl);
+		}
+		
+		// Block & Delete the access if a User is banned (from Blacklist with its email address)
+		if ($this->doesUserIsBanned($request, $authUser)) {
+			if (isFromApi()) {
+				return apiResponse()->forbidden($this->message);
+			}
+			
+			if (isFromAjax($request)) {
+				return ajaxResponse()->text($this->message, Response::HTTP_UNAUTHORIZED);
+			}
+			
+			notification($this->message, 'error');
+			
+			$loginUrl = isAdminPanel() ? admin_uri('login') : UrlGen::loginPath();
+			
+			return redirect()->guest($loginUrl);
 		}
 		
 		return $next($request);
 	}
 	
 	/**
+	 * Check if the user is blocked
 	 * Block the access if User is blocked (as registered User)
 	 *
 	 * @param \Illuminate\Http\Request $request
-	 * @param $guard
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|void
+	 * @param $authUser
+	 * @return bool
 	 */
-	private function invalidateBlockedUser(Request $request, $guard = null)
+	private function doesUserIsBlocked(Request $request, $authUser): bool
 	{
-		if (auth()->guard($guard)->user()->blocked) {
-			if ($request->ajax() || $request->wantsJson()) {
-				return response($this->message, 401);
-			} else {
-				if (isAdminPanel()) {
-					Alert::error($this->message)->flash();
-					
-					return redirect()->guest(admin_uri('login'));
-				} else {
-					flash($this->message)->error();
-					
-					return redirect()->guest(UrlGen::loginPath());
-				}
-			}
-		}
+		return ($authUser->blocked == 1);
 	}
 	
 	/**
-	 * Block & Delete the access if User is banned (from Blacklist with its email address)
+	 * Check if the user is banned
+	 * Block & Delete the access if a User is banned (from Blacklist with its email address)
 	 *
 	 * @param \Illuminate\Http\Request $request
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|void
+	 * @param $authUser
+	 * @return bool
 	 */
-	private function invalidateBannedUser(Request $request)
+	private function doesUserIsBanned(Request $request, $authUser): bool
 	{
 		$cacheExpiration = (int)config('settings.optimization.cache_expiration', 86400);
 		
 		// Check if the user's email address has been banned
-		$cacheId    = 'blacklist.email.' . auth()->user()->email;
-		$bannedUser = cache()->remember($cacheId, $cacheExpiration, function () {
-			return Blacklist::ofType('email')->where('entry', auth()->user()->email)->first();
+		$cacheId = 'blacklist.email.' . $authUser->email;
+		$bannedUser = cache()->remember($cacheId, $cacheExpiration, function () use($authUser) {
+			return Blacklist::ofType('email')->where('entry', $authUser->email)->first();
 		});
 		
-		if (!empty($bannedUser)) {
-			$user = User::find(auth()->user()->id);
-			$user->delete();
-			
-			if ($request->ajax() || $request->wantsJson()) {
-				return response($this->message, 401);
-			} else {
-				if (isAdminPanel()) {
-					Alert::error($this->message)->flash();
-					
-					return redirect()->guest(admin_uri('login'));
-				} else {
-					flash($this->message)->error();
-					
-					return redirect()->guest(UrlGen::loginPath());
-				}
-			}
+		if (empty($bannedUser)) {
+			return false;
 		}
+		
+		$user = User::find($authUser->id);
+		if (empty($user)) {
+			return false;
+		}
+		
+		$user->delete();
+		
+		return true;
 	}
 }

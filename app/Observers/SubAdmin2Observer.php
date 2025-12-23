@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Models\City;
@@ -14,8 +29,8 @@ class SubAdmin2Observer
 	 */
 	public function deleting(SubAdmin2 $admin)
 	{
-		// Delete all the Admin's Cities
-		$cities = City::countryOf($admin->country_code)->where('subadmin2_code', $admin->code);
+		// Delete all the cities of the admin. division
+		$cities = City::inCountry($admin->country_code)->where('subadmin2_code', $admin->code);
 		if ($cities->count() > 0) {
 			foreach ($cities->cursor() as $city) {
 				$city->delete();
@@ -51,8 +66,9 @@ class SubAdmin2Observer
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $admin
+	 * @return void
 	 */
-	private function clearCache($admin)
+	private function clearCache($admin): void
 	{
 		try {
 			cache()->flush();

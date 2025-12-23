@@ -1,26 +1,34 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
-use App\Events\PostWasVisited;
 use App\Helpers\Arr;
 use App\Http\Controllers\Api\Auth\Traits\VerificationTrait;
-use App\Http\Controllers\Api\Payment\SingleStepPaymentTrait;
-use App\Http\Controllers\Api\Post\CreateOrEdit\CommonUpdateTrait;
-use App\Http\Controllers\Api\Post\CreateOrEdit\SingleStep\UpdateSingleStepFormTrait;
-use App\Http\Controllers\Api\Post\CreateOrEdit\StoreTrait;
-use App\Http\Controllers\Api\Post\CreateOrEdit\Traits\MakePaymentTrait;
-use App\Http\Controllers\Api\Post\SearchTrait;
+use App\Http\Controllers\Api\Payment\HasPaymentTrigger;
+use App\Http\Controllers\Api\Payment\Promotion\SingleStepPayment;
+use App\Http\Controllers\Api\Post\UpdateTrait;
+use App\Http\Controllers\Api\Post\StoreTrait;
+use App\Http\Controllers\Api\Post\ListTrait;
 use App\Http\Controllers\Api\Post\ShowTrait;
-use App\Http\Controllers\Api\Post\CreateOrEdit\MultiSteps\UpdateMultiStepsFormTrait;
-use App\Http\Controllers\Api\Post\Traits\AutoRegistrationTrait;
-use App\Http\Requests\PostRequest;
+use App\Http\Requests\Front\PostRequest;
 use App\Models\Post;
 use App\Models\Scopes\ReviewedScope;
-use App\Models\Scopes\StrictActiveScope;
 use App\Models\Scopes\VerifiedScope;
-use App\Http\Resources\PostResource;
 use App\Notifications\PostDeleted;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use NotificationChannels\Twilio\TwilioChannel;
 
@@ -29,162 +37,91 @@ use NotificationChannels\Twilio\TwilioChannel;
  */
 class PostController extends BaseController
 {
-	use SearchTrait, VerificationTrait, ShowTrait;
-	use AutoRegistrationTrait;
+	use VerificationTrait;
+	
+	use ListTrait;
+	use ShowTrait;
 	use StoreTrait;
-	use CommonUpdateTrait; // offline & repost
-	use UpdateMultiStepsFormTrait;
-	use UpdateSingleStepFormTrait, SingleStepPaymentTrait;
-	use SingleStepPaymentTrait, MakePaymentTrait;
+	use UpdateTrait;
 	
-	// => StoreTrait & UpdateSingleStepFormTrait
-	
-	public function __construct()
-	{
-		parent::__construct();
-		
-		$this->middleware(function ($request, $next) {
-			//...
-			
-			return $next($request);
-		});
-	}
+	use SingleStepPayment, HasPaymentTrigger;
 	
 	/**
 	 * List posts
 	 *
-	 * @queryParam op string Type of listings list (optional) - Possible value: search,sponsored,latest,similar. Example: null
+	 * @queryParam op string Type of listings list (optional) - Possible value: search,premium,latest,free,premiumFirst,similar. Example: null
 	 * @queryParam postId int Base Listing's ID to get similar listings (optional) - Mandatory to get similar listings (when op=similar). Example: null
 	 * @queryParam distance int Distance to get similar listings (optional) - Also optional when the type of similar listings is based on the current listing's category. Mandatory when the type of similar listings is based on the current listing's location. So, its usage is limited to get similar listings (when op=similar) based on the current listing's location. Example: null
-	 * @queryParam belongLoggedUser boolean Do listings are belonged the logged user? Authentication token need to be sent in the header, and the "op" parameter need be null or unset - Possible value: 0 or 1.
-	 * @queryParam pendingApproval boolean To list a user's listings in pending approval. Authentication token need to be sent in the header, and the "op" parameter need be null or unset - Possible value: 0 or 1.
-	 * @queryParam archived boolean To list a user's archived posts. Authentication token need to be sent in the header, and the "op" parameter need be null or unset - Possible value: 0 or 1.
-	 * @queryParam embed string Comma-separated list of the post relationships for Eager Loading - Possible values: user,category,parent,postType,city,savedByLoggedUser,pictures,latestPayment,package. Example: null
+	 * @queryParam belongLoggedUser boolean Force users to be logged to get data that belongs to him. Authentication token needs to be sent in the header, and the "op" parameter needs to be null or unset - Possible value: 0 or 1.
+	 * @queryParam pendingApproval boolean To list a user's listings in pending approval. Authentication token needs to be sent in the header, and the "op" parameter needs to be null or unset - Possible value: 0 or 1.
+	 * @queryParam archived boolean To list a user's archived posts. Authentication token needs to be sent in the header, and the "op" parameter need be null or unset - Possible value: 0 or 1.
+	 * @queryParam embed string Comma-separated list of the post relationships for Eager Loading - Possible values: user,category,parent,postType,city,currency,savedByLoggedUser,pictures,payment,package. Example: null
 	 * @queryParam sort string The sorting parameter (Order by DESC with the given column. Use "-" as prefix to order by ASC). Possible values: created_at. Example: created_at
 	 * @queryParam perPage int Items per page. Can be defined globally from the admin settings. Cannot be exceeded 100. Example: 2
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		return $this->getPosts();
+		// Advanced Query (Query with the 'op' parameter)
+		$searchOptions = ['search', 'premium', 'latest', 'free', 'premiumFirst'];
+		
+		$op = request()->input('op');
+		$op = is_string($op) ? $op : null;
+		
+		if (in_array($op, $searchOptions)) {
+			return $this->getPostsBySearch($op);
+		}
+		if ($op == 'similar') {
+			return $this->getSimilarPosts();
+		}
+		
+		return $this->getPostsList();
 	}
 	
 	/**
 	 * Get post
 	 *
 	 * @queryParam unactivatedIncluded boolean Include or not unactivated entries - Possible value: 0 or 1. Example: 1
-	 * @queryParam belongLoggedUser boolean Does the listing is belonged the logged user? - Possible value: 0 or 1. Example: 0
+	 * @queryParam belongLoggedUser boolean Force users to be logged to get data that belongs to him - Possible value: 0 or 1. Example: 0
 	 * @queryParam noCache boolean Disable the cache for this request - Possible value: 0 or 1. Example: 0
-	 * @queryParam embed string Comma-separated list of the post relationships for Eager Loading - Possible values: user,category,parent,postType,city,savedByLoggedUser,pictures,latestPayment,package.Example: user,postType
-	 * @queryParam detailed boolean Allow to get the post's details with all its relationships (No need to set the 'embed' parameter). Example: false
+	 * @queryParam embed string Comma-separated list of the post relationships for Eager Loading - Possible values: user,category,parent,postType,city,currency,savedByLoggedUser,pictures,payment,package.Example: user,postType
+	 * @queryParam detailed boolean Allow getting the post's details with all its relationships (No need to set the 'embed' parameter). Example: false
 	 *
 	 * @urlParam id int required The post's ID. Example: 2
 	 *
 	 * @param $id
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function show($id): \Illuminate\Http\JsonResponse
 	{
 		$isDetailed = (request()->filled('detailed') && request()->integer('detailed') == 1);
-		
 		if ($isDetailed) {
-			
-			$defaultEmbed = ['user', 'category', 'parent', 'postType', 'city', 'savedByLoggedUser', 'pictures', 'latestPayment', 'package', 'company'];
+			$defaultEmbed = [
+				'user',
+				'category',
+				'parent',
+				'postType',
+				'city',
+				'currency',
+				'savedByLoggedUser',
+				'pictures',
+				'payment',
+				'package',
+				'company',
+			];
 			if (request()->has('embed')) {
-				$embed = explode(',', request()->get('embed', ''));
+				$embed = explode(',', request()->input('embed', ''));
 				$embed = array_merge($defaultEmbed, $embed);
 				request()->query->set('embed', implode(',', $embed));
 			} else {
 				request()->query->add(['embed' => implode(',', $defaultEmbed)]);
 			}
 			
-			return $this->showPost($id);
-			
-		} else {
-			$embed = explode(',', request()->get('embed'));
-			$countryCode = request()->get('countryCode');
-			$isUnactivatedIncluded = (request()->filled('unactivatedIncluded') && request()->integer('unactivatedIncluded') == 1);
-			$isBelongLoggedUser = (request()->filled('belongLoggedUser') && request()->integer('belongLoggedUser') == 1);
-			
-			// Cache control
-			$this->updateCachingParameters();
-			
-			// Cache ID
-			$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->get('embed') : '';
-			$cacheFiltersId = '.filters' . '.unactivatedIncluded:' . (int)$isUnactivatedIncluded . '.auth:' . (int)$isBelongLoggedUser;
-			$cacheId = 'post' . $cacheEmbedId . $cacheFiltersId . '.id:' . $id . '.' . config('app.locale');
-			$cacheId = md5($cacheId);
-			
-			// Cached Query
-			$post = cache()->remember($cacheId, $this->cacheExpiration, function () use ($isUnactivatedIncluded, $id, $embed, $isBelongLoggedUser) {
-				$post = Post::query();
-				
-				if ($isUnactivatedIncluded) {
-					$post->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class]);
-				}
-				
-				if (in_array('country', $embed)) {
-					$post->with('country');
-				}
-				if (in_array('user', $embed)) {
-					$post->with('user');
-				}
-				if (in_array('category', $embed)) {
-					$post->with('category');
-				}
-				if (in_array('postType', $embed)) {
-					$post->with('postType');
-				}
-				if (in_array('city', $embed)) {
-					$post->with('city');
-					if (in_array('subAdmin1', $embed)) {
-						$post->with('city.subAdmin1');
-					}
-					if (in_array('subAdmin2', $embed)) {
-						$post->with('city.subAdmin2');
-					}
-				}
-				if (in_array('latestPayment', $embed)) {
-					$post->with('latestPayment');
-					if (in_array('package', $embed)) {
-						$post->with('latestPayment.package')->withoutGlobalScope(StrictActiveScope::class);
-					}
-				}
-				if (in_array('savedByLoggedUser', $embed)) {
-					$post->with('savedByLoggedUser');
-				}
-				if (in_array('company', $embed)) {
-					$post->with('company');
-				}
-				
-				if (!empty($countryCode)) {
-					$post->whereHas('country')->countryOf($countryCode);
-				}
-				if ($isBelongLoggedUser) {
-					$userId = (auth('sanctum')->check()) ? auth('sanctum')->user()->getAuthIdentifier() : '-1';
-					$post->where('user_id', $userId);
-				}
-				
-				return $post->where('id', $id)->first();
-			});
-			
-			// Reset caching parameters
-			$this->resetCachingParameters();
-			
-			abort_if(empty($post), 404, t('post_not_found'));
-			
-			// Increment the Listing's visits counter
-			Event::dispatch(new PostWasVisited($post));
-			
-			$resource = new PostResource($post);
-			
-			return $this->respondWithResource($resource);
+			return $this->showDetailedPost($id);
 		}
+		
+		return $this->showPost($id);
 	}
 	
 	/**
@@ -217,7 +154,7 @@ class PostController extends BaseController
 	 * @bodyParam price int required The price. Example: 5000
 	 * @bodyParam negotiable boolean Negotiable price or no. Example: 0
 	 * @bodyParam phone_hidden boolean Mobile phone number will be hidden in public or no. Example: 0
-	 * @bodyParam ip_addr string The post's author IP address.
+	 * @bodyParam create_from_ip string The post's author IP address. Example: 127.0.0.1
 	 * @bodyParam accept_marketing_offers boolean Accept to receive marketing offers or no.
 	 * @bodyParam is_permanent boolean Is it permanent post or no.
 	 * @bodyParam tags string Comma-separated tags list. Example: car,automotive,tesla,cyber,truck
@@ -226,14 +163,12 @@ class PostController extends BaseController
 	 * @bodyParam payment_method_id int The payment method's ID (required when the selected package's price is > 0). Example: 5
 	 * @bodyParam captcha_key string Key generated by the CAPTCHA endpoint calling (Required when the CAPTCHA verification is enabled from the Admin panel).
 	 *
-	 * @param \App\Http\Requests\PostRequest $request
-	 * @return array|\Illuminate\Http\JsonResponse|mixed
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @param \App\Http\Requests\Front\PostRequest $request
+	 * @return \Illuminate\Http\JsonResponse|mixed
 	 */
 	public function store(PostRequest $request)
 	{
-		$this->paymentSettings();
+		$this->setPaymentSettingsForPromotion();
 		
 		return $this->storePost($request);
 	}
@@ -268,7 +203,7 @@ class PostController extends BaseController
 	 * @bodyParam price int required The price. Example: 5000
 	 * @bodyParam negotiable boolean Negotiable price or no. Example: 0
 	 * @bodyParam phone_hidden boolean Mobile phone number will be hidden in public or no. Example: 0
-	 * @bodyParam ip_addr string The post's author IP address.
+	 * @bodyParam latest_update_ip string The post's author IP address. Example: 127.0.0.1
 	 * @bodyParam accept_marketing_offers boolean Accept to receive marketing offers or no.
 	 * @bodyParam is_permanent boolean Is it permanent post or no.
 	 * @bodyParam tags string Comma-separated tags list. Example: car,automotive,tesla,cyber,truck
@@ -280,21 +215,20 @@ class PostController extends BaseController
 	 * @urlParam id int required The post/listing's ID.
 	 *
 	 * @param $id
-	 * @param \App\Http\Requests\PostRequest $request
+	 * @param \App\Http\Requests\Front\PostRequest $request
 	 * @return array|\Illuminate\Http\JsonResponse|mixed
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function update($id, PostRequest $request)
 	{
-		// Single Step Form
-		if (config('settings.single.publication_form_type') == '2') {
-			$this->paymentSettings();
+		// Single-Step Form
+		$isSingleStepFormEnabled = (config('settings.listing_form.publication_form_type') == '2');
+		if ($isSingleStepFormEnabled) {
+			$this->setPaymentSettingsForPromotion();
 			
-			return $this->updateSingleStepForm($id, $request);
+			return $this->singleStepFormUpdate($id, $request);
 		}
 		
-		return $this->updateMultiStepsForm($id, $request);
+		return $this->multiStepsFormUpdate($id, $request);
 	}
 	
 	/**
@@ -310,11 +244,10 @@ class PostController extends BaseController
 	 */
 	public function destroy(string $ids): \Illuminate\Http\JsonResponse
 	{
-		if (!auth('sanctum')->check()) {
-			return $this->respondUnAuthorized();
+		$authUser = auth('sanctum')->user();
+		if (empty($authUser)) {
+			return apiResponse()->unauthorized();
 		}
-		
-		$user = auth('sanctum')->user();
 		
 		$data = [
 			'success' => false,
@@ -330,9 +263,8 @@ class PostController extends BaseController
 		// Delete
 		$res = false;
 		foreach ($ids as $postId) {
-			$post = Post::query()
-				->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
-				->where('user_id', $user->id)
+			$post = Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
+				->where('user_id', $authUser->getAuthIdentifier())
 				->where('id', $postId)
 				->first();
 			
@@ -382,6 +314,6 @@ class PostController extends BaseController
 		
 		$data['extra'] = $extra;
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 }

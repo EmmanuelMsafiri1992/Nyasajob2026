@@ -1,8 +1,24 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @section('wizard')
-	@includeFirst([config('larapen.core.customizedViewPath') . 'post.createOrEdit.multiSteps.inc.wizard', 'post.createOrEdit.multiSteps.inc.wizard'])
+	@includeFirst([
+		config('larapen.core.customizedViewPath') . 'post.createOrEdit.multiSteps.inc.wizard',
+		'post.createOrEdit.multiSteps.inc.wizard'
+	])
 @endsection
 
 @section('content')
@@ -30,7 +46,7 @@
 									<div class="alert alert-success pgray alert-lg mb-0" role="alert">
 										<h2 class="no-padding mb20">&#10004; {{ t('Congratulations') }}</h2>
 										<p class="mb-0">
-											{{ session()->get('message') }} <a href="{{ url('/') }}">{{ t('Homepage') }}</a>
+											{{ session('message') }} <a href="{{ url('/') }}">{{ t('Homepage') }}</a>
 										</p>
 									</div>
 								</div>

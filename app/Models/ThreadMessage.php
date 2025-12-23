@@ -1,20 +1,40 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Date;
 use App\Models\Thread\MessageTrait;
+use App\Models\Traits\Common\AppendsTrait;
 use App\Observers\ThreadMessageObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 
+#[ObservedBy([ThreadMessageObserver::class])]
 class ThreadMessage extends BaseModel
 {
-	use SoftDeletes, Crud, Notifiable, MessageTrait, HasFactory;
+	use SoftDeletes, Crud, AppendsTrait, Notifiable, MessageTrait, HasFactory;
 	
 	/**
 	 * The table associated with the model.
@@ -24,38 +44,28 @@ class ThreadMessage extends BaseModel
 	protected $table = 'threads_messages';
 	
 	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
+	 * @var array<int, string>
 	 */
-	// protected $primaryKey = 'id';
 	protected $appends = ['created_at_formatted', 'p_recipient'];
-	
-	/**
-	 * Indicates if the model should be timestamped.
-	 *
-	 * @var boolean
-	 */
-	// public $timestamps = false;
 	
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The relationships that should be touched on save.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $touches = ['thread'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'thread_id',
@@ -64,30 +74,23 @@ class ThreadMessage extends BaseModel
 		'filename',
 	];
 	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
+	/**
+	 * Get the attributes that should be cast.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function casts(): array
 	{
-		parent::boot();
-		
-		ThreadMessage::observe(ThreadMessageObserver::class);
+		return [
+			'created_at' => 'datetime',
+			'updated_at' => 'datetime',
+			'deleted_at' => 'datetime',
+		];
 	}
 	
 	/*
@@ -102,7 +105,7 @@ class ThreadMessage extends BaseModel
 	 *
 	 * @codeCoverageIgnore
 	 */
-	public function thread()
+	public function thread(): BelongsTo
 	{
 		return $this->belongsTo(Thread::class, 'thread_id', 'id');
 	}
@@ -114,7 +117,7 @@ class ThreadMessage extends BaseModel
 	 *
 	 * @codeCoverageIgnore
 	 */
-	public function user()
+	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class, 'user_id');
 	}
@@ -126,7 +129,7 @@ class ThreadMessage extends BaseModel
 	 *
 	 * @codeCoverageIgnore
 	 */
-	public function participants()
+	public function participants(): HasMany
 	{
 		return $this->hasMany(ThreadParticipant::class, 'thread_id', 'thread_id');
 	}
@@ -136,9 +139,9 @@ class ThreadMessage extends BaseModel
 	| SCOPES
 	|--------------------------------------------------------------------------
 	*/
-	public function scopeNotDeletedByUser(Builder $query, $userId)
+	public function scopeNotDeletedByUser(Builder $query, $userId): Builder
 	{
-		return $query->where(function($q) use ($userId) {
+		return $query->where(function (Builder $q) use ($userId) {
 			$q->where('deleted_by', '!=', $userId)->orWhereNull('deleted_by');
 		});
 	}
@@ -150,15 +153,17 @@ class ThreadMessage extends BaseModel
 	 * @param int $userId
 	 * @return \Illuminate\Database\Eloquent\Builder
 	 */
-	public function scopeUnreadForUser(Builder $query, $userId)
+	public function scopeUnreadForUser(Builder $query, int $userId): Builder
 	{
+		$rawTable = $this->getConnection()->getTablePrefix() . $this->getTable();
+		$rawCreatedAt = $this->getConnection()->raw($rawTable . '.created_at');
+		
 		return $query->has('thread')
 			->where('user_id', '!=', $userId)
-			->whereHas('participants', function (Builder $query) use ($userId) {
+			->whereHas('participants', function (Builder $query) use ($userId, $rawCreatedAt) {
 				$query->where('user_id', $userId)
-					->where(function (Builder $q) {
-						$q->where('last_read', '<', $this->getConnection()->raw($this->getConnection()->getTablePrefix() . $this->getTable() . '.created_at'))
-							->orWhereNull('last_read');
+					->where(function (Builder $q) use ($rawCreatedAt) {
+						$q->where('last_read', '<', $rawCreatedAt)->orWhereNull('last_read');
 					});
 			});
 	}
@@ -183,9 +188,13 @@ class ThreadMessage extends BaseModel
 	protected function createdAtFormatted(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				$value = new Carbon($this->attributes['created_at']);
-				$value->timezone(Date::getAppTimeZone());
+			get: function () {
+				$value = $this->created_at ?? ($this->attributes['created_at'] ?? null);
+				
+				if (!$value instanceof Carbon) {
+					$value = new Carbon($value);
+					$value->timezone(Date::getAppTimeZone());
+				}
 				
 				return Date::format($value, 'datetime');
 			},
@@ -195,7 +204,7 @@ class ThreadMessage extends BaseModel
 	protected function pRecipient(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
+			get: function () {
 				return $this->participants()->where('user_id', '!=', $this->user_id)->first();
 			},
 		);

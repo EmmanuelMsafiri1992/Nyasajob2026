@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -25,7 +38,7 @@
 								<span class="title-3">{{ t('companies_list') }}</span>
 								<a class="sell-your-item" href="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}">
 									{{ t('Browse Jobs') }}
-									<i class="fas fa-bars"></i>
+									<i class="fa-solid fa-list"></i>
 								</a>
 							</h2>
 						</div>
@@ -35,7 +48,7 @@
 						@foreach($companies as $key => $iCompany)
 							<div class="col-lg-2 col-md-3 col-sm-3 col-4 f-category">
 								<a href="{{ \App\Helpers\UrlGen::company(null, data_get($iCompany, 'id')) }}">
-									<img alt="{{ data_get($iCompany, 'name') }}" class="img-fluid" src="{{ data_get($iCompany, 'logo_url.full') }}">
+									<img alt="{{ data_get($iCompany, 'name') }}" class="img-fluid" src="{{ data_get($iCompany, 'logo_url.medium') }}">
 									<h6> {{ t('Jobs at') }}
 										<span class="company-name">{{ data_get($iCompany, 'name') }}</span>
 										<span class="jobs-count text-muted">({{ data_get($iCompany, 'posts_count') ?? 0 }})</span>

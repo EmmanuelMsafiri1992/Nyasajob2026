@@ -29,10 +29,10 @@ class HomeSectionSeeder extends Seeder
 				'active'    => '1',
 			],
 			[
-				'method'    => 'getSponsoredPosts',
-				'name'      => 'Sponsored Ads',
+				'method'    => 'getPremiumListings',
+				'name'      => 'Premium Listings',
 				'value'     => null,
-				'view'      => 'home.inc.featured',
+				'view'      => 'home.inc.premium',
 				'field'     => null,
 				'parent_id' => null,
 				'lft'       => '2',
@@ -41,8 +41,8 @@ class HomeSectionSeeder extends Seeder
 				'active'    => '1',
 			],
 			[
-				'method'    => 'getLatestPosts',
-				'name'      => 'Latest Ads',
+				'method'    => 'getLatestListings',
+				'name'      => 'Latest Listings',
 				'value'     => null,
 				'view'      => 'home.inc.latest',
 				'field'     => null,
@@ -77,7 +77,7 @@ class HomeSectionSeeder extends Seeder
 				'active'    => '1',
 			],
 			[
-				'method'    => 'getFeaturedPostsCompanies',
+				'method'    => 'getCompanies',
 				'name'      => 'Companies',
 				'value'     => null,
 				'view'      => 'home.inc.companies',

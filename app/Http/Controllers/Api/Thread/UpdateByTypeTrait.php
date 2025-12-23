@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Thread;
 
 use App\Models\Thread;
@@ -9,32 +24,32 @@ trait UpdateByTypeTrait
 	 * @param $ids
 	 * @param $user
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function updateByType($ids, $user): \Illuminate\Http\JsonResponse
 	{
 		if (!isset($user->id)) {
-			return $this->respondUnAuthorized();
+			return apiResponse()->forbidden();
 		}
 		
-		if (request()->get('type') == 'markAsRead') {
+		$actionType = request()->input('type');
+		
+		if ($actionType == 'markAsRead') {
 			return $this->markAsRead($ids, $user);
 		}
-		if (request()->get('type') == 'markAsUnread') {
+		if ($actionType == 'markAsUnread') {
 			return $this->markAsUnread($ids, $user);
 		}
-		if (request()->get('type') == 'markAsImportant') {
+		if ($actionType == 'markAsImportant') {
 			return $this->markAsImportant($ids, $user);
 		}
-		if (request()->get('type') == 'markAsNotImportant') {
+		if ($actionType == 'markAsNotImportant') {
 			return $this->markAsNotImportant($ids, $user);
 		}
-		if (request()->get('type') == 'markAllAsRead') {
+		if ($actionType == 'markAllAsRead') {
 			return $this->markAllAsRead($user);
 		}
 		
-		return $this->respondUnAuthorized();
+		return apiResponse()->forbidden();
 	}
 	
 	/**
@@ -67,7 +82,7 @@ trait UpdateByTypeTrait
 			]);
 		}
 		
-		return $this->respondSuccess($msg);
+		return apiResponse()->success($msg);
 	}
 	
 	/**
@@ -100,7 +115,7 @@ trait UpdateByTypeTrait
 			]);
 		}
 		
-		return $this->respondSuccess($msg);
+		return apiResponse()->success($msg);
 	}
 	
 	/**
@@ -133,7 +148,7 @@ trait UpdateByTypeTrait
 			]);
 		}
 		
-		return $this->respondSuccess($msg);
+		return apiResponse()->success($msg);
 	}
 	
 	/**
@@ -166,7 +181,7 @@ trait UpdateByTypeTrait
 			]);
 		}
 		
-		return $this->respondSuccess($msg);
+		return apiResponse()->success($msg);
 	}
 	
 	/**
@@ -178,11 +193,11 @@ trait UpdateByTypeTrait
 	public function markAllAsRead($user): \Illuminate\Http\JsonResponse
 	{
 		// Get all Threads with New Messages
-		$threadsWithNewMessage = Thread::whereHas('post', function ($query) {
-			$query->currentCountry();
-		})->forUserWithNewMessages($user->id);
+		$threadsWithNewMessage = Thread::query()
+			->whereHas('post', fn ($query) => $query->inCountry())
+			->forUserWithNewMessages($user->id);
 		
-		// Count all Thread
+		// Count all Threads
 		$countThreadsWithNewMessage = $threadsWithNewMessage->count();
 		
 		if ($countThreadsWithNewMessage > 0) {
@@ -195,11 +210,11 @@ trait UpdateByTypeTrait
 				'action'   => mb_strtolower(t('read')),
 			]);
 			
-			return $this->respondSuccess($msg);
+			return apiResponse()->success($msg);
 		} else {
 			$msg = t('This action could not be done');
 			
-			return $this->respondError($msg);
+			return apiResponse()->error($msg);
 		}
 	}
 	

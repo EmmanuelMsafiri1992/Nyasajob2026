@@ -22,7 +22,7 @@
 		<div class="col-12">
 			<div class="card rounded">
 				<div class="card-header">
-					<h3 class="card-title"><i class="fas fa-info-circle"></i> {{ trans('admin.system') }}</h3>
+					<h3 class="card-title"><i class="fa-solid fa-circle-info"></i> {{ trans('admin.system') }}</h3>
 				</div>
 				
 				<div class="card-body">
@@ -47,7 +47,7 @@
 		<div class="col-6">
 			<div class="card rounded">
 				<div class="card-header">
-					<h3 class="card-title"><i class="fas fa-exclamation-triangle"></i> {{ trans('messages.requirements') }}</h3>
+					<h3 class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> {{ trans('messages.requirements') }}</h3>
 				</div>
 				
 				<div class="card-body pt-0 pb-0">
@@ -57,9 +57,9 @@
 								@foreach ($components as $key => $item)
 									<li>
 										@if ($item['isOk'])
-											<i class="fas fa-check text-success"></i>
+											<i class="bi bi-check text-success"></i>
 										@else
-											<i class="fas fa-times text-danger"></i>
+											<i class="bi bi-x text-danger"></i>
 										@endif
 										<h5 class="title-5 fw-bolder">
 											{{ $item['name'] }}
@@ -79,7 +79,7 @@
 		<div class="col-6">
 			<div class="card rounded">
 				<div class="card-header">
-					<h3 class="card-title"><i class="fas fa-folder-open"></i> {{ trans('messages.permissions') }}</h3>
+					<h3 class="card-title"><i class="fa-regular fa-folder-open"></i> {{ trans('messages.permissions') }}</h3>
 				</div>
 				
 				<div class="card-body pt-0 pb-0">
@@ -89,9 +89,9 @@
 								@foreach ($permissions as $key => $item)
 									<li>
 										@if ($item['isOk'])
-											<i class="fas fa-check text-success"></i>
+											<i class="bi bi-check text-success"></i>
 										@else
-											<i class="fas fa-times text-danger"></i>
+											<i class="bi bi-x text-danger"></i>
 										@endif
 										<h5 class="title-5 fw-bolder">
 											{{ relativeAppPath($item['name']) }}

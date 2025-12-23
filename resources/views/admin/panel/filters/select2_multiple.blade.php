@@ -2,7 +2,7 @@
 
 <li filter-name="{{ $filter->name }}"
 	filter-type="{{ $filter->type }}"
-	class="dropdown {{ request()->get($filter->name)?'active':'' }}">
+	class="dropdown {{ request()->query($filter->name)?'active':'' }}">
 	<a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
 		{{ $filter->label }} <span class="caret"></span>
 	</a>
@@ -40,7 +40,7 @@
 @push('crud_list_styles')
 	{{-- include select2 css--}}
 	<link href="{{ asset('assets/plugins/select2/css/select2.min.css') }}" rel="stylesheet" type="text/css"/>
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" rel="stylesheet" type="text/css"/>
+	<link href="{{ asset('assets/plugins/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css') }}" rel="stylesheet" type="text/css"/>
 	<style>
 		.form-inline .select2-container {
 			display: inline-block;
@@ -69,7 +69,7 @@
 	{{-- include select2 js--}}
 	<script src="{{ asset('assets/plugins/select2/js/select2.js') }}"></script>
 	<script>
-		jQuery(document).ready(function ($) {
+		onDocumentReady((event) => {
 			// trigger select2 for each untriggered select2 box
 			$('.select2').each(function (i, obj) {
 				if (!$(obj).data("select2")) {

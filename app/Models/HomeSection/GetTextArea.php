@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\HomeSection;
 
 use App\Models\Language;
@@ -36,7 +51,7 @@ class GetTextArea
 				$bodyLabel = trans('admin.body_label') . ' (' . $language->name . ')';
 				
 				$txtFields[] = [
-					'name'              => 'title_' . $language->abbr,
+					'name'              => 'title_' . $language->code,
 					'label'             => $titleLabel,
 					'type'              => 'text',
 					'attributes'        => [
@@ -48,7 +63,7 @@ class GetTextArea
 					'tab' => $language->name,
 				];
 				$txtFields[] = [
-					'name'              => 'body_' . $language->abbr,
+					'name'              => 'body_' . $language->code,
 					'label'             => $bodyLabel,
 					'type'              => ($wysiwygEditor != 'none' && file_exists(resource_path() . $wysiwygEditorViewPath))
 						? $wysiwygEditor
@@ -66,7 +81,7 @@ class GetTextArea
 				];
 				
 				$txtFields[] = [
-					'name'  => 'seo_start' . $language->abbr,
+					'name'  => 'seo_start_' . $language->code,
 					'type'  => 'custom_html',
 					'value' => '<hr style="border: 1px dashed #EFEFEF;" class="my-3">',
 				];

@@ -1,14 +1,34 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Models\Scopes\ActiveScope;
+use App\Models\Traits\Common\AppendsTrait;
 use App\Observers\SalaryTypeObserver;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 
+#[ObservedBy([SalaryTypeObserver::class])]
+#[ScopedBy([ActiveScope::class])]
 class SalaryType extends BaseModel
 {
-	use Crud, HasTranslations;
+	use Crud, AppendsTrait, HasTranslations;
 	
 	/**
 	 * The table associated with the model.
@@ -16,13 +36,6 @@ class SalaryType extends BaseModel
 	 * @var string
 	 */
 	protected $table = 'salary_types';
-	
-	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
-	 */
-	// protected $primaryKey = 'id';
 	
 	/**
 	 * Indicates if the model should be timestamped.
@@ -34,45 +47,27 @@ class SalaryType extends BaseModel
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = ['name', 'active', 'lft', 'rgt', 'depth',];
-	public $translatable = ['name'];
 	
 	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	// protected $dates = [];
+	public array $translatable = ['name'];
 	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
-	{
-		parent::boot();
-		
-		SalaryType::observe(SalaryTypeObserver::class);
-		
-		static::addGlobalScope(new ActiveScope());
-	}
 	
 	/*
 	|--------------------------------------------------------------------------

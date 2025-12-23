@@ -10,7 +10,12 @@ if (isset($field['value']) && (is_array($field['value']) || is_object($field['va
 ?>
 
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+        {!! $field['label'] !!}
+        @if (isset($field['required']) && $field['required'])
+            <span class="text-danger">*</span>
+        @endif
+    </label>
     @include('admin.panel.fields.inc.translatable_icon')
     <input type="hidden" value="{{ old($field['name']) ? old($field['name']) : (isset($field['value']) ? $field['value'] : (isset($field['default']) ? $field['default'] : '' )) }}" name="{{ $field['name'] }}">
 
@@ -59,12 +64,12 @@ if (isset($field['value']) && (is_array($field['value']) || is_object($field['va
 
     {{-- FIELD JS - will be loaded in the after_scripts section --}}
     @push('crud_fields_scripts')
-    <script src="https://cdn.jsdelivr.net/places.js/1/places.min.js"></script>
+    <script src="{{ asset('assets/plugins/places.js/1.19.0/places.min.js') }}"></script>
     <script>
-        jQuery(document).ready(function($){
+        onDocumentReady((event) => {
             window.AlgoliaPlaces = window.AlgoliaPlaces || {};
 
-            $('[data-address]').each(function(){
+            $('[data-address]').each(function() {
 
                 var $this      = $(this),
                 $addressConfig = $this.data('address'),
@@ -79,7 +84,7 @@ if (isset($field['value']) && (is_array($field['value']) || is_object($field['va
                     }
                 }
 
-                if( $addressConfig.full ){
+                if ($addressConfig.full) {
 
                     $place.on('change', function(e){
                         var result = JSON.parse(JSON.stringify(e.suggestion));

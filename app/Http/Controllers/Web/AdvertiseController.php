@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Http\Controllers\Web\FrontController;
+use App\Http\Controllers\Web\Public\FrontController;
 use App\Models\AdPackage;
 use App\Models\AdSubscription;
 use App\Models\ProductAdvertisement;

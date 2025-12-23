@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Helpers\ProductAd;
-use App\Http\Controllers\Web\FrontController;
+use App\Http\Controllers\Web\Public\FrontController;
 use App\Models\ProductAdvertisement;
 use Illuminate\Http\Request;
 

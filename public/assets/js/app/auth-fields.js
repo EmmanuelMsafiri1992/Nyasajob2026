@@ -1,4 +1,17 @@
-
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 if (typeof siteUrl === 'undefined') {
 	var siteUrl = '';
@@ -16,7 +29,7 @@ if (typeof defaultAuthField === 'undefined') {
 	var defaultAuthField = 'email';
 }
 
-$(document).ready(function () {
+onDocumentReady((event) => {
 	
 	/* Apply the 'intl-tel-input' plugin to the modal phone field */
 	let mPhoneInput = document.querySelector('#mPhone');
@@ -154,18 +167,18 @@ function selectAuthField(thisEl = null, defaultAuthField = null) {
 	let authField;
 	if (thisEl) {
 		authFieldTagName = $(thisEl).get(0).tagName.toLowerCase();
-		authField = (authFieldTagName == 'input') ? $(thisEl).val() : $(thisEl).data('auth-field');
+		authField = (authFieldTagName === 'input') ? $(thisEl).val() : $(thisEl).data('auth-field');
 	} else {
 		authField = defaultAuthField;
 	}
 	
-	if (!authField || authField.length == 0) {
+	if (!authField || authField.length <= 0) {
 		jsAlert('Impossible to get the auth field!', 'error', false);
 		return false;
 	}
 	
 	/* Update the 'auth_field' filed value */
-	if (!isEmpty(authFieldTagName) && authFieldTagName == 'a') {
+	if (!isEmpty(authFieldTagName) && authFieldTagName === 'a') {
 		$("input[name='auth_field']:not([type=radio], [type=checkbox])").val(authField);
 	}
 	

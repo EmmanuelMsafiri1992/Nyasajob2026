@@ -2,10 +2,11 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Web\Public\FrontController;
 use Illuminate\Http\Request;
 use App\Helpers\UrlGen;
 use Larapen\LaravelMetaTags\Facades\MetaTag;
-use OpenGraph;   
+use OpenGraph;
 
 class InterviewTipsController extends FrontController
 {

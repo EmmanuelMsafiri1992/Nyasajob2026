@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Console\Commands;
 
 // Increase the server resources
@@ -7,8 +22,6 @@ if (file_exists($iniConfigFile)) {
 	include_once $iniConfigFile;
 }
 
-use App\Models\Package;
-use App\Models\Payment;
 use App\Models\Scopes\VerifiedScope;
 use App\Models\Scopes\ActiveScope;
 use App\Models\Scopes\ReviewedScope;
@@ -46,17 +59,11 @@ class ListingsPurge extends Command
 	private int $archivedPostsExpiration = 7;           // Delete the archived Posts after this expiration
 	private int $manuallyArchivedPostsExpiration = 90;  // Delete the manually archived Posts after this expiration
 	
-	/**
-	 * AdsCleaner constructor.
-	 */
 	public function __construct()
 	{
 		parent::__construct();
 		
-		$this->unactivatedPostsExpiration = (int)config('settings.cron.unactivated_posts_expiration', $this->unactivatedPostsExpiration);
-		$this->activatedPostsExpiration = (int)config('settings.cron.activated_posts_expiration', $this->activatedPostsExpiration);
-		$this->archivedPostsExpiration = (int)config('settings.cron.archived_posts_expiration', $this->archivedPostsExpiration);
-		$this->manuallyArchivedPostsExpiration = (int)config('settings.cron.manually_archived_posts_expiration', $this->manuallyArchivedPostsExpiration);
+		$this->applyRequiredSettings();
 	}
 	
 	/**
@@ -64,14 +71,14 @@ class ListingsPurge extends Command
 	 */
 	public function handle()
 	{
-		if (isDemoDomain(env('APP_URL'))) {
+		if (isDemoDomain(config('app.url'))) {
 			$msg = t('demo_mode_message');
 			(isCli()) ? $this->warn($msg) : $this->printWeb($msg);
 			exit();
 		}
 		
 		// Get all countries
-		$countries = Country::withoutGlobalScope(ActiveScope::class);
+		$countries = Country::query()->withoutAppends()->withoutGlobalScope(ActiveScope::class);
 		if ($countries->doesntExist()) {
 			$msg = 'No country found.';
 			(isCli()) ? $this->warn($msg) : $this->printWeb($msg);
@@ -91,14 +98,16 @@ class ListingsPurge extends Command
 			}
 			
 			// Set the country locale
-			config()->set('app.locale', $countryLocale);
 			app()->setLocale($countryLocale);
 			
 			// Get country's items
-			$posts = Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])->countryOf($country->code);
+			$posts = Post::query()
+				->withoutAppends()
+				->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
+				->inCountry($country->code);
 			
 			if ($posts->doesntExist()) {
-				$msg = 'No ads in "' . $country->name . '" (' . strtoupper($country->code) . ') website.';
+				$msg = 'No listings in "' . $country->name . '" (' . strtoupper($country->code) . ') website.';
 				(isCli()) ? $this->info($msg) : $this->printWeb($msg);
 				
 				continue;
@@ -110,11 +119,7 @@ class ListingsPurge extends Command
 			 * When processing large amounts of data, the cursor method may be used to greatly reduce your memory usage
 			 */
 			foreach ($posts->cursor() as $post) {
-				try {
-					$this->itemProcessing($post, $country);
-				} catch (\Throwable $e) {
-					dd($e);
-				}
+				$this->itemProcessing($post, $country);
 			}
 			
 		}
@@ -126,87 +131,121 @@ class ListingsPurge extends Command
 	/**
 	 * @param \App\Models\Post $post
 	 * @param \App\Models\Country $country
-	 * @throws \Exception
+	 * @return void
 	 */
-	private function itemProcessing(Post $post, Country $country)
+	private function itemProcessing(Post $post, Country $country): void
 	{
 		// Debug
 		// if ($country->code != 'US') return;
 		
 		// Get the Country's TimeZone
-		$timeZone = (isset($country->time_zone) && !empty($country->time_zone))
-			? $country->time_zone
-			: config('app.timezone');
+		$timeZone = (!empty($country->time_zone)) ? $country->time_zone : config('app.timezone');
 		
 		// Get the current Datetime
-		$today = Carbon::now($timeZone);
+		$today = now($timeZone);
+		
+		// Ensure that the date columns are not null and are Carbon objects
+		$createdAt = $post->created_at ?? now($timeZone);
+		if (!$createdAt instanceof Carbon) {
+			$createdAt = (new Carbon($createdAt))->timezone($timeZone);
+		}
+		$archivedAt = $post->archived_at ?? now($timeZone);
+		if (!$archivedAt instanceof Carbon) {
+			$archivedAt = (new Carbon($archivedAt))->timezone($timeZone);
+		}
+		$archivedManuallyAt = $post->archived_manually_at ?? now($timeZone);
+		if (!$archivedManuallyAt instanceof Carbon) {
+			$archivedManuallyAt = (new Carbon($archivedManuallyAt))->timezone($timeZone);
+		}
+		$deletionMailSentAt = $post->deletion_mail_sent_at ?? now($timeZone);
+		if (!$deletionMailSentAt instanceof Carbon) {
+			$deletionMailSentAt = (new Carbon($deletionMailSentAt))->timezone($timeZone);
+		}
 		
 		// Debug
-		// dd($today->diffInDays($post->created_at));
+		// dd($createdAt->diffInDays($today));
 		
 		/* For non-activated items */
 		if (!isVerifiedPost($post)) {
 			// Delete non-active items after '$this->unactivatedPostsExpiration' days
-			if ($today->diffInDays($post->created_at) >= $this->unactivatedPostsExpiration) {
+			if ($createdAt->diffInDays($today) >= $this->unactivatedPostsExpiration) {
 				$post->delete();
 			}
 			
 			/*
 			 * IMPORTANT
-			 * Break: Non-activated item expected treatment applied
+			 * Exit: Non-activated item expected treatment applied
 			 */
 			
 			return;
 		}
 		
 		/* For activated items */
-		// Get all packages (Just count them)
-		$packages = Package::query();
 		
 		/* Is it a website with premium options enabled? */
-		$payment = null;
-		$package = null;
-		if ($packages->count() > 0) {
-			// Check the item's transactions (Get the last transaction (Non pushed))
-			$payment = Payment::where('post_id', $post->id)
-				->where(function ($query) {
-					$query->where('transaction_id', '!=', 'featured')->orWhereNull('transaction_id');
-				})
-				->orderByDesc('id')
-				->first();
-			if (!empty($payment)) {
-				// Get package info
-				$package = Package::find($payment->package_id);
-				if (!empty($package)) {
-					if (!empty($package->duration)) {
-						$this->activatedPostsExpiration = $package->duration;
-					}
-				}
+		/*
+		 * Important:
+		 * The basic packages can be saved as paid in the "payments" table by the OfflinePayment plugin
+		 * So, don't apply the fake basic features, so we have to exclude packages whose price is 0.
+		 */
+		$isNotBasic = fn ($q) => $q->where('price', '>', 0);
+		
+		// Subscription ============================================================
+		// Load the post's user's subscription payment
+		$post->loadMissing([
+			'user' => function ($query) use ($isNotBasic) {
+				$query->with(['payment' => fn ($q) => $q->withWhereHas('package', $isNotBasic)]);
+			},
+		]);
+		
+		$hasValidSubscription = (
+			!empty($post->user)
+			&& !empty($post->user->payment)
+			&& !empty($post->user->payment->package)
+			&& !empty($post->user->payment->package->expiration_time)
+		);
+		if ($hasValidSubscription) {
+			$this->activatedPostsExpiration = $post->user->payment->package->expiration_time ?? 0;
+		}
+		
+		/* Check if the item's user is premium|featured */
+		if (!empty($post->user) && $post->user->featured == 1) {
+			// Un-featured the item's user when its payment expires du to the validity period
+			if (empty($post->user->payment)) {
+				$post->user->featured = 0;
+				$post->push();
+			}
+		}
+		
+		// Promotion ============================================================
+		// Load the post's promotion payment
+		$post->loadMissing(['payment' => fn ($q) => $q->withWhereHas('package', $isNotBasic)]);
+		
+		if (!empty($post->payment) && !empty($post->payment->package)) {
+			if (!empty($post->payment->package->expiration_time)) {
+				$this->activatedPostsExpiration = $post->payment->package->expiration_time;
 			}
 		}
 		
 		/* Check if the item is premium|featured */
 		if ($post->featured == 1) {
-			if (!empty($payment) && !empty($package)) {
-				// Un-featured the Ad after {$package->promo_duration} days (related to the Payment date)
-				if ($today->diffInDays($payment->created_at) >= $package->promo_duration) {
-					
-					// Un-featured
-					$post->featured = 0;
-					$post->save();
-					
-				}
-				
+			// Un-featured the item when its payment expires du to the validity period
+			if (!empty($post->payment)) {
 				/*
 				 * IMPORTANT
-			 	 * Break: Premium|featured item expected treatment applied
+			 	 * Exit: Premium|featured item expected treatment applied
 			 	 */
 				
 				return;
 			}
 			
+			// Un-featured
+			$post->featured = 0;
+			$post->save();
+			
 			/*
-			 * Payment or package not found. Apply non-premium|non-featured treatment.
+			 * Payment is not found:
+			 * Continue to apply non-premium|non-featured treatment
 			 */
 		}
 		
@@ -214,7 +253,7 @@ class ListingsPurge extends Command
 		// Auto-archive
 		if (empty($post->archived_at)) {
 			// Archive all activated Ads after '$this->activatedPostsExpiration' days
-			if ($today->diffInDays($post->created_at) >= $this->activatedPostsExpiration) {
+			if ($createdAt->diffInDays($today) >= $this->activatedPostsExpiration) {
 				// Archive
 				$post->archived_at = $today;
 				$post->save();
@@ -232,7 +271,7 @@ class ListingsPurge extends Command
 			
 			/*
 			 * IMPORTANT
-			 * Break: Non-archived item expected treatment applied
+			 * Exit: Non-archived item expected treatment applied
 			 */
 			
 			return;
@@ -243,7 +282,7 @@ class ListingsPurge extends Command
 		// $today = $today->addDays(4); // Debug
 		
 		// Count days since the item has been archived
-		$countDaysSinceAdHasBeenArchived = $today->diffInDays($post->archived_at);
+		$daysSinceListingHasBeenArchived = $archivedAt->diffInDays($today);
 		
 		// Send one alert email each X day started from Y days before the final deletion until the item deletion (using 'archived_at')
 		// Start alert email sending from 7 days earlier (for example)
@@ -256,13 +295,22 @@ class ListingsPurge extends Command
 			$archivedPostsExpirationSomeDaysEarlier = $this->manuallyArchivedPostsExpiration - $daysEarlier;
 		}
 		
-		if ($countDaysSinceAdHasBeenArchived >= $archivedPostsExpirationSomeDaysEarlier) {
+		if ($daysSinceListingHasBeenArchived >= $archivedPostsExpirationSomeDaysEarlier) {
 			// Update the '$daysEarlier' to show in the mail
-			$daysEarlier = $daysEarlier - $countDaysSinceAdHasBeenArchived;
+			$daysEarlier = $daysEarlier - $daysSinceListingHasBeenArchived;
 			
 			if ($daysEarlier > 0) {
-				// Using 'deletion_mail_sent_at'
-				if (empty($post->deletion_mail_sent_at) || $today->diffInDays($post->deletion_mail_sent_at) >= $intervalOfSending) {
+				// Count days since the item's deletion mail has been sent (Using the 'deletion_mail_sent_at' column)
+				$daysSinceListingDeletionMailHasBeenSent = $deletionMailSentAt->diffInDays($today);
+				
+				/*
+				 * =============================================================
+				 * Send a deletion mail when:
+				 * - deletion mails are never sent before
+				 * - the latest sending is earlier than the interval of sending
+				 * =============================================================
+				 */
+				if (empty($post->deletion_mail_sent_at) || $daysSinceListingDeletionMailHasBeenSent >= $intervalOfSending) {
 					try {
 						$post->notify(new PostWilBeDeleted($post, $daysEarlier));
 					} catch (\Throwable $e) {
@@ -278,7 +326,7 @@ class ListingsPurge extends Command
 		}
 		
 		// Delete all archived items '$this->archivedPostsExpiration' days later (using 'archived_at')
-		if ($countDaysSinceAdHasBeenArchived >= $this->archivedPostsExpiration) {
+		if ($daysSinceListingHasBeenArchived >= $this->archivedPostsExpiration) {
 			if ($country->active == 1) {
 				try {
 					// Send Notification Email to the Author
@@ -295,8 +343,30 @@ class ListingsPurge extends Command
 		
 		/*
 		 * IMPORTANT
-		 * Break: Archived item expected treatment applied
+		 * Exit: Archived item expected treatment applied
 		 */
+	}
+	
+	// PRIVATE
+	
+	private function applyRequiredSettings(): void
+	{
+		$this->unactivatedPostsExpiration = (int)config(
+			'settings.cron.unactivated_listings_expiration',
+			$this->unactivatedPostsExpiration
+		);
+		$this->activatedPostsExpiration = (int)config(
+			'settings.cron.activated_listings_expiration',
+			$this->activatedPostsExpiration
+		);
+		$this->archivedPostsExpiration = (int)config(
+			'settings.cron.archived_listings_expiration',
+			$this->archivedPostsExpiration
+		);
+		$this->manuallyArchivedPostsExpiration = (int)config(
+			'settings.cron.manually_archived_listings_expiration',
+			$this->manuallyArchivedPostsExpiration
+		);
 	}
 	
 	/**

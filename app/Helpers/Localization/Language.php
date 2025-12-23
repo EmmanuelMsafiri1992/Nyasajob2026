@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Localization;
 
 use App\Helpers\Arr;
@@ -9,20 +24,19 @@ use Illuminate\Support\Collection;
 
 class Language
 {
-	protected static ?Collection $languages = null;
+	protected ?string $defaultLocale;
 	
-	protected $defaultLocale;
-	protected $country;
+	protected static ?Collection $languages = null;
 	
 	public static int $cacheExpiration = 3600;
 	
 	public function __construct()
 	{
-		// Get all languages
-		self::$languages = self::getLanguages();
-		
 		// Set Default Locale
 		$this->defaultLocale = config('app.locale');
+		
+		// Get all languages
+		self::$languages = self::getLanguages();
 		
 		// Cache Expiration Time
 		self::$cacheExpiration = (int)config('settings.optimization.cache_expiration', self::$cacheExpiration);
@@ -32,8 +46,6 @@ class Language
 	 * Find Language
 	 *
 	 * @return \Illuminate\Support\Collection
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function find(): Collection
 	{
@@ -77,14 +89,14 @@ class Language
 		if (auth($guard)->check()) {
 			$user = auth($guard)->user();
 			if (!empty($user) && isset($user->language_code)) {
-				$langCode = $hrefLang = $user->language_code;
+				$langCode = $user->language_code;
 				if (!empty($langCode)) {
 					// Get the Language Details
 					$isAvailableLang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
 					$isAvailableLang = collect($isAvailableLang);
 					
-					if (!$isAvailableLang->isEmpty()) {
-						$lang = $isAvailableLang->merge(collect(['hreflang' => $hrefLang]));
+					if ($isAvailableLang->isNotEmpty()) {
+						$lang = $isAvailableLang;
 					}
 				}
 			}
@@ -102,17 +114,21 @@ class Language
 	{
 		$lang = collect();
 		
-		if (request()->hasHeader('Content-Language') || request()->hasHeader('Accept-Language')) {
-			$acceptLanguage = array_key_first(parseAcceptLanguageHeader(request()->header('Accept-Language')));
-			$langCode = $hrefLang = request()->header('Content-Language', $acceptLanguage);
-			if (!empty($langCode)) {
-				// Get the Language Details
-				$isAvailableLang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
-				$isAvailableLang = collect($isAvailableLang);
-				
-				if (!$isAvailableLang->isEmpty()) {
-					$lang = $isAvailableLang->merge(collect(['hreflang' => $hrefLang]));
-				}
+		// Get language code from the 'Accept-Language' header
+		$acceptLanguage = request()->header('Accept-Language');
+		$acceptLanguageArray = parseAcceptLanguageHeader($acceptLanguage);
+		$langCode = array_key_first($acceptLanguageArray);
+		
+		// Get language code from the 'Content-Language' header
+		$langCode = request()->header('Content-Language', $langCode);
+		
+		if (!empty($langCode)) {
+			// Get the Language Details
+			$isAvailableLang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
+			$isAvailableLang = collect($isAvailableLang);
+			
+			if ($isAvailableLang->isNotEmpty()) {
+				$lang = $isAvailableLang;
 			}
 		}
 		
@@ -123,22 +139,20 @@ class Language
 	 * Get Language from Session
 	 *
 	 * @return \Illuminate\Support\Collection
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function fromSession(): Collection
 	{
 		$lang = collect();
 		
 		if (session()->has('langCode')) {
-			$langCode = $hrefLang = session()->get('langCode');
+			$langCode = session('langCode');
 			if (!empty($langCode)) {
 				// Get the Language Details
 				$isAvailableLang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
 				$isAvailableLang = collect($isAvailableLang);
 				
-				if (!$isAvailableLang->isEmpty()) {
-					$lang = $isAvailableLang->merge(collect(['hreflang' => $hrefLang]));
+				if ($isAvailableLang->isNotEmpty()) {
+					$lang = $isAvailableLang;
 				}
 			}
 		}
@@ -155,43 +169,48 @@ class Language
 	{
 		$lang = collect();
 		
-		if (config('settings.app.auto_detect_language') == '1') {
-			// Parse the browser's languages
-			$langTab = parseAcceptLanguageHeader();
-			
-			// Get country info \w country language
-			$country = self::getCountryFromIP();
-			
-			// Search the default language (Intersection Browser & Country language OR First Browser language)
-			$langCode = $hrefLang = '';
-			if (!empty($langTab)) {
-				foreach ($langTab as $code => $q) {
-					if (!$country->isEmpty() && $country->has('lang')) {
-						if (!$country->get('lang')->isEmpty() && $country->get('lang')->has('abbr')) {
-							if (str_contains($code, $country->get('lang')->get('abbr'))) {
-								$langCode = substr($code, 0, 2);
-								$hrefLang = $langCode;
-								break;
-							}
-						}
-					} else {
-						if ($langCode == '') {
+		if (config('settings.localization.auto_detect_language') != 'from_browser') {
+			return $lang;
+		}
+		
+		// Parse the browser's languages
+		$langTab = parseAcceptLanguageHeader();
+		
+		// Get country info \w country language
+		$country = self::getCountryFromIP();
+		
+		// Search the default language (Intersection Browser & Country language OR First Browser language)
+		$langCode = '';
+		if (!empty($langTab)) {
+			foreach ($langTab as $code => $q) {
+				if (!$country->isEmpty() && $country->has('lang')) {
+					$countryLang = $country->get('lang');
+					if (
+						$countryLang instanceof Collection
+						&& !$countryLang->isEmpty()
+						&& $countryLang->has('code')
+					) {
+						if (str_contains($code, $countryLang->get('code'))) {
 							$langCode = substr($code, 0, 2);
-							$hrefLang = $langCode;
+							break;
 						}
+					}
+				} else {
+					if ($langCode == '') {
+						$langCode = substr($code, 0, 2);
 					}
 				}
 			}
+		}
+		
+		// Check language
+		if ($langCode != '') {
+			// Get the Language details
+			$isAvailableLang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
+			$isAvailableLang = collect($isAvailableLang);
 			
-			// Check language
-			if ($langCode != '') {
-				// Get the Language details
-				$isAvailableLang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
-				$isAvailableLang = collect($isAvailableLang);
-				
-				if (!$isAvailableLang->isEmpty()) {
-					$lang = $isAvailableLang->merge(collect(['hreflang' => $hrefLang]));
-				}
+			if ($isAvailableLang->isNotEmpty()) {
+				$lang = $isAvailableLang;
 			}
 		}
 		
@@ -205,21 +224,28 @@ class Language
 	 */
 	public function fromConfig(): Collection
 	{
+		$locale = config('app.locale');
+		
+		$defaultLang = [
+			'code' => $locale,
+			'tag'  => getLangTag($locale),
+		];
+		
 		// Get the default Language (from DB)
-		$langCode = config('appLang.abbr');
+		$langCode = config('appLang.code');
 		
 		// Get the Language details
 		try {
 			// Get the Language details
 			$lang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
-			$lang = collect($lang)->merge(collect(['hreflang' => config('appLang.abbr')]));
-		} catch (\Exception $e) {
-			$lang = collect(['abbr' => config('app.locale'), 'hreflang' => config('app.locale')]);
+			$lang = collect($lang);
+		} catch (\Throwable $e) {
+			$lang = collect($defaultLang);
 		}
 		
 		// Check if language code exists
-		if (!$lang->has('abbr')) {
-			$lang = collect(['abbr' => config('app.locale'), 'hreflang' => config('app.locale')]);
+		if (!$lang->has('code')) {
+			$lang = collect($defaultLang);
 		}
 		
 		return $lang;
@@ -236,26 +262,34 @@ class Language
 		$languages = [];
 		
 		try {
-			$languages = cache()->remember('languages.all', self::$cacheExpiration, function () use ($includeNonActive) {
+			$cacheFiltersId = '.' . (int)$includeNonActive;
+			$cacheId = 'languages.all' . $cacheFiltersId;
+			$languages = cache()->remember($cacheId, self::$cacheExpiration, function () use ($includeNonActive) {
 				$languages = LanguageModel::query();
+				
 				if ($includeNonActive) {
 					$languages->withoutGlobalScopes([ActiveScope::class]);
 				} else {
 					$languages->active();
 				}
-				$languages = $languages->orderBy('lft')->get();
 				
-				if ($languages->count() > 0) {
-					$languages = $languages->keyBy('abbr');
-				}
-				
-				return $languages;
+				return $languages->orderBy('lft')->get();
 			});
 		} catch (\Throwable $e) {
-			$languages[config('app.locale')] = ['abbr' => config('app.locale'), 'hreflang' => config('app.locale')];
+			$locale = config('app.locale');
+			$languages[$locale] = [
+				'code' => $locale,
+				'tag'  => getLangTag($locale),
+			];
 		}
 		
-		return collect($languages);
+		$languages = collect($languages);
+		
+		if ($languages->count() > 0) {
+			$languages = $languages->keyBy('code');
+		}
+		
+		return $languages;
 	}
 	
 	/**

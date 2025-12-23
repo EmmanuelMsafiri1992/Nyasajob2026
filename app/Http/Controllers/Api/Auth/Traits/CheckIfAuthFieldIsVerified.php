@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Auth\Traits;
 
 use App\Helpers\Arr;
@@ -86,13 +101,16 @@ trait CheckIfAuthFieldIsVerified
 		$this->invalidateTheAuthenticatedUser();
 		
 		$user = null;
-		$apiPath = (isFromApi() && !isFromTheAppsWebEnvironment()) ? 'api/' : '';
+		$apiPath = (isFromApi() && !doesRequestIsFromWebApp()) ? 'api/' : '';
 		
 		// phone
 		if (empty($authUser->phone_verified_at)) {
 			if (empty($authUser->phone_token)) {
 				if (empty($user)) {
-					$user = User::withoutGlobalScopes([VerifiedScope::class])->where('id', $authUser->id)->first();
+					$user = User::query()
+						->withoutGlobalScopes([VerifiedScope::class])
+						->where('id', $authUser->id)
+						->first();
 				}
 				$user->phone_token = mt_rand(100000, 999999);
 			}
@@ -110,7 +128,10 @@ trait CheckIfAuthFieldIsVerified
 		if (empty($authUser->email_verified_at)) {
 			if (empty($authUser->email_token)) {
 				if (empty($user)) {
-					$user = User::withoutGlobalScopes([VerifiedScope::class])->where('id', $authUser->id)->first();
+					$user = User::query()
+						->withoutGlobalScopes([VerifiedScope::class])
+						->where('id', $authUser->id)
+						->first();
 				}
 				$user->email_token = md5(microtime() . mt_rand());
 			}
@@ -124,7 +145,7 @@ trait CheckIfAuthFieldIsVerified
 			$data['message'] .= ' ' . t('Resend the verification message to verify your email address');
 		}
 		
-		if (!isFromApi() || isFromTheAppsWebEnvironment()) {
+		if (!isFromApi() || doesRequestIsFromWebApp()) {
 			if (empty($authUser->phone_verified_at) || empty($authUser->email_verified_at)) {
 				$data['message'] .= ' ';
 				$data['message'] .= '<a href="' . $error['button']['url'] . '" class="btn btn-sm btn-danger">';
@@ -170,9 +191,11 @@ trait CheckIfAuthFieldIsVerified
 		} else {
 			
 			// Get the current Country
+			$countryCode = null;
 			if (session()->has('countryCode')) {
 				$countryCode = session('countryCode');
 			}
+			$allowMeFromReferrer = null;
 			if (session()->has('allowMeFromReferrer')) {
 				$allowMeFromReferrer = session('allowMeFromReferrer');
 			}
@@ -183,10 +206,10 @@ trait CheckIfAuthFieldIsVerified
 			request()->session()->regenerate();
 			
 			// Retrieve the current Country
-			if (isset($countryCode) && !empty($countryCode)) {
+			if (!empty($countryCode)) {
 				session()->put('countryCode', $countryCode);
 			}
-			if (isset($allowMeFromReferrer) && !empty($allowMeFromReferrer)) {
+			if (!empty($allowMeFromReferrer)) {
 				session()->put('allowMeFromReferrer', $allowMeFromReferrer);
 			}
 			

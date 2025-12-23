@@ -1,5 +1,23 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class Arr extends \Illuminate\Support\Arr
 {
@@ -8,51 +26,50 @@ class Arr extends \Illuminate\Support\Arr
 	 * Replace & remove: httpBuildQuery()
 	 *
 	 * @param $array
-	 * @return array|string|string[]
+	 * @return string
 	 */
-	public static function query($array)
+	public static function query($array): string
 	{
 		$query = parent::query($array);
+		$query = str_replace(['%5B', '%5D'], ['[', ']'], $query);
 		
-		return str_replace(['%5B', '%5D'], ['[', ']'], $query);
+		return getAsString($query);
 	}
 	
 	/**
 	 * Sort multidimensional array by sub-array key
 	 *
 	 * @param $array
-	 * @param $field
+	 * @param string $field
 	 * @param string $order
 	 * @param bool $keepIndex
 	 * @return array|\Illuminate\Support\Collection|\stdClass
 	 */
-	public static function sortBy($array, $field, string $order = 'asc', bool $keepIndex = true)
+	public static function sortBy($array, string $field, string $order = 'asc', bool $keepIndex = true): array|Collection|\stdClass
 	{
-		// Check if Laravel Collection given
 		$isLaravelCollection = false;
-		if (class_exists('\Illuminate\Support\Collection')) {
-			if ($array instanceof \Illuminate\Support\Collection) {
+		$isObject = false;
+		
+		if (is_object($array)) {
+			if ($array instanceof Collection) {
 				$array = $array->toArray();
 				$isLaravelCollection = true;
+			} else {
+				$array = self::fromObject($array);
+				$isObject = true;
 			}
 		}
 		
-		// Check if Object given
-		$isObject = false;
-		if (is_object($array)) {
-			$array = self::fromObject($array);
-			$isObject = true;
-		}
+		// If array is not found
+		if (!is_array($array)) return [];
 		
+		// If the array found is empty
 		if (empty($array)) {
-			return ($isLaravelCollection) ? self::toCollection([]) : (($isObject) ? self::toObject([]) : []);
+			return $isLaravelCollection ? self::toCollection([]) : ($isObject ? self::toObject([]) : []);
 		}
 		
 		// Get sorting order
-		$int = 1;
-		if (strtolower($order) == 'desc') {
-			$int = -1;
-		}
+		$int = (strtolower($order) == 'desc') ? -1 : 1;
 		
 		// Sorting
 		if ($keepIndex) {
@@ -87,31 +104,38 @@ class Arr extends \Illuminate\Support\Arr
 	 * @param bool $keepIndex
 	 * @return array|\Illuminate\Support\Collection|\stdClass
 	 */
-	public static function mbSortBy($array, string $field, string $locale = 'en_US', string $order = 'asc', bool $keepIndex = true)
+	public static function mbSortBy(
+		$array,
+		string $field,
+		string $locale = 'en_US',
+		string $order = 'asc',
+		bool $keepIndex = true
+	): array|Collection|\stdClass
 	{
-		// Check if Laravel Collection given
 		$isLaravelCollection = false;
-		if (class_exists('\Illuminate\Support\Collection')) {
-			if ($array instanceof \Illuminate\Support\Collection) {
+		$isObject = false;
+		
+		if (is_object($array)) {
+			if ($array instanceof Collection) {
 				$array = $array->toArray();
 				$isLaravelCollection = true;
+			} else {
+				$array = self::fromObject($array);
+				$isObject = true;
 			}
 		}
 		
-		// Check if Object given
-		$isObject = false;
-		if (is_object($array)) {
-			$array = self::fromObject($array);
-			$isObject = true;
-		}
+		// If array is not found
+		if (!is_array($array)) return [];
 		
+		// If the array found is empty
 		if (empty($array)) {
-			return ($isLaravelCollection) ? self::toCollection([]) : (($isObject) ? self::toObject([]) : []);
+			return $isLaravelCollection ? self::toCollection([]) : ($isObject ? self::toObject([]) : []);
 		}
 		
 		// \Collator is available in the PHP intl Extension
 		if (!(extension_loaded('intl') && class_exists('\Collator'))) {
-			$array = ($isLaravelCollection) ? self::toCollection($array) : (($isObject) ? self::toObject($array) : $array);
+			$array = $isLaravelCollection ? self::toCollection($array) : ($isObject ? self::toObject($array) : $array);
 			
 			return self::sortBy($array, $field, $order, $keepIndex);
 		}
@@ -119,7 +143,7 @@ class Arr extends \Illuminate\Support\Arr
 		try {
 			$collator = \Collator::create($locale);
 		} catch (\Throwable $e) {
-			$array = ($isLaravelCollection) ? self::toCollection($array) : (($isObject) ? self::toObject($array) : $array);
+			$array = $isLaravelCollection ? self::toCollection($array) : ($isObject ? self::toObject($array) : $array);
 			
 			return self::sortBy($array, $field, $order, $keepIndex);
 		}
@@ -136,7 +160,10 @@ class Arr extends \Illuminate\Support\Arr
 				if (extension_loaded('intl') && class_exists('\Collator')) {
 					$collator->asort($arr, \Collator::SORT_REGULAR);
 					
-					$res = $collator->compare(array_pop($arr), $a[$field]);
+					$lastItem = array_pop($arr);
+					if (is_string($lastItem)) {
+						$res = $collator->compare($lastItem, $a[$field]);
+					}
 				}
 				
 				if ($res === false) {
@@ -153,7 +180,10 @@ class Arr extends \Illuminate\Support\Arr
 				if (extension_loaded('intl') && class_exists('\Collator')) {
 					$collator->asort($arr, \Collator::SORT_REGULAR);
 					
-					$res = $collator->compare(array_pop($arr), $a[$field]);
+					$lastItem = array_pop($arr);
+					if (is_string($lastItem)) {
+						$res = $collator->compare($lastItem, $a[$field]);
+					}
 				}
 				
 				if ($res === false) {
@@ -164,76 +194,113 @@ class Arr extends \Illuminate\Support\Arr
 			});
 		}
 		
-		return ($isLaravelCollection) ? self::toCollection($array) : (($isObject) ? self::toObject($array) : $array);
+		return $isLaravelCollection ? self::toCollection($array) : ($isObject ? self::toObject($array) : $array);
 	}
 	
 	/**
 	 * Object to Array
 	 *
 	 * @param $object
-	 * @param int $level
-	 * @return array|mixed
+	 * @param int|null $level
+	 * @param int $currentLevel
+	 * @return array
+	 * @author: edwardayen
+	 *
+	 * Example usage
+	 * -------------
+	 * $object = new \stdClass();
+	 * $object->name = 'John';
+	 * $object->age = 30;
+	 * $object->address = new \stdClass();
+	 * $object->address->street = '123 Main St';
+	 * $object->address->city = 'Anytown';
+	 * $object->address->postal = new \stdClass();
+	 * $object->address->postal->zip = '12345';
+	 * $object->address->postal->country = 'USA';
+	 * $object->hobbies = ['reading', 'travelling'];
+	 *
+	 * $converted = Arr::fromObject($object, 2); // Convert up to level 2
+	 * print_r($converted);
+	 *
+	 * $convertedAllLevels = Arr::fromObject($object); // Convert all levels
+	 * print_r($convertedAllLevels);
+	 *
 	 */
-	public static function fromObject($object, int $level = 0)
+	public static function fromObject($object, ?int $level = null, int $currentLevel = 0)
 	{
-		if (!is_array($object) && !is_object($object)) {
+		// If the input is not an object, return it as it is
+		if (!is_object($object)) {
 			return $object;
 		}
 		
-		if ($level <= 0) {
-			$array = [];
-			foreach ($object as $key => $value) {
-				if (is_array($value) || is_object($value)) {
-					$array[$key] = self::fromObject($value);
-				} else {
-					$array[$key] = $value;
-				}
-			}
-			
-			return $array;
-		} else {
-			// First we convert the object into a json string
-			$json = json_encode($object, 0, $level);
-			
-			// Then we convert the json string to an array
-			return json_decode($json, true);
+		// If a specific level is set, and we have reached that level, return the object
+		if ($level !== null && $currentLevel >= $level) {
+			return $object;
 		}
+		
+		// Convert the object to an array
+		$array = [];
+		foreach ($object as $key => $value) {
+			if (is_object($value)) {
+				// Recursively convert nested objects to arrays
+				$array[$key] = self::fromObject($value, $level, $currentLevel + 1);
+			} else {
+				$array[$key] = $value;
+			}
+		}
+		
+		return $array;
 	}
 	
 	/**
 	 * Array to Object
 	 *
 	 * @param $array
-	 * @param int $level
-	 * @return array|mixed|\stdClass
+	 * @param int|null $level
+	 * @param int $currentLevel
+	 * @return array|\stdClass
+	 * @author: edwardayen
+	 *
+	 * Example usage
+	 * -------------
+	 * $array = [
+	 *      'name' => 'John',
+	 *      'age' => 30,
+	 *      'address' => ['street' => '123 Main St', 'city' => 'Anytown', 'postal' => ['zip' => '12345', 'country' => 'USA']],
+	 *      'hobbies' => ['reading', 'travelling']
+	 * ];
+	 *
+	 * $converted = Arr::toObject($array, 2); // Convert up to level 2
+	 * print_r($converted);
+	 *
+	 * $convertedAllLevels = Arr::toObject($array); // Convert all levels
+	 * print_r($convertedAllLevels);
+	 *
 	 */
-	public static function toObject($array, int $level = 0)
+	public static function toObject($array, ?int $level = null, int $currentLevel = 0)
 	{
+		// If the input is not an array, return it as it is
 		if (!is_array($array)) {
 			return $array;
 		}
 		
-		if ($level <= 0) {
-			$object = new \stdClass();
-			if (!empty($array)) {
-				foreach ($array as $key => $value) {
-					$key = trim($key);
-					if ($key != '') {
-						$object->$key = self::toObject($value);
-					}
-				}
-				
-				return $object;
-			} else {
-				return [];
-			}
-		} else {
-			// First we convert the array to a json string
-			$json = json_encode($array, 0, $level);
-			
-			// Then we convert the json string to a stdClass()
-			return json_decode($json);
+		// If a specific level is set, and we have reached that level, return the array
+		if ($level !== null && $currentLevel >= $level) {
+			return $array;
 		}
+		
+		// Convert the array to an object
+		$object = new \stdClass();
+		foreach ($array as $key => $value) {
+			if (is_array($value)) {
+				// Recursively convert nested arrays to objects
+				$object->$key = self::toObject($value, $level, $currentLevel + 1);
+			} else {
+				$object->$key = $value;
+			}
+		}
+		
+		return $object;
 	}
 	
 	/**
@@ -244,10 +311,12 @@ class Arr extends \Illuminate\Support\Arr
 	 */
 	public static function toCollection($array)
 	{
+		// If the input is not an array, return it as it is
 		if (!is_array($array)) {
 			return $array;
 		}
 		
+		// Convert the array to a Laravel Collection
 		$newArray = [];
 		foreach ($array as $key => $value) {
 			if (is_array($value)) {
@@ -264,14 +333,24 @@ class Arr extends \Illuminate\Support\Arr
 	 * array_unique multi dimension
 	 *
 	 * @param $array
-	 * @return array|\stdClass
+	 * @return array|\Illuminate\Support\Collection|\stdClass
 	 */
-	public static function unique($array)
+	public static function unique($array): array|Collection|\stdClass
 	{
+		if (!is_array($array) && !is_object($array)) {
+			return [];
+		}
+		
 		if (is_object($array)) {
-			$array = self::fromObject($array);
-			$array = self::unique($array);
-			$array = self::toObject($array);
+			if ($array instanceof Collection) {
+				$array = $array->toArray();
+				$array = self::unique($array);
+				$array = self::toCollection($array);
+			} else {
+				$array = self::fromObject($array);
+				$array = self::unique($array);
+				$array = self::toObject($array);
+			}
 		} else {
 			$array = array_map('serialize', $array);
 			$array = array_map('base64_encode', $array);
@@ -294,7 +373,7 @@ class Arr extends \Illuminate\Support\Arr
 	 */
 	public static function shuffleAssoc($array): array
 	{
-		if (!is_array($array)) return $array;
+		if (!is_array($array)) return [];
 		if (empty($array)) return $array;
 		
 		$keys = array_keys($array);
@@ -472,25 +551,19 @@ class Arr extends \Illuminate\Support\Arr
 	 *
 	 * @param $postData
 	 * @param string $prefix
-	 * @return array|mixed
+	 * @return array
 	 */
-	public static function flattenPost($postData, string $prefix = '')
+	public static function flattenPost($postData, string $prefix = ''): array
 	{
 		$result = [];
 		
 		foreach ($postData as $key => $value) {
+			$newKey = ($prefix == '') ? ($prefix . $key) : ($prefix . '[' . $key . ']');
 			if (is_array($value)) {
-				if ($prefix == '') {
-					$result = $result + self::flattenPost($value, $prefix . $key);
-				} else {
-					$result = $result + self::flattenPost($value, $prefix . '[' . $key . ']');
-				}
+				$result = $result + self::flattenPost($value, $newKey);
 			} else {
-				if ($prefix == '') {
-					$result[$prefix . $key . ''] = $value;
-				} else {
-					$result[$prefix . '[' . $key . ']' . ''] = $value;
-				}
+				$newKey .= ''; // Force the value to be string
+				$result[$newKey] = $value;
 			}
 		}
 		
@@ -518,10 +591,7 @@ class Arr extends \Illuminate\Support\Arr
 			return array_key_exists($key, Arr::fromObject($object));
 		}
 		
-		if (
-			$object instanceof \Illuminate\Support\Collection
-			|| $object instanceof \Illuminate\Database\Eloquent\Model
-		) {
+		if ($object instanceof Collection || $object instanceof Model) {
 			return array_key_exists($key, $object->toArray());
 		}
 		

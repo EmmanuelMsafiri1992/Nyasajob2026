@@ -14,7 +14,7 @@
 	
 	$parallax = data_get($sectionOptions, 'parallax') ?? '0';
 	$hideForm = data_get($sectionOptions, 'hide_form') ?? '0';
-	$displayStatesSearchTip = config('settings.list.display_states_search_tip');
+	$displayStatesSearchTip = config('settings.listings_list.display_states_search_tip');
 	
 	$hideOnMobile = (data_get($sectionOptions, 'hide_on_mobile') == '1') ? ' hidden-sm' : '';
 @endphp
@@ -24,7 +24,9 @@
 		<div class="p-0 mt-lg-4 mt-md-3 mt-3"></div>
 	@endif
 	
-	<?php $parallax = ($parallax == '1') ? ' parallax' : ''; ?>
+	@php
+		$parallax = ($parallax == '1') ? ' parallax' : '';
+	@endphp
 	<div class="intro{{ $hideOnMobile }}{{ $parallax }}">
 		<div class="container text-center">
 			
@@ -43,7 +45,7 @@
 						
 						<div class="col-md-5 col-sm-12 search-col relative mb-1 mb-xxl-0 mb-xl-0 mb-lg-0 mb-md-0">
 							<div class="search-col-inner">
-								<i class="fas {{ (config('lang.direction')=='rtl') ? 'fa-angle-double-left' : 'fa-angle-double-right' }} icon-append"></i>
+								<i class="fa-solid {{ (config('lang.direction')=='rtl') ? 'fa-angles-left' : 'fa-angles-right' }} icon-append"></i>
 								<div class="search-col-input">
 									<input class="form-control has-icon" name="q" placeholder="{{ t('what') }}" type="text" value="">
 								</div>
@@ -54,7 +56,7 @@
 						
 						<div class="col-md-5 col-sm-12 search-col relative locationicon mb-1 mb-xxl-0 mb-xl-0 mb-lg-0 mb-md-0">
 							<div class="search-col-inner">
-								<i class="fas fa-map-marker-alt icon-append"></i>
+								<i class="fa-solid fa-location-dot icon-append"></i>
 								<div class="search-col-input">
 									@if ($displayStatesSearchTip)
 										<input class="form-control locinput input-rel searchtag-input has-icon"
@@ -66,6 +68,10 @@
 											   data-bs-placement="top"
 											   data-bs-toggle="tooltipHover"
 											   title="{{ t('Enter a city name OR a state name with the prefix', ['prefix' => t('area')]) . t('State Name') }}"
+											   spellcheck=false
+											   autocomplete="off"
+											   autocapitalize="off"
+											   tabindex="1"
 										>
 									@else
 										<input class="form-control locinput input-rel searchtag-input has-icon"
@@ -74,6 +80,10 @@
 											   placeholder="{{ t('where') }}"
 											   type="text"
 											   value=""
+											   spellcheck=false
+											   autocomplete="off"
+											   autocapitalize="off"
+											   tabindex="1"
 										>
 									@endif
 								</div>
@@ -83,7 +93,7 @@
 						<div class="col-md-2 col-sm-12 search-col">
 							<div class="search-btn-border bg-primary">
 								<button class="btn btn-primary btn-search btn-block btn-gradient">
-									<i class="fas fa-search"></i> <strong>{{ t('find') }}</strong>
+									<i class="fa-solid fa-magnifying-glass"></i> <strong>{{ t('find') }}</strong>
 								</button>
 							</div>
 						</div>
@@ -107,7 +117,7 @@
 						
 						<div class="col-md-5 col-sm-12 search-col relative mb-1 mb-xxl-0 mb-xl-0 mb-lg-0 mb-md-0">
 							<div class="search-col-inner">
-								<i class="fas {{ (config('lang.direction')=='rtl') ? 'fa-angle-double-left' : 'fa-angle-double-right' }} icon-append"></i>
+								<i class="fa-solid {{ (config('lang.direction')=='rtl') ? 'fa-angles-left' : 'fa-angles-right' }} icon-append"></i>
 								<div class="search-col-input">
 									<input class="form-control has-icon" name="q" placeholder="{{ t('what') }}" type="text" value="">
 								</div>
@@ -118,7 +128,7 @@
 						
 						<div class="col-md-5 col-sm-12 search-col relative locationicon mb-1 mb-xxl-0 mb-xl-0 mb-lg-0 mb-md-0">
 							<div class="search-col-inner">
-								<i class="fas fa-map-marker-alt icon-append"></i>
+								<i class="fa-solid fa-location-dot icon-append"></i>
 								<div class="search-col-input">
 									@if ($displayStatesSearchTip)
 										<input class="form-control locinput input-rel searchtag-input has-icon"
@@ -146,8 +156,8 @@
 						
 						<div class="col-md-2 col-sm-12 search-col">
 							<div class="search-btn-border bg-primary">
-								<button class="btn btn-primary btn-search btn-block btn-gradient">
-									<i class="fas fa-search"></i> <strong>{{ t('find') }}</strong>
+								<button type="submit" class="btn btn-primary btn-search btn-block btn-gradient">
+									<i class="fa-solid fa-magnifying-glass"></i> <strong>{{ t('find') }}</strong>
 								</button>
 							</div>
 						</div>

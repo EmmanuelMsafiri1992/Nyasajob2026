@@ -6,12 +6,12 @@
 	$cats ??= [];
 	
 	// Keywords
-	$keywords = request()->get('q');
+	$keywords = request()->query('q');
 	$keywords = (is_string($keywords)) ? $keywords : null;
 	$keywords = rawurldecode($keywords);
 	
 	// Category
-	$qCategory = request()->get('c');
+	$qCategory = request()->query('c');
 	$qCategory = (is_numeric($qCategory) || is_string($qCategory)) ? $qCategory : null;
 	$qCategory = data_get($cat, 'id', $qCategory);
 	
@@ -22,9 +22,9 @@
 		$qLocationId = data_get($city, 'id') ?? 0;
 		$qLocation = data_get($city, 'name');
 	} else {
-		$qLocationId = request()->get('l');
-		$qLocation = request()->get('location');
-		$qAdminName = request()->get('r');
+		$qLocationId = request()->query('l');
+		$qLocation = request()->query('location');
+		$qAdminName = request()->query('r');
 		
 		$qLocationId = (is_numeric($qLocationId)) ? $qLocationId : null;
 		$qLocation = (is_string($qLocation)) ? $qLocation : null;
@@ -37,11 +37,18 @@
 		}
 	}
 	
-	$displayStatesSearchTip = config('settings.list.display_states_search_tip');
+	// FilterBy
+	$qFilterBy = request()->query('filterBy');
+	$qFilterBy = (is_string($qFilterBy)) ? $qFilterBy : null;
+	
+	$displayStatesSearchTip = config('settings.listings_list.display_states_search_tip');
 @endphp
 @includeFirst([config('larapen.core.customizedViewPath') . 'home.inc.spacer', 'home.inc.spacer'])
 <div class="container mb-2 serp-search-bar">
 	<form id="search" name="search" action="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" method="GET">
+		@if (!empty($qFilterBy))
+			<input type="hidden" name="filterBy" value="{{ $qFilterBy }}">
+		@endif
 		<div class="row m-0">
 			<div class="col-12 px-1 py-sm-1 bg-primary rounded">
 				<div class="row gx-1 gy-1">
@@ -79,6 +86,10 @@
 								   data-bs-placement="top"
 								   data-bs-toggle="tooltipHover"
 								   title="{{ t('Enter a city name OR a state name with the prefix', ['prefix' => t('area')]) . t('State Name') }}"
+								   spellcheck=false
+								   autocomplete="off"
+								   autocapitalize="off"
+								   tabindex="1"
 							>
 						@else
 							<input class="form-control locinput input-rel searchtag-input"
@@ -87,13 +98,17 @@
 								   name="location"
 								   placeholder="{{ t('where') }}"
 								   value="{{ $qLocation }}"
+								   spellcheck=false
+								   autocomplete="off"
+								   autocapitalize="off"
+								   tabindex="1"
 							>
 						@endif
 					</div>
 					
 					<div class="col-xl-2 col-md-2 col-sm-12 col-12">
-						<button class="btn btn-block btn-primary">
-							<i class="fa fa-search"></i> <strong>{{ t('find') }}</strong>
+						<button type="submit" class="btn btn-block btn-primary">
+							<i class="fa-solid fa-magnifying-glass"></i> <strong>{{ t('find') }}</strong>
 						</button>
 					</div>
 				
@@ -105,14 +120,4 @@
 
 @section('after_scripts')
 	@parent
-	<script>
-		$(document).ready(function () {
-			$('#locSearch').on('change', function () {
-				if ($(this).val() == '') {
-					$('#lSearch').val('');
-					$('#rSearch').val('');
-				}
-			});
-		});
-	</script>
 @endsection

@@ -1,12 +1,27 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use App\Models\Permission;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Schema;
-use Prologue\Alerts\Facades\Alert;
 
 class Admin
 {
@@ -15,21 +30,16 @@ class Admin
 	 *
 	 * @param \Illuminate\Http\Request $request
 	 * @param \Closure $next
-	 * @param null $guard
-	 * @return mixed
+	 * @param $guard
+	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Response|mixed
 	 */
 	public function handle(Request $request, Closure $next, $guard = null)
 	{
+		$message = trans('admin.unauthorized');
+
 		if (!auth()->check()) {
-			// Block access if user is guest (not logged in)
-			if ($request->ajax() || $request->wantsJson()) {
-				return response(trans('admin.unauthorized'), 401);
-			} else {
-				if ($request->path() != admin_uri('login')) {
-					Alert::error(trans('admin.unauthorized'))->flash();
-					return redirect()->guest(admin_uri('login'));
-				}
-			}
+			// Block access if user is guest (not logged in) - return 404 to hide admin panel
+			abort(404);
 		} else {
 			try {
 				$aclTableNames = config('permission.table_names');
@@ -44,16 +54,10 @@ class Admin
 			
 			$user = User::query()->count();
 			if (!($user == 1)) {
-				// If user does //not have this permission
-				if (!auth()->guard($guard)->user()->can(Permission::getStaffPermissions())) {
-					if ($request->ajax() || $request->wantsJson()) {
-						return response(trans('admin.unauthorized'), 401);
-					} else {
-						auth()->logout();
-						Alert::error(trans('admin.unauthorized'))->flash();
-						
-						return redirect()->guest(admin_uri('login'));
-					}
+				// If user does not have admin permission - return 404 to hide admin panel
+				$authUser = auth()->guard($guard)->user();
+				if (!doesUserHavePermission($authUser, Permission::getStaffPermissions())) {
+					abort(404);
 				}
 			}
 		}

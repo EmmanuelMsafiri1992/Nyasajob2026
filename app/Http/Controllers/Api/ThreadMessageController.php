@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\EntityCollection;
@@ -26,19 +41,18 @@ class ThreadMessageController extends BaseController
 	 *
 	 * @param $threadId
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index($threadId): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$embed = explode(',', request()->input('embed'));
+		$perPage = getNumberOfItemsPerPage('threads_messages', request()->integer('perPage'));
+		
+		$authUser = auth('sanctum')->user();
 		
 		// All threads messages
-		$threadMessages = ThreadMessage::whereHas('thread', function ($query) use ($threadId, $user) {
-			$query->where('thread_id', $threadId)->forUser($user->id);
+		$threadMessages = ThreadMessage::whereHas('thread', function ($query) use ($threadId, $authUser) {
+			$query->where('thread_id', $threadId)->forUser($authUser->getAuthIdentifier());
 		});
-		
-		$embed = explode(',', request()->get('embed'));
 		
 		if (in_array('user', $embed)) {
 			$threadMessages->with('user');
@@ -48,7 +62,7 @@ class ThreadMessageController extends BaseController
 		$threadMessages = $this->applySorting($threadMessages, ['created_at']);
 		
 		// Get rows & paginate
-		$threadMessages = $threadMessages->paginate($this->perPage);
+		$threadMessages = $threadMessages->paginate($perPage);
 		
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
@@ -58,7 +72,7 @@ class ThreadMessageController extends BaseController
 		
 		$message = ($threadMessages->count() <= 0) ? t('no_messages_found') : null;
 		
-		return $this->respondWithCollection($collection, $message);
+		return apiResponse()->withCollection($collection, $message);
 	}
 	
 	/**
@@ -77,18 +91,16 @@ class ThreadMessageController extends BaseController
 	 * @param $threadId
 	 * @param $id
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function show($threadId, $id): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$embed = explode(',', request()->input('embed'));
 		
-		$threadMessage = ThreadMessage::whereHas('thread', function ($query) use ($threadId, $user) {
-			$query->where('thread_id', $threadId)->forUser($user->id);
+		$authUser = auth('sanctum')->user();
+		
+		$threadMessage = ThreadMessage::whereHas('thread', function ($query) use ($threadId, $authUser) {
+			$query->where('thread_id', $threadId)->forUser($authUser->getAuthIdentifier());
 		});
-		
-		$embed = explode(',', request()->get('embed'));
 		
 		if (in_array('thread', $embed)) {
 			$threadMessage->with('thread');
@@ -104,6 +116,6 @@ class ThreadMessageController extends BaseController
 		
 		$resource = new ThreadMessageResource($threadMessage);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

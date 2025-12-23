@@ -30,12 +30,14 @@
 					@if ($latestUsers->count() > 0)
 						@foreach($latestUsers as $user)
 							<tr>
-								<td class="td-nowrap"><a href="{{ admin_url('users/' . $user->id . '/edit') }}">{{ $user->id }}</a></td>
+								<td class="td-nowrap">
+									<a href="{{ admin_url('users/' . $user->id . '/edit') }}">{{ $user->id }}</a>
+								</td>
 								<td>
-									<?php
+									@php
 										$url = admin_url('users/' . $user->id . '/edit');
-										echo linkStrLimit($url, $user->name, 35);
-									?>
+									@endphp
+									{!! linkStrLimit($url, $user->name, 35) !!}
 								</td>
 								<td class="td-nowrap">{!! getCountryFlag($user) !!}</td>
 								<td class="td-nowrap">
@@ -47,7 +49,7 @@
 								</td>
 								<td class="td-nowrap">
 									<div class="sparkbar" data-color="#00a65a" data-height="20">
-										{{ \App\Helpers\Date::format($user->created_at, 'datetime') }}
+										{!! \App\Helpers\Date::format($user->created_at, 'datetime') !!}
 									</div>
 								</td>
 							</tr>

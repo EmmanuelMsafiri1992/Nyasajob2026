@@ -1,20 +1,42 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Files\Storage\StorageDisk;
-use App\Helpers\Localization\Helpers\Country as CountryHelper;
 use App\Models\Scopes\ActiveScope;
 use App\Models\Scopes\LocalizedScope;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\CountryTrait;
 use App\Observers\CountryObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy([CountryObserver::class])]
+#[ScopedBy([ActiveScope::class, LocalizedScope::class])]
 class Country extends BaseModel
 {
-	use Crud, HasTranslations;
+	use Crud, AppendsTrait, HasTranslations;
+	use CountryTrait;
 	
 	/**
 	 * The table associated with the model.
@@ -29,7 +51,12 @@ class Country extends BaseModel
 	 * @var string
 	 */
 	protected $primaryKey = 'code';
+	protected $keyType = 'string';
 	public $incrementing = false;
+	
+	/**
+	 * @var array<int, string>
+	 */
 	protected $appends = [
 		'icode',
 		'flag_url',
@@ -38,29 +65,46 @@ class Country extends BaseModel
 		'flag32_url',
 		'flag48_url',
 		'flag64_url',
-		'background_image_url'
+		'background_image_url',
 	];
-	// Removed $visible array to prevent conflicts with $appends accessors
-	// protected $visible = [...];
 	
 	/**
-	 * Indicates if the model should be timestamped.
-	 *
-	 * @var boolean
+	 * @var array<int, string>
 	 */
-	// public $timestamps = false;
+	protected $visible = [
+		'code',
+		'name',
+		'icode',
+		'iso3',
+		'currency_code',
+		'phone',
+		'languages',
+		'currency',
+		'time_zone',
+		'date_format',
+		'datetime_format',
+		'background_image',
+		'flag_url',
+		'flag16_url',
+		'flag24_url',
+		'flag32_url',
+		'flag48_url',
+		'flag64_url',
+		'background_image_url',
+		'admin_type',
+	];
 	
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'code',
@@ -78,121 +122,28 @@ class Country extends BaseModel
 		'admin_type',
 		'active',
 	];
-	public $translatable = ['name'];
 	
 	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'created_at'];
+	public array $translatable = ['name'];
 	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
-	{
-		parent::boot();
-		
-		Country::observe(CountryObserver::class);
-		
-		static::addGlobalScope(new ActiveScope());
-		static::addGlobalScope(new LocalizedScope());
-	}
-	
 	/**
-	 * Countries Batch Auto Translation
+	 * Get the attributes that should be cast.
 	 *
-	 * @param bool $overwriteExistingTrans
+	 * @return array<string, string>
 	 */
-	public static function autoTranslation($overwriteExistingTrans = false)
+	protected function casts(): array
 	{
-		$tableName = (new self())->getTable();
-		
-		$languages = DB::table((new Language())->getTable())->get();
-		$oldEntries = DB::table($tableName)->get();
-		
-		if ($oldEntries->count() > 0) {
-			$transCountry = new CountryHelper();
-			foreach ($oldEntries as $oldEntry) {
-				$newNames = [];
-				foreach ($languages as $language) {
-					if (isJson($oldEntry->name)) {
-						$oldNames = json_decode($oldEntry->name, true);
-					}
-					
-					$translationNotFound = (!isset($oldNames[$language->abbr]) || empty($oldNames[$language->abbr]));
-					
-					if ($overwriteExistingTrans || $translationNotFound) {
-						if ($translationNotFound) {
-							$newNames[$language->abbr] = getColumnTranslation($oldEntry->name);
-						}
-						if ($name = $transCountry->get($oldEntry->code, $language->abbr)) {
-							$newNames[$language->abbr] = $name;
-						}
-					}
-				}
-				if (!empty($newNames)) {
-					$affected = DB::table($tableName)->where('code', $oldEntry->code)->update([
-						'name' => json_encode($newNames, JSON_UNESCAPED_UNICODE),
-					]);
-				}
-			}
-		}
-	}
-	
-	public function getNameHtml(): string
-	{
-		$currentUrl = preg_replace('#/(search)$#', '', url()->current());
-		$url = $currentUrl . '/' . $this->getKey() . '/edit';
-		
-		return '<a href="' . $url . '">' . $this->name . '</a>';
-	}
-	
-	public function getActiveHtml()
-	{
-		if (!isset($this->active)) return '';
-		
-		return installAjaxCheckboxDisplay($this->{$this->primaryKey}, $this->getTable(), 'active', $this->active);
-	}
-	
-	public function adminDivisionsBtn($xPanel = false): string
-	{
-		$url = admin_url('countries/' . $this->id . '/admins1');
-		
-		$msg = trans('admin.Admin Divisions 1 of country', ['country' => $this->name]);
-		$tooltip = ' data-bs-toggle="tooltip" title="' . $msg . '"';
-		
-		$out = '<a class="btn btn-xs btn-light" href="' . $url . '"' . $tooltip . '>';
-		$out .= '<i class="fa fa-eye"></i> ';
-		$out .= mb_ucfirst(trans('admin.admin divisions 1'));
-		$out .= '</a>';
-		
-		return $out;
-	}
-	
-	public function citiesBtn($xPanel = false): string
-	{
-		$url = admin_url('countries/' . $this->id . '/cities');
-		
-		$msg = trans('admin.Cities of country', ['country' => $this->name]);
-		$tooltip = ' data-bs-toggle="tooltip" title="' . $msg . '"';
-		
-		$out = '<a class="btn btn-xs btn-light" href="' . $url . '"' . $tooltip . '>';
-		$out .= '<i class="fa fa-eye"></i> ';
-		$out .= mb_ucfirst(trans('admin.cities'));
-		$out .= '</a>';
-		
-		return $out;
+		return [
+			'created_at' => 'datetime',
+			'updated_at' => 'datetime',
+		];
 	}
 	
 	/*
@@ -200,24 +151,19 @@ class Country extends BaseModel
 	| RELATIONS
 	|--------------------------------------------------------------------------
 	*/
-	public function currency()
+	public function currency(): BelongsTo
 	{
 		return $this->belongsTo(Currency::class, 'currency_code', 'code');
 	}
 	
-	public function continent()
+	public function posts(): HasMany
 	{
-		return $this->belongsTo(Continent::class, 'continent_code', 'code');
+		return $this->hasMany(Post::class, 'country_code')->orderByDesc('created_at');
 	}
 	
-	public function posts()
+	public function users(): HasMany
 	{
-		return $this->hasMany(Post::class, 'country_code')->orderBy('created_at', 'DESC');
-	}
-	
-	public function users()
-	{
-		return $this->hasMany(User::class, 'country_code')->orderBy('created_at', 'DESC');
+		return $this->hasMany(User::class, 'country_code')->orderByDesc('created_at');
 	}
 	
 	/*
@@ -225,10 +171,10 @@ class Country extends BaseModel
 	| SCOPES
 	|--------------------------------------------------------------------------
 	*/
-	public function scopeActive($query)
+	public function scopeActive(Builder $query): Builder
 	{
 		if (request()->segment(1) == admin_uri()) {
-			if (str_contains(Route::currentRouteAction(), 'Admin\CountryController')) {
+			if (str_contains(currentRouteAction(), 'Admin\CountryController')) {
 				return $query;
 			}
 		}
@@ -244,14 +190,14 @@ class Country extends BaseModel
 	protected function icode(): Attribute
 	{
 		return Attribute::make(
-			get: fn ($value) => strtolower($this->attributes['code']),
+			get: fn ($value) => strtolower($this->code ?? ($this->attributes['code'] ?? '')),
 		);
 	}
 	
 	protected function id(): Attribute
 	{
 		return Attribute::make(
-			get: fn ($value) => $this->attributes['code'],
+			get: fn ($value) => $this->code ?? ($this->attributes['code'] ?? $value),
 		);
 	}
 	
@@ -268,11 +214,28 @@ class Country extends BaseModel
 		);
 	}
 	
-	protected function flagUrl(): Attribute
+	protected function languages(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
-				return $this->getFlagUrl();
+				$value = explode(',', $value);
+				
+				return collect($value)
+					->map(function ($item) {
+						$item = str_replace('-', '_', $item);
+						
+						return getPrimaryLocaleCode($item);
+					})
+					->implode(',');
+			},
+		);
+	}
+	
+	protected function flagUrl(): Attribute
+	{
+		return Attribute::make(
+			get: function () {
+				return getCountryFlagUrl($this->code);
 			},
 		);
 	}
@@ -280,8 +243,8 @@ class Country extends BaseModel
 	protected function flag16Url(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return $this->getFlagUrl(16);
+			get: function () {
+				return getCountryFlagUrl($this->code, 16);
 			},
 		);
 	}
@@ -289,8 +252,8 @@ class Country extends BaseModel
 	protected function flag24Url(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return $this->getFlagUrl(24);
+			get: function () {
+				return getCountryFlagUrl($this->code, 24);
 			},
 		);
 	}
@@ -298,8 +261,8 @@ class Country extends BaseModel
 	protected function flag32Url(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return $this->getFlagUrl(32);
+			get: function () {
+				return getCountryFlagUrl($this->code, 32);
 			},
 		);
 	}
@@ -307,8 +270,8 @@ class Country extends BaseModel
 	protected function flag48Url(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return $this->getFlagUrl(48);
+			get: function () {
+				return getCountryFlagUrl($this->code, 48);
 			},
 		);
 	}
@@ -316,8 +279,8 @@ class Country extends BaseModel
 	protected function flag64Url(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return $this->getFlagUrl(64);
+			get: function () {
+				return getCountryFlagUrl($this->code, 64);
 			},
 		);
 	}
@@ -327,10 +290,10 @@ class Country extends BaseModel
 		return Attribute::make(
 			get: function ($value) {
 				$bgImageUrl = null;
-				if (isset($this->background_image) && !empty($this->background_image)) {
+				if (!empty($this->background_image)) {
 					$disk = StorageDisk::getDisk();
 					if ($disk->exists($this->background_image)) {
-						$bgImageUrl = imgUrl($this->background_image, 'bgHeader');
+						$bgImageUrl = imgUrl($this->background_image, 'bg-header');
 					}
 				}
 				
@@ -344,25 +307,4 @@ class Country extends BaseModel
 	| OTHER PRIVATE METHODS
 	|--------------------------------------------------------------------------
 	*/
-	private function getFlagUrl($size = 16) {
-		$flagUrl = null;
-		
-		$missingIslandFlags = [
-			'BQ' => 'NL',
-			'BV' => 'NO',
-			'GF' => 'FR',
-			'GP' => 'FR',
-			'PM' => 'FR',
-			'RE' => 'FR',
-			'SX' => 'NL',
-		];
-		$code = $missingIslandFlags[$this->code] ?? $this->code;
-		
-		$flagPath = 'images/flags/' . $size . '/' . strtolower($code) . '.png';
-		if (file_exists(public_path($flagPath))) {
-			$flagUrl = url($flagPath);
-		}
-		
-		return $flagUrl;
-	}
 }

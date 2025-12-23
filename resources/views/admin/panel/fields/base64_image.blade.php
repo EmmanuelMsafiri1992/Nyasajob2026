@@ -1,6 +1,11 @@
   <div class="mb-3 col-md-12 image" data-preview="#{{ $field['name'] }}" data-aspectRatio="{{ isset($field['aspect_ratio']) ? $field['aspect_ratio'] : 0 }}" data-crop="{{ isset($field['crop']) ? $field['crop'] : false }}" @include('admin.panel.inc.field_wrapper_attributes')>
     <div>
-        <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+        <label class="form-label fw-bolder">
+            {!! $field['label'] !!}
+            @if (isset($field['required']) && $field['required'])
+                <span class="text-danger">*</span>
+            @endif
+        </label>
         @include('admin.panel.fields.inc.translatable_icon')
     </div>
     {{-- Wrap the image or canvas element with a block element (container) --}}
@@ -25,13 +30,13 @@
             <input type="hidden" id="hiddenImage" name="{{ $field['name'] }}">
         </label>
         @if(isset($field['crop']) && $field['crop'])
-        <button class="btn btn-secondary" id="rotateLeft" type="button" style="display: none;"><i class="fa fa-rotate-left"></i></button>
-        <button class="btn btn-secondary" id="rotateRight" type="button" style="display: none;"><i class="fa fa-rotate-right"></i></button>
-        <button class="btn btn-secondary" id="zoomIn" type="button" style="display: none;"><i class="fa fa-search-plus"></i></button>
-        <button class="btn btn-secondary" id="zoomOut" type="button" style="display: none;"><i class="fa fa-search-minus"></i></button>
-        <button class="btn btn-warning" id="reset" type="button" style="display: none;"><i class="fa fa-times"></i></button>
+        <button class="btn btn-secondary" id="rotateLeft" type="button" style="display: none;"><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="btn btn-secondary" id="rotateRight" type="button" style="display: none;"><i class="fa-solid fa-rotate-right"></i></button>
+        <button class="btn btn-secondary" id="zoomIn" type="button" style="display: none;"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+        <button class="btn btn-secondary" id="zoomOut" type="button" style="display: none;"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+        <button class="btn btn-warning" id="reset" type="button" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
         @endif
-        <button class="btn btn-danger" id="remove" type="button"><i class="fa fa-trash"></i></button>
+        <button class="btn btn-danger" id="remove" type="button"><i class="fa-regular fa-trash-can"></i></button>
     </div>
 
     {{-- HINT --}}
@@ -102,7 +107,7 @@
         {{-- YOUR JS HERE --}}
         <script src="{{ asset('assets/plugins/cropper/dist/cropper.min.js') }}"></script>
         <script>
-            jQuery(document).ready(function($) {
+            onDocumentReady((event) => {
                 // Loop through all instances of the image field
                 $('.input-group.image').each(function(index){
                     // Find DOM elements under this input-group element

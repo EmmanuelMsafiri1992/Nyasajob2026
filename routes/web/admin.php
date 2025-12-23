@@ -1,67 +1,62 @@
 <?php
-use App\Http\Controllers\Admin\ActionController;
-use App\Http\Controllers\Admin\AdvertisingController;
-use App\Http\Controllers\Admin\Auth\ForgotPasswordController;
-use App\Http\Controllers\Admin\Auth\LoginController;
-use App\Http\Controllers\Admin\BackupController;
-use App\Http\Controllers\Admin\BlacklistController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\CityController;
-use App\Http\Controllers\Admin\CourseController;
-use App\Http\Controllers\Admin\CourseModuleController;
-use App\Http\Controllers\Admin\CourseLessonController;
-use App\Http\Controllers\Admin\InteractiveStepController;
-use App\Http\Controllers\Admin\CompanyController;
-use App\Http\Controllers\Admin\CountryController;
-use App\Http\Controllers\Admin\CurrencyController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\FileController;
-use App\Http\Controllers\Admin\GenderController;
-use App\Http\Controllers\Admin\HomeSectionController;
-use App\Http\Controllers\Admin\InlineRequestController;
-use App\Http\Controllers\Admin\LanguageController;
-use App\Http\Controllers\Admin\MetaTagController;
-use App\Http\Controllers\Admin\PackageController;
-use App\Http\Controllers\Admin\AdPackageController;
-use App\Http\Controllers\Admin\AdSubscriptionController;
-use App\Http\Controllers\Admin\ProductAdvertisementController;
-use App\Http\Controllers\Admin\PageController;
-use App\Http\Controllers\Admin\Panel\Library\PanelRoutes;
-use App\Http\Controllers\Admin\PaymentController;
-use App\Http\Controllers\Admin\PaymentMethodController;
-use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Admin\PictureController;
-use App\Http\Controllers\Admin\PluginController;
-use App\Http\Controllers\Admin\PostController;
-use App\Http\Controllers\Admin\PostTypeController;
-use App\Http\Controllers\Admin\ReportTypeController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\SalaryTypeController;
-use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\SubAdmin1Controller;
-use App\Http\Controllers\Admin\SubAdmin2Controller;
-use App\Http\Controllers\Admin\SystemController;
-use App\Http\Controllers\Admin\UserController;
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
+use App\Http\Controllers\Web\Admin\ActionController;
+use App\Http\Controllers\Web\Admin\AdvertisingController;
+use App\Http\Controllers\Web\Admin\BackupController;
+use App\Http\Controllers\Web\Admin\BlacklistController;
+use App\Http\Controllers\Web\Admin\CategoryController;
+use App\Http\Controllers\Web\Admin\CityController;
+use App\Http\Controllers\Web\Admin\CompanyController;
+use App\Http\Controllers\Web\Admin\CountryController;
+use App\Http\Controllers\Web\Admin\CurrencyController;
+use App\Http\Controllers\Web\Admin\DashboardController;
+use App\Http\Controllers\Web\Admin\FileController;
+use App\Http\Controllers\Web\Admin\HomeSectionController;
+use App\Http\Controllers\Web\Admin\InlineRequestController;
+use App\Http\Controllers\Web\Admin\LanguageController;
+use App\Http\Controllers\Web\Admin\MetaTagController;
+use App\Http\Controllers\Web\Admin\PackageController;
+use App\Http\Controllers\Web\Admin\PageController;
+use App\Http\Controllers\Web\Admin\Panel\Library\PanelRoutes;
+use App\Http\Controllers\Web\Admin\PaymentController;
+use App\Http\Controllers\Web\Admin\PaymentMethodController;
+use App\Http\Controllers\Web\Admin\PermissionController;
+use App\Http\Controllers\Web\Admin\PictureController;
+use App\Http\Controllers\Web\Admin\PluginController;
+use App\Http\Controllers\Web\Admin\PostController;
+use App\Http\Controllers\Web\Admin\PostTypeController;
+use App\Http\Controllers\Web\Admin\ReportTypeController;
+use App\Http\Controllers\Web\Admin\RoleController;
+use App\Http\Controllers\Web\Admin\SalaryTypeController;
+use App\Http\Controllers\Web\Admin\SettingController;
+use App\Http\Controllers\Web\Admin\SubAdmin1Controller;
+use App\Http\Controllers\Web\Admin\SubAdmin2Controller;
+use App\Http\Controllers\Web\Admin\SystemController;
+use App\Http\Controllers\Web\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-// Auth
-Route::namespace('Auth')
-	->group(function ($router) {
-		// Authentication Routes...
-		Route::controller(LoginController::class)
-			->group(function ($router) {
-				Route::get('login', 'showLoginForm')->name('login');
-				Route::post('login', 'login');
-				Route::get('logout', 'logout')->name('logout');
-			});
-		
-		// Password Reset Routes...
-		Route::controller(ForgotPasswordController::class)
-			->group(function ($router) {
-				Route::get('password/reset', 'showLinkRequestForm')->name('password.request');
-				Route::post('password/email', 'sendResetLinkEmail')->name('password.email');
-			});
-	});
+// Auth routes hidden - return 404 to hide admin panel existence
+Route::get('login', function () {
+	abort(404);
+});
+
+Route::get('logout', function () {
+	abort(404);
+});
 
 // Admin Panel Area
 Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
@@ -74,12 +69,25 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 			});
 		
 		// Extra (must be called before CRUD)
-		Route::get('homepage/{action}', [HomeSectionController::class, 'reset'])->where('action', 'reset_(.*)');
+		Route::controller(SettingController::class)
+			->group(function ($router) {
+				Route::get('settings/find/{key}', 'find')->where('key', '[^/]+');
+				Route::get('settings/reset/{key}', 'reset')->where('key', '[^/]+');
+			});
+		Route::controller(HomeSectionController::class)
+			->group(function ($router) {
+				Route::get('homepage/find/{method}', 'find')->where('method', '[^/]+');
+				Route::get('homepage/reset/all/{action}', 'resetAll')->where('action', 'reorder|options');
+			});
 		Route::controller(LanguageController::class)
 			->group(function ($router) {
 				Route::get('languages/sync_files', 'syncFilesLines');
-				Route::get('languages/texts/{lang?}/{file?}', 'showTexts')->where('lang', '[^/]*')->where('file', '[^/]*');
-				Route::post('languages/texts/{lang}/{file}', 'updateTexts')->where('lang', '[^/]+')->where('file', '[^/]+');
+				Route::get('languages/texts/{lang?}/{file?}', 'showTexts')
+					->where('lang', '[^/]*')
+					->where('file', '[^/]*');
+				Route::post('languages/texts/{lang}/{file}', 'updateTexts')
+					->where('lang', '[^/]+')
+					->where('file', '[^/]+');
 			});
 		Route::get('permissions/create_default_entries', [PermissionController::class, 'createDefaultEntries']);
 		Route::get('blacklists/add', [BlacklistController::class, 'banUser']);
@@ -96,7 +104,6 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 		PanelRoutes::resource('countries/{countryCode}/cities', CityController::class);
 		PanelRoutes::resource('countries/{countryCode}/admins1', SubAdmin1Controller::class);
 		PanelRoutes::resource('currencies', CurrencyController::class);
-		PanelRoutes::resource('genders', GenderController::class);
 		PanelRoutes::resource('homepage', HomeSectionController::class);
 		PanelRoutes::resource('admins1/{admin1Code}/cities', CityController::class);
 		PanelRoutes::resource('admins1/{admin1Code}/admins2', SubAdmin2Controller::class);
@@ -105,29 +112,20 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 		PanelRoutes::resource('meta_tags', MetaTagController::class);
 		PanelRoutes::resource('packages/promotion', PackageController::class);
 		PanelRoutes::resource('packages/subscription', PackageController::class);
-		PanelRoutes::resource('ad_packages', AdPackageController::class);
-		PanelRoutes::resource('ad_subscriptions', AdSubscriptionController::class);
-		PanelRoutes::resource('product_advertisements', ProductAdvertisementController::class);
 		PanelRoutes::resource('pages', PageController::class);
 		PanelRoutes::resource('payments/promotion', PaymentController::class);
 		PanelRoutes::resource('payments/subscription', PaymentController::class);
 		PanelRoutes::resource('payment_methods', PaymentMethodController::class);
 		PanelRoutes::resource('permissions', PermissionController::class);
 		PanelRoutes::resource('pictures', PictureController::class);
+		PanelRoutes::resource('post_types', PostTypeController::class);
 		PanelRoutes::resource('posts', PostController::class);
-		PanelRoutes::resource('p_types', PostTypeController::class);
 		PanelRoutes::resource('report_types', ReportTypeController::class);
 		PanelRoutes::resource('roles', RoleController::class);
 		PanelRoutes::resource('salary_types', SalaryTypeController::class);
 		PanelRoutes::resource('settings', SettingController::class);
 		PanelRoutes::resource('users', UserController::class);
-
-		// Courses Management
-		PanelRoutes::resource('courses', CourseController::class);
-		PanelRoutes::resource('courses/{courseId}/modules', CourseModuleController::class);
-		PanelRoutes::resource('modules/{moduleId}/lessons', CourseLessonController::class);
-		PanelRoutes::resource('lessons/{lessonId}/steps', InteractiveStepController::class);
-
+		
 		// Others
 		Route::get('account', [UserController::class, 'account']);
 		Route::post('ajax/{table}/{field}', [InlineRequestController::class, 'make'])
@@ -170,8 +168,8 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 			->group(function ($router) {
 				$router->pattern('plugin', '.+');
 				Route::get('plugins', 'index');
-				Route::post('plugins/{plugin}/install', 'install');
-				Route::get('plugins/{plugin}/install', 'install');
+				Route::post('plugins/{plugin}/install/code', 'installWithCode');
+				Route::get('plugins/{plugin}/install', 'installWithoutCode');
 				Route::get('plugins/{plugin}/uninstall', 'uninstall');
 				Route::get('plugins/{plugin}/delete', 'delete');
 			});

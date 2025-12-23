@@ -1,120 +1,104 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Models\Scopes\LocalizedScope;
-use App\Models\Traits\CountryTrait;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\Common\HasCountryCodeColumn;
+use App\Models\Traits\SubAdmin2Trait;
 use App\Observers\SubAdmin2Observer;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\SpatieTranslatable\HasTranslations;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy([SubAdmin2Observer::class])]
+#[ScopedBy([LocalizedScope::class])]
 class SubAdmin2 extends BaseModel
 {
-    use Crud, CountryTrait, HasTranslations;
-    
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'subadmin2';
-    
-    /**
-     * The primary key for the model.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'code';
-    public $incrementing = false;
-    
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var boolean
-     */
-    public $timestamps = false;
-    
-    /**
-     * The attributes that aren't mass assignable.
-     *
-     * @var array
-     */
-    protected $guarded = ['id'];
-    
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = ['country_code', 'subadmin1_code', 'code', 'name', 'active'];
-	public $translatable = ['name'];
-    
-    /**
-     * The attributes that should be hidden for arrays
-     *
-     * @var array
-     */
-    // protected $hidden = [];
-    
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
-    // protected $dates = [];
-    
-    /*
-    |--------------------------------------------------------------------------
-    | FUNCTIONS
-    |--------------------------------------------------------------------------
-    */
-    protected static function boot()
-    {
-        parent::boot();
+	use Crud, AppendsTrait, HasFactory, HasCountryCodeColumn, HasTranslations;
+	use SubAdmin2Trait;
 	
-		SubAdmin2::observe(SubAdmin2Observer::class);
+	/**
+	 * The table associated with the model.
+	 *
+	 * @var string
+	 */
+	protected $table = 'subadmin2';
 	
-		static::addGlobalScope(new LocalizedScope());
-    }
+	/**
+	 * The primary key for the model.
+	 *
+	 * @var string
+	 */
+	protected $primaryKey = 'code';
+	protected $keyType = 'string';
+	public $incrementing = false;
 	
-	public function getNameHtml(): string
+	/**
+	 * Indicates if the model should be timestamped.
+	 *
+	 * @var boolean
+	 */
+	public $timestamps = false;
+	
+	/**
+	 * The attributes that aren't mass assignable.
+	 *
+	 * @var array<int, string>
+	 */
+	protected $guarded = ['id'];
+	
+	/**
+	 * The attributes that are mass assignable.
+	 *
+	 * @var array<int, string>
+	 */
+	protected $fillable = ['country_code', 'subadmin1_code', 'code', 'name', 'active'];
+	
+	/**
+	 * @var array<int, string>
+	 */
+	public array $translatable = ['name'];
+	
+	/*
+	|--------------------------------------------------------------------------
+	| FUNCTIONS
+	|--------------------------------------------------------------------------
+	*/
+	
+	/*
+	|--------------------------------------------------------------------------
+	| RELATIONS
+	|--------------------------------------------------------------------------
+	*/
+	public function subAdmin1(): BelongsTo
 	{
-		$currentUrl = preg_replace('#/(search)$#', '', url()->current());
-		$editUrl = $currentUrl . '/' . $this->code . '/edit';
-		
-		return '<a href="' . $editUrl . '" style="float:left;">' . $this->name . '</a>';
+		return $this->belongsTo(SubAdmin1::class, 'subadmin1_code', 'code');
 	}
 	
-	public function citiesBtn($xPanel = false): string
-	{
-		$url = admin_url('admins2/' . $this->code . '/cities');
-		
-		$msg = trans('admin.Cities of admin2', ['admin_division2' => $this->name]);
-		$toolTip = ' data-bs-toggle="tooltip" title="' . $msg . '"';
-		
-		$out = '<a class="btn btn-xs btn-light" href="' . $url . '"' . $toolTip . '>';
-		$out .= '<i class="fa fa-eye"></i> ';
-		$out .= mb_ucfirst(trans('admin.cities'));
-		$out .= '</a>';
-		
-		return $out;
-	}
-    
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
-    public function subAdmin1()
-    {
-        return $this->belongsTo(SubAdmin1::class, 'subadmin1_code', 'code');
-    }
-    
-    /*
-    |--------------------------------------------------------------------------
-    | SCOPES
-    |--------------------------------------------------------------------------
-    */
+	/*
+	|--------------------------------------------------------------------------
+	| SCOPES
+	|--------------------------------------------------------------------------
+	*/
 	
 	/*
 	|--------------------------------------------------------------------------
@@ -124,7 +108,7 @@ class SubAdmin2 extends BaseModel
 	protected function id(): Attribute
 	{
 		return Attribute::make(
-			get: fn ($value) => $this->attributes['code'],
+			get: fn ($value) => $this->code ?? ($this->attributes['code'] ?? $value),
 		);
 	}
 	

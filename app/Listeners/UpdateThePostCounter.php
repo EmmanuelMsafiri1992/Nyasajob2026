@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Listeners;
 
 use App\Events\PostWasVisited;
@@ -18,8 +33,6 @@ class UpdateThePostCounter
 	 *
 	 * @param \App\Events\PostWasVisited $event
 	 * @return bool
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function handle(PostWasVisited $event)
 	{
@@ -48,7 +61,7 @@ class UpdateThePostCounter
 		
 		if (
 			!session()->has('postIsVisited')
-			|| session()->get('postIsVisited') != $event->post->id
+			|| session('postIsVisited') != $event->post->id
 		) {
 			$this->updateCounter($event->post);
 			session()->put('postIsVisited', $event->post->id);

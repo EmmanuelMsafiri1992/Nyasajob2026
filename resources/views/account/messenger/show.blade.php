@@ -1,5 +1,25 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
+
+@php
+    $authUser = auth()->check() ? auth()->user() : null;
+	$authUserId = !empty($authUser) ? $authUser->getAuthIdentifier() : 0;
+	
+    $fiTheme = config('larapen.core.fileinput.theme', 'bs5');
+@endphp
 
 @section('content')
 	@includeFirst([config('larapen.core.customizedViewPath') . 'common.spacer', 'common.spacer'])
@@ -14,7 +34,7 @@
                 <div class="col-md-9 page-content">
                     <div class="inner-box">
                         <h2 class="title-2">
-                            <i class="fas fa-envelope"></i> {{ t('inbox') }}
+                            <i class="fa-solid fa-envelope"></i> {{ t('inbox') }}
                         </h2>
     
                         @if (session()->has('flash_notification'))
@@ -46,12 +66,12 @@
                                         <div class="user-top">
                                             <p>
                                                 <a href="{{ url('account/messages') }}">
-                                                    <i class="fas fa-inbox"></i>
+                                                    <i class="fa-solid fa-inbox"></i>
                                                 </a>&nbsp;
-                                                @if (auth()->id() != data_get($thread, 'p_creator.id'))
+                                                @if ($authUser != data_get($thread, 'p_creator.id'))
                                                     <a href="#user">
                                                         @if (isUserOnline(data_get($thread, 'p_creator')))
-                                                            <i class="fa fa-circle color-success"></i>&nbsp;
+                                                            <i class="fa-solid fa-circle color-success"></i>&nbsp;
                                                         @endif
                                                         <strong>
                                                             <a href="{{ \App\Helpers\UrlGen::user(data_get($thread, 'p_creator')) }}">
@@ -76,7 +96,7 @@
                                                        data-bs-placement="top"
                                                        title="{{ t('Mark as not important') }}"
                                                     >
-                                                        <i class="fas fa-star"></i>
+                                                        <i class="fa-solid fa-star"></i>
                                                     </a>
                                                 @else
                                                     <a href="{{ url('account/messages/' . data_get($thread, 'id') . '/actions?type=markAsImportant') }}"
@@ -85,7 +105,7 @@
                                                        data-bs-placement="top"
                                                        title="{{ t('Mark as important') }}"
                                                     >
-                                                        <i class="far fa-star"></i>
+                                                        <i class="fa-regular fa-star"></i>
                                                     </a>
                                                 @endif
                                                 <a href="{{ url('account/messages/' . data_get($thread, 'id') . '/delete') }}"
@@ -94,7 +114,7 @@
                                                    data-bs-placement="top"
                                                    title="{{ t('Delete') }}"
                                                 >
-                                                    <i class="fas fa-trash"></i>
+                                                    <i class="fa-solid fa-trash"></i>
                                                 </a>
                                                 @if (data_get($thread, 'p_is_unread'))
                                                     <a href="{{ url('account/messages/' . data_get($thread, 'id') . '/actions?type=markAsRead') }}"
@@ -103,7 +123,7 @@
                                                        data-bs-placement="top"
                                                        title="{{ t('Mark as read') }}"
                                                     >
-                                                        <i class="fas fa-envelope"></i>
+                                                        <i class="fa-solid fa-envelope"></i>
                                                     </a>
                                                 @else
                                                     <a href="{{ url('account/messages/' . data_get($thread, 'id') . '/actions?type=markAsUnread') }}"
@@ -112,7 +132,7 @@
                                                        data-bs-placement="top"
                                                        title="{{ t('Mark as unread') }}"
                                                     >
-                                                        <i class="fas fa-envelope-open"></i>
+                                                        <i class="fa-solid fa-envelope-open"></i>
                                                     </a>
                                                 @endif
                                             </div>
@@ -139,9 +159,12 @@
 
                                         <div class="type-message">
                                             <div class="type-form">
-                                                <?php $updateUrl = url('account/messages/' . data_get($thread, 'id')); ?>
+                                                @php
+                                                    $updateUrl = url('account/messages/' . data_get($thread, 'id'));
+                                                @endphp
                                                 <form id="chatForm" role="form" method="POST" action="{{ $updateUrl }}" enctype="multipart/form-data">
                                                     {!! csrf_field() !!}
+                                                    @honeypot
                                                     <input name="_method" type="hidden" value="PUT">
                                                     <textarea id="body" name="body"
                                                           maxlength="500"
@@ -153,7 +176,7 @@
                                                     <div class="button-wrap">
                                                         <input id="addFile" name="filename" type="file">
                                                         <button id="sendChat" class="btn btn-primary" type="submit">
-                                                            <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                                                            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
                                                         </button>
                                                     </div>
                                                 </form>
@@ -179,6 +202,9 @@
     @if (config('lang.direction') == 'rtl')
         <link href="{{ url('assets/plugins/bootstrap-fileinput/css/fileinput-rtl.min.css') }}" rel="stylesheet">
     @endif
+    @if (str_starts_with($fiTheme, 'explorer'))
+        <link href="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.min.css') }}" rel="stylesheet">
+    @endif
     <style>
         .file-input {
             display: inline-block;
@@ -190,7 +216,7 @@
     @parent
 
     <script>
-        var loadingImage = '{{ url('images/loading.gif') }}';
+        var loadingImage = '{{ url('images/spinners/fading-line.gif') }}';
         var loadingErrorMessage = '{{ t('Threads could not be loaded') }}';
         var actionErrorMessage = '{{ t('This action could not be done') }}';
         var title = {
@@ -205,27 +231,27 @@
     
     <script src="{{ url('assets/plugins/bootstrap-fileinput/js/plugins/sortable.min.js') }}" type="text/javascript"></script>
     <script src="{{ url('assets/plugins/bootstrap-fileinput/js/fileinput.min.js') }}" type="text/javascript"></script>
-    <script src="{{ url('assets/plugins/bootstrap-fileinput/themes/fas/theme.js') }}" type="text/javascript"></script>
+    <script src="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.js') }}" type="text/javascript"></script>
     <script src="{{ url('common/js/fileinput/locales/' . config('app.locale') . '.js') }}" type="text/javascript"></script>
     
     <script>
-        /* Initialize with defaults (filename) */
-        $('#addFile').fileinput(
-        {
-            theme: 'fas',
-            language: '{{ config('app.locale') }}',
-            @if (config('lang.direction') == 'rtl')
-                rtl: true,
-            @endif
-            allowedFileExtensions: {!! getUploadFileTypes('file', true) !!},
-            maxFileSize: {{ (int)config('settings.upload.max_file_size', 1000) }},
-            browseClass: 'btn btn-primary',
-            browseIcon: '<i class="fas fa-paperclip" aria-hidden="true"></i>',
-            layoutTemplates: {
-                main1: '{browse}',
-                main2: '{browse}',
-                btnBrowse: '<div tabindex="500" class="{css}"{status}>{icon}</div>',
-            }
+        let options = {};
+        options.theme = '{{ $fiTheme }}';
+        options.language = '{{ config('app.locale') }}';
+        options.rtl = {{ (config('lang.direction') == 'rtl') ? 'true' : 'false' }};
+        options.allowedFileExtensions = {!! getUploadFileTypes('file', true) !!};
+        options.maxFileSize = {{ (int)config('settings.upload.max_file_size', 1000) }};
+        options.browseClass = 'btn btn-primary';
+        options.browseIcon = '<i class="fa-solid fa-paperclip" aria-hidden="true"></i>';
+        options.layoutTemplates = {
+            main1: '{browse}',
+            main2: '{browse}',
+            btnBrowse: '<div tabindex="500" class="{css}"{status}>{icon}</div>',
+        };
+
+        onDocumentReady((event) => {
+            {{-- fileinput (filename) --}}
+            $('#addFile').fileinput(options);
         });
     </script>
 @endsection

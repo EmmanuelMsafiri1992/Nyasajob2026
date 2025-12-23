@@ -1,18 +1,42 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use NotificationChannels\Twilio\TwilioChannel;
 use NotificationChannels\Twilio\TwilioSmsMessage;
 
-class ExampleSms extends Notification implements ShouldQueue
+/*
+ * Note: Implementing "Illuminate\Contracts\Queue\ShouldQueue"
+ * allows Laravel to save mail sending as Queue in the database
+ */
+
+class ExampleSms extends Notification
 {
 	use Queueable;
 	
-	public function __construct() { }
+	private ?string $driver;
+	
+	public function __construct(?string $driver = null)
+	{
+		$this->driver = !empty($driver) ? $driver : config('settings.sms.driver');
+	}
 	
 	public function via($notifiable)
 	{
@@ -20,7 +44,7 @@ class ExampleSms extends Notification implements ShouldQueue
 			return [];
 		}
 		
-		if (config('settings.sms.driver') == 'twilio') {
+		if ($this->driver == 'twilio') {
 			return [TwilioChannel::class];
 		}
 		

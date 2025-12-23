@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @section('search')
@@ -10,7 +23,9 @@
 		
 		@if (session()->has('flash_notification'))
 			@includeFirst([config('larapen.core.customizedViewPath') . 'common.spacer', 'common.spacer'])
-			<?php $paddingTopExists = true; ?>
+			@php
+				$paddingTopExists = true;
+			@endphp
 			<div class="container">
 				<div class="row">
 					<div class="col-12">
@@ -22,11 +37,11 @@
 		
 		@if (!empty($sections))
 			@foreach($sections as $section)
-				<?php
-				 $section ??= [];
-				$sectionView = data_get($section, 'view');
-				$sectionData = (array)data_get($section, 'data');
-				?>
+				@php
+					$section ??= [];
+					$sectionView = data_get($section, 'view');
+					$sectionData = (array)data_get($section, 'data');
+				@endphp
 				@if (!empty($sectionView) && view()->exists($sectionView))
 					@includeFirst(
 						[
@@ -39,20 +54,9 @@
 						]
 					)
 				@endif
-
-				{{-- Ad Placement After First Section --}}
-				@if ($loop->first && !empty($topAdvertising))
-					<div class="container my-4">
-						<div class="row">
-							<div class="col-12 text-center">
-								{!! data_get($topAdvertising, 'tracking_code_large') !!}
-							</div>
-						</div>
-					</div>
-				@endif
 			@endforeach
 		@endif
-
+		
 	</div>
 @endsection
 

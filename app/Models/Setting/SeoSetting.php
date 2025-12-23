@@ -1,43 +1,34 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Setting;
 
-use App\Helpers\Files\Upload;
+/*
+ * settings.seo.option
+ */
 
 class SeoSetting
 {
-	public static function passedValidation($request)
-	{
-		$params = [
-			[
-				'attribute' => 'og_image',
-				'destPath'  => 'app/logo',
-				'width'     => (int)config('larapen.core.picture.otherTypes.bgHeader.width', 2000),
-				'height'    => (int)config('larapen.core.picture.otherTypes.bgHeader.height', 1000),
-				'ratio'     => config('larapen.core.picture.otherTypes.bgHeader.ratio', '1'),
-				'upsize'    => config('larapen.core.picture.otherTypes.bgHeader.upsize', '0'),
-				'filename'  => 'og-',
-				'quality'   => 100,
-			],
-		];
-		
-		foreach ($params as $param) {
-			$file = $request->hasFile($param['attribute'])
-				? $request->file($param['attribute'])
-				: $request->input($param['attribute']);
-			
-			$request->request->set($param['attribute'], Upload::image($param['destPath'], $file, $param));
-		}
-		
-		return $request;
-	}
-	
 	public static function getValues($value, $disk)
 	{
 		if (empty($value)) {
 			
 			$value['robots_txt'] = getDefaultRobotsTxtContent();
 			$value['robots_txt_sm_indexes'] = '1';
-			$value['multi_countries_urls'] = config('larapen.core.multiCountriesUrls');
+			$value['multi_country_urls'] = config('larapen.core.multiCountryUrls');
 			$value['listing_hashed_id_enabled'] = '0';
 			$value['listing_hashed_id_seo_redirection'] = '1';
 			
@@ -49,8 +40,8 @@ class SeoSetting
 			if (!array_key_exists('robots_txt_sm_indexes', $value)) {
 				$value['robots_txt_sm_indexes'] = '1';
 			}
-			if (!array_key_exists('multi_countries_urls', $value)) {
-				$value['multi_countries_urls'] = config('larapen.core.multiCountriesUrls');
+			if (!array_key_exists('multi_country_urls', $value)) {
+				$value['multi_country_urls'] = config('larapen.core.multiCountryUrls');
 			}
 			if (!array_key_exists('listing_hashed_id_enabled', $value)) {
 				$value['listing_hashed_id_enabled'] = '0';
@@ -60,11 +51,6 @@ class SeoSetting
 			}
 			
 		}
-		
-		// Append files URLs
-		// og_image_url
-		$ogImage = $value['og_image'] ?? null;
-		$value['og_image_url'] = !empty($ogImage) ? imgUrl($ogImage, 'bgHeader') : null;
 		
 		return $value;
 	}
@@ -76,7 +62,9 @@ class SeoSetting
 	
 	public static function getFields($diskName)
 	{
-		$fields = [
+		$fields = [];
+		
+		$fields = array_merge($fields, [
 			[
 				'name'  => 'verification_tools_sep',
 				'type'  => 'custom_html',
@@ -85,15 +73,6 @@ class SeoSetting
 			[
 				'name'              => 'google_site_verification',
 				'label'             => trans('admin.google_site_verification_label'),
-				'type'              => 'text',
-				'hint'              => trans('admin.seo_site_verification_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'alexa_verify_id',
-				'label'             => trans('admin.alexa_verify_id_label'),
 				'type'              => 'text',
 				'hint'              => trans('admin.seo_site_verification_hint'),
 				'wrapperAttributes' => [
@@ -126,16 +105,18 @@ class SeoSetting
 					'class' => 'col-md-6',
 				],
 			],
+		]);
+		
+		$fields = array_merge($fields, [
 			[
 				'name'  => 'robots_txt_sep',
 				'type'  => 'custom_html',
 				'value' => trans('admin.robots_txt_sep_value'),
 			],
 			[
-				'name'         => 'robots_txt_info',
-				'type'         => 'custom_html',
-				'value'        => trans('admin.robots_txt_info_value', ['domain' => url('/')]),
-				'disableTrans' => 'true',
+				'name'  => 'robots_txt_info',
+				'type'  => 'custom_html',
+				'value' => trans('admin.robots_txt_info_value', ['domain' => url('/')]),
 			],
 			[
 				'name'       => 'robots_txt',
@@ -155,7 +136,9 @@ class SeoSetting
 					'class' => 'col-md-12',
 				],
 			],
-			
+		]);
+		
+		$fields = array_merge($fields, [
 			[
 				'name'  => 'no_index',
 				'type'  => 'custom_html',
@@ -224,11 +207,7 @@ class SeoSetting
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
-			],
-			[
-				'name'  => 'separator_clear_10',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
+				'newline'           => true,
 			],
 			[
 				'name'              => 'no_index_filters_orders',
@@ -247,11 +226,6 @@ class SeoSetting
 				],
 			],
 			[
-				'name'  => 'separator_clear_11',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
-			],
-			[
 				'name'              => 'no_index_listing_report',
 				'label'             => trans('admin.no_index_listing_report_label'),
 				'type'              => 'checkbox_switch',
@@ -267,36 +241,13 @@ class SeoSetting
 					'class' => 'col-12',
 				],
 			],
-			
+		]);
+		
+		$fields = array_merge($fields, [
 			[
-				'name'  => 'seo_permalink_sep',
+				'name'  => 'listing_id_hashing',
 				'type'  => 'custom_html',
-				'value' => trans('admin.seo_permalink_title'),
-			],
-			[
-				'name'  => 'seo_permalink_warning_sep',
-				'type'  => 'custom_html',
-				'value' => trans('admin.seo_permalink_warning'),
-			],
-			[
-				'name'              => 'listing_permalink',
-				'label'             => trans('admin.listing_permalink_label'),
-				'type'              => 'select2_from_array',
-				'options'           => self::getPermalinks('post'),
-				'hint'              => trans('admin.listing_permalink_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
-			],
-			[
-				'name'              => 'listing_permalink_ext',
-				'label'             => trans('admin.permalink_ext_label'),
-				'type'              => 'select2_from_array',
-				'options'           => self::getPermalinkExt(),
-				'hint'              => trans('admin.permalink_ext_hint') . '<br>' . trans('admin.listing_permalink_ext_hint'),
-				'wrapperAttributes' => [
-					'class' => 'col-md-6',
-				],
+				'value' => trans('admin.listing_id_hashing_title'),
 			],
 			[
 				'name'              => 'listing_hashed_id_enabled',
@@ -316,69 +267,97 @@ class SeoSetting
 					'class' => 'col-md-6',
 				],
 			],
-			
+		]);
+		
+		// Get the permalinks patterns list
+		$permalinks = self::getPermalinks();
+		
+		// Get the drivers selectors list as JS objects
+		$permalinksJson = collect($permalinks)->toJson();
+		
+		$fields = array_merge($fields, [
+			[
+				'name'  => 'seo_permalink_sep',
+				'type'  => 'custom_html',
+				'value' => trans('admin.seo_permalink_title'),
+			],
+			[
+				'name'  => 'seo_permalink_warning_sep',
+				'type'  => 'custom_html',
+				'value' => trans('admin.seo_permalink_warning'),
+			],
+			[
+				'name'              => 'listing_permalink',
+				'label'             => trans('admin.listing_permalink_label'),
+				'type'              => 'select2_from_array',
+				'options'           => $permalinks,
+				'hint'              => trans('admin.listing_permalink_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'listing_permalink_ext',
+				'label'             => trans('admin.permalink_ext_label'),
+				'type'              => 'select2_from_array',
+				'options'           => self::getPermalinkExt(),
+				'hint'              => trans('admin.permalink_ext_hint') . '<br>' . trans('admin.listing_permalink_ext_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+		]);
+		
+		$fields = array_merge($fields, [
 			[
 				'name'  => 'separator_4',
 				'type'  => 'custom_html',
-				'value' => trans('admin.seo_html_multi_countries_urls'),
+				'value' => trans('admin.seo_html_multi_country_urls'),
 			],
 			[
 				'name'  => 'separator_4_1',
 				'type'  => 'custom_html',
-				'value' => trans('admin.multi_countries_urls_optimization_warning'),
+				'value' => trans('admin.multi_country_urls_optimization_warning'),
 			],
 			[
-				'name'  => 'multi_countries_urls',
+				'name'  => 'multi_country_urls',
 				'label' => trans('admin.Enable The Multi-countries URLs Optimization'),
 				'type'  => 'checkbox_switch',
-				'hint'  => trans('admin.multi_countries_urls_optimization_hint'),
+				'hint'  => trans('admin.multi_country_urls_optimization_hint'),
 			],
 			[
 				'name'  => 'separator_4_2',
 				'type'  => 'custom_html',
-				'value' => trans('admin.multi_countries_urls_optimization_info'),
+				'value' => trans('admin.multi_country_urls_optimization_info'),
 			],
-			
-			[
-				'name'  => 'other_settings_sep',
-				'type'  => 'custom_html',
-				'value' => trans('admin.seo_other_settings'),
-			],
-			[
-				'name'   => 'og_image',
-				'label'  => trans('admin.og_image_label'),
-				'type'   => 'image',
-				'upload' => true,
-				'disk'   => $diskName,
-				'hint'   => trans('admin.og_image_hint'),
-			],
-		];
+		]);
 		
-		return $fields;
-	}
-	
-	/**
-	 * @param string $key
-	 * @return array
-	 */
-	private static function getPermalinks(string $key)
-	{
-		$permalinks = config('larapen.core.permalink.' . $key);
-		
-		return collect($permalinks)->mapWithKeys(function ($value, $key) {
-			return [$value => $value];
-		})->toArray();
+		return addOptionsGroupJavaScript(__NAMESPACE__, __CLASS__, $fields, [
+			'permalinksJson' => $permalinksJson,
+		]);
 	}
 	
 	/**
 	 * @return array
 	 */
-	private static function getPermalinkExt()
+	private static function getPermalinks(): array
 	{
-		$permalinks = config('larapen.core.permalinkExt');
+		$permalinks = config('larapen.options.permalink.post');
 		
-		return collect($permalinks)->mapWithKeys(function ($value, $key) {
-			return [$value => (!empty($value)) ? $value : '&nbsp;'];
-		})->toArray();
+		return collect($permalinks)
+			->mapWithKeys(fn ($item) => [$item => $item])
+			->toArray();
+	}
+	
+	/**
+	 * @return array
+	 */
+	private static function getPermalinkExt(): array
+	{
+		$extensions = config('larapen.options.permalinkExt');
+		
+		return collect($extensions)
+			->mapWithKeys(fn ($item) => [$item => !empty($item) ? $item : '&nbsp;'])
+			->toArray();
 	}
 }

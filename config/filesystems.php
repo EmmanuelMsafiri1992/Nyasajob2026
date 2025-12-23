@@ -8,8 +8,8 @@ return [
 	|--------------------------------------------------------------------------
 	|
 	| Here you may specify the default filesystem disk that should be used
-	| by the framework. The "local" disk, as well as a variety of cloud
-	| based disks are available to your application. Just store away!
+    | by the framework. The "local" disk, as well as a variety of cloud
+    | based disks are available to your application for file storage.
 	|
 	*/
 	
@@ -17,7 +17,7 @@ return [
 	
 	/*
 	|--------------------------------------------------------------------------
-	| Default Cloud Filesystem Disk
+	| Default Cloud Filesystem Disk (Deprecated from Laravel 11.x)
 	|--------------------------------------------------------------------------
 	|
 	| Many applications store files both locally and in the cloud. For this
@@ -33,11 +33,11 @@ return [
 	| Filesystem Disks
 	|--------------------------------------------------------------------------
 	|
-	| Here you may configure as many filesystem "disks" as you wish, and you
-	| may even configure multiple disks of the same driver. Defaults have
-	| been setup for each driver as an example of the required options.
-	|
-	| Supported Drivers: "local", "ftp", "sftp", "s3", "dropbox"
+	| Below you may configure as many filesystem disks as necessary, and you
+    | may even configure multiple disks for the same driver. Examples for
+    | most supported storage drivers are configured here for reference.
+    |
+    | Supported Drivers: "local", "ftp", "sftp", "s3", "dropbox"
 	|
 	*/
 	
@@ -50,9 +50,9 @@ return [
 		],
 		
 		'public' => [
-			'driver'     => 'local',
-			'root'       => storage_path('app/public'),
-			'url'        => env('APP_URL') . '/storage',
+			'driver' 	 => 'local',
+			'root' 		 => storage_path('app/public'),
+			'url' 		 => env('APP_URL').'/storage',
 			'visibility' => 'public',
 			'throw'      => false,
 		],
@@ -95,15 +95,18 @@ return [
 		],
 		
 		'sftp' => [
-			'driver'     => 'sftp',
-			'host'       => env('SFTP_HOST'),
-			'username'   => env('SFTP_USERNAME'),
-			'password'   => env('SFTP_PASSWORD'), // Or SSH Encryption Password
-			'privateKey' => env('SFTP_SSH_PRIVATE_KEY'), // '/path/to/privateKey'
-			'port'       => env('SFTP_PORT', 22),
-			'root'       => env('SFTP_ROOT', ''),
-			'timeout'    => env('SFTP_TIMEOUT', 30),
-			'throw'      => env('SFTP_THROW', false),
+			'driver'          => 'sftp',
+			'host' 	          => env('SFTP_HOST'),
+			'username'        => env('SFTP_USERNAME'),
+			'password'        => env('SFTP_PASSWORD'), // Or SSH Encryption Password
+			'privateKey'      => env('SFTP_SSH_PRIVATE_KEY'), // '/path/to/privateKey'
+			'hostFingerprint' => env('SFTP_HOST_FINGERPRINT'),
+			'maxTries'        => env('SFTP_MAX_TRIES', 4),
+			'passphrase'      => env('SFTP_PASSPHRASE'),
+			'port'            => env('SFTP_PORT', 22),
+			'root'            => env('SFTP_ROOT', ''),
+			'timeout'         => env('SFTP_TIMEOUT', 30),
+			'throw'           => env('SFTP_THROW', false),
 		],
 		
 		'minio' => [
@@ -120,11 +123,11 @@ return [
 		
 		's3' => [
 			'driver'   => 's3',
-			'key'      => env('AWS_ACCESS_KEY_ID'),
+			'key' 	   => env('AWS_ACCESS_KEY_ID'),
 			'secret'   => env('AWS_SECRET_ACCESS_KEY'),
 			'region'   => env('AWS_DEFAULT_REGION'),
 			'bucket'   => env('AWS_BUCKET'),
-			'url'      => env('AWS_URL', ''),
+			'url'	   => env('AWS_URL', ''),
 			'endpoint' => env('AWS_ENDPOINT'),
 			'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
 			'throw'    => env('AWS_THROW', false),

@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 /**
  * Email address prefix (local-part) mask
  *
@@ -348,7 +363,7 @@ function getUrlHost(?string $url): ?string
  * @param string|null $skip
  * @return string
  */
-function noFollowLinks(?string $html, ?string $skip = null): string
+function noFollowLinks(?string $html, string $skip = null): string
 {
 	$callback = function ($mach) use ($skip) {
 		$link = $mach[1] ?? null;
@@ -985,7 +1000,7 @@ function splitName(?string $input): array
  * @param int|null $default
  * @return string
  */
-function keepOnlyNumericChars(?string $value, ?int $default = null): string
+function keepOnlyNumericChars(?string $value, int $default = null): string
 {
 	// Use regular expression to keep only numeric characters
 	$value = preg_replace('/[^0-9]/', '', strval($value));
@@ -1229,7 +1244,7 @@ function arrayTranslationsToJson(?array $entry, bool $unescapedUnicode = true): 
  * @param int|null $decimalPlaces
  * @return string
  */
-function getInputNumberStep(?int $decimalPlaces = null): string
+function getInputNumberStep(int $decimalPlaces = null): string
 {
 	if (empty($decimalPlaces) || $decimalPlaces <= 0) {
 		$decimalPlaces = 2;

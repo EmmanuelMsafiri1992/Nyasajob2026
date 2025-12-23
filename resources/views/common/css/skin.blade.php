@@ -3,7 +3,8 @@
 /* === Skin === */
 	{{-- ========= START BTN ========= --}}
 	{{-- .btn-primary --}}
-	.skin .btn-primary {
+	.skin .btn-primary,
+	html[theme="dark"] .skin .btn-primary {
 		color: {{ $primaryColor }};
 		background-color: {{ $primaryBgColor }};
 		border-color: {{ $primaryBgColor }};
@@ -15,7 +16,16 @@
 	.skin .btn-primary.active,
 	.skin .btn-primary.active:focus,
 	.skin .show > .btn-primary.dropdown-toggle,
-	.skin .open .dropdown-toggle.btn-primary {
+	.skin .open .dropdown-toggle.btn-primary,
+	
+	html[theme="dark"] .skin .btn-primary:hover,
+	html[theme="dark"] .skin .btn-primary:focus,
+	html[theme="dark"] .skin .btn-primary:active,
+	html[theme="dark"] .skin .btn-primary:active:focus,
+	html[theme="dark"] .skin .btn-primary.active,
+	html[theme="dark"] .skin .btn-primary.active:focus,
+	html[theme="dark"] .skin .show > .btn-primary.dropdown-toggle,
+	html[theme="dark"] .skin .open .dropdown-toggle.btn-primary {
 		color: {{ $primaryColor }};
 		background-color: {{ $primaryBgColor10 }};
 		border-color: {{ $primaryBgColor10 }};
@@ -28,7 +38,8 @@
 	}
 	
 	{{-- .btn-primary-dark --}}
-	.skin .btn-primary-dark {
+	.skin .btn-primary-dark,
+	html[theme="dark"] .skin .btn-primary-dark {
 		color: {{ $primaryDarkColor }};
 		background-color: {{ $primaryDarkBgColor }};
 		border-color: {{ $primaryDarkBgColor }};
@@ -40,7 +51,16 @@
 	.skin .btn-primary-dark.active,
 	.skin .btn-primary-dark.active:focus,
 	.skin .show > .btn-primary-dark.dropdown-toggle,
-	.skin .open .dropdown-toggle.btn-primary-dark {
+	.skin .open .dropdown-toggle.btn-primary-dark,
+	
+	html[theme="dark"] .skin .btn-primary-dark:hover,
+	html[theme="dark"] .skin .btn-primary-dark:focus,
+	html[theme="dark"] .skin .btn-primary-dark:active,
+	html[theme="dark"] .skin .btn-primary-dark:active:focus,
+	html[theme="dark"] .skin .btn-primary-dark.active,
+	html[theme="dark"] .skin .btn-primary-dark.active:focus,
+	html[theme="dark"] .skin .show > .btn-primary-dark.dropdown-toggle,
+	html[theme="dark"] .skin .open .dropdown-toggle.btn-primary-dark {
 		color: {{ $primaryDarkColor }};
 		background-color: {{ $primaryDarkBgColor10 }};
 		border-color: {{ $primaryDarkBgColor10 }};
@@ -53,7 +73,8 @@
 	}
 	
 	{{-- .btn-outline-primary --}}
-	.skin .btn-outline-primary {
+	.skin .btn-outline-primary,
+	html[theme="dark"] .skin .btn-outline-primary {
 		color: {{ $primaryBgColor }};
 		background-color: {{ $primaryColor }};
 		border-color: {{ $primaryBgColor }};
@@ -65,7 +86,16 @@
 	.skin .btn-outline-primary.active,
 	.skin .btn-outline-primary.active:focus,
 	.skin .show > .btn-outline-primary.dropdown-toggle,
-	.skin .open .dropdown-toggle.btn-outline-primary {
+	.skin .open .dropdown-toggle.btn-outline-primary,
+	
+	html[theme="dark"] .skin .btn-outline-primary:hover,
+	html[theme="dark"] .skin .btn-outline-primary:focus,
+	html[theme="dark"] .skin .btn-outline-primary:active,
+	html[theme="dark"] .skin .btn-outline-primary:active:focus,
+	html[theme="dark"] .skin .btn-outline-primary.active,
+	html[theme="dark"] .skin .btn-outline-primary.active:focus,
+	html[theme="dark"] .skin .show > .btn-outline-primary.dropdown-toggle,
+	html[theme="dark"] .skin .open .dropdown-toggle.btn-outline-primary {
 		color: {{ $primaryColor }};
 		background-color: {{ $primaryBgColor }};
 		border-color: {{ $primaryBgColor }};
@@ -78,7 +108,8 @@
 	}
 	
 	{{-- .btn-primary.btn-gradient --}}
-	.skin .btn-primary.btn-gradient {
+	.skin .btn-primary.btn-gradient,
+	html[theme="dark"] .skin .btn-primary.btn-gradient {
 		color: {{ $primaryColor }};
 		background: -webkit-linear-gradient(292deg, {{ $primaryBgColor20d }} 44%, {{ $primaryBgColor }} 85%);
 		background: -moz-linear-gradient(292deg, {{ $primaryBgColor20d }} 44%, {{ $primaryBgColor }} 85%);
@@ -97,7 +128,16 @@
 	.skin .btn-primary.btn-gradient.active,
 	.skin .btn-primary.btn-gradient.active:focus,
 	.skin .show > .btn-primary.btn-gradient.dropdown-toggle,
-	.skin .open .dropdown-toggle.btn-primary.btn-gradient {
+	.skin .open .dropdown-toggle.btn-primary.btn-gradient,
+	
+	html[theme="dark"] .skin .btn-primary.btn-gradient:hover,
+	html[theme="dark"] .skin .btn-primary.btn-gradient:focus,
+	html[theme="dark"] .skin .btn-primary.btn-gradient:active,
+	html[theme="dark"] .skin .btn-primary.btn-gradient:active:focus,
+	html[theme="dark"] .skin .btn-primary.btn-gradient.active,
+	html[theme="dark"] .skin .btn-primary.btn-gradient.active:focus,
+	html[theme="dark"] .skin .show > .btn-primary.btn-gradient.dropdown-toggle,
+	html[theme="dark"] .skin .open .dropdown-toggle.btn-primary.btn-gradient {
 		color: {{ $primaryColor }};
 		background-color: {{ $primaryBgColor }};
 		border-color: {{ $primaryBgColor }};
@@ -105,7 +145,11 @@
 	}
 	.skin .btn-check:focus+.btn-primary.btn-gradient,
 	.skin .btn-primary.btn-gradient:focus,
-	.skin .btn-primary.btn-gradient.focus {
+	.skin .btn-primary.btn-gradient.focus,
+	
+	html[theme="dark"] .skin .btn-check:focus+.btn-primary.btn-gradient,
+	html[theme="dark"] .skin .btn-primary.btn-gradient:focus,
+	html[theme="dark"] .skin .btn-primary.btn-gradient.focus {
 		box-shadow: 0 0 0 2px {{ $primaryBgColor50 }};
 	}
 	
@@ -558,11 +602,39 @@
 	.skin .select2-container--default .select2-selection--multiple {
 		border-color: #ddd;
 	}
-	.skin .form-control:focus,
+	.skin div:not(.input-group) > .form-control:focus,
 	.skin .select2-container--default.select2-container--focus .select2-selection--multiple {
 		border-color: {{ $primaryBgColor }};
 		box-shadow: 0 1px 0 {{ $primaryBgColor }}, 0 -1px 0 {{ $primaryBgColor }}, -1px 0 0 {{ $primaryBgColor }}, 1px 0 0 {{ $primaryBgColor }};
 		outline: 0 none;
+	}
+	.skin .input-group:focus-within {
+		border: 1px solid {{ $primaryBgColor }};
+		box-shadow: 0 1px 0 {{ $primaryBgColor }}, 0 -1px 0 {{ $primaryBgColor }}, -1px 0 0 {{ $primaryBgColor }}, 1px 0 0 {{ $primaryBgColor }};
+		outline: 0 none;
+	}
+	
+	.skin div:not(.input-group) > .form-control.is-invalid,
+	.skin div:not(.input-group) > .form-control.was-validated,
+	.skin .select2-container--default.is-invalid .select2-selection--multiple.is-invalid {
+		border-color: #dc3545;
+	}
+	
+	.skin div:not(.input-group) > .form-control.is-invalid:focus,
+	.skin div:not(.input-group) > .form-control.was-validated:focus,
+	.skin .select2-container--default.is-invalid.select2-container--focus {
+		border-color: #dc3545;
+		box-shadow: 0 1px 0 #dc3545, 0 -1px 0 #dc3545, -1px 0 0 #dc3545, 1px 0 0 #dc3545;
+	}
+	
+	.skin .input-group.is-invalid,
+	.skin .input-group.was-validated {
+		border: 1px solid #dc3545;
+		border-radius: 6px;
+	}
+	.skin .input-group.is-invalid:focus-within,
+	.skin .input-group.was-validated:focus-within {
+		box-shadow: 0 1px 0 #dc3545, 0 -1px 0 #dc3545, -1px 0 0 #dc3545, 1px 0 0 #dc3545;
 	}
 	
 	.skin .logo,

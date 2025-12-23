@@ -1,16 +1,44 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
-<?php
-	$addListingUrl = (isset($addListingUrl)) ? $addListingUrl : \App\Helpers\UrlGen::addPost();
-	$addListingAttr = '';
-	if (!auth()->check()) {
-		if (config('settings.single.guests_can_post_listings') != '1') {
-			$addListingUrl = '#quickLogin';
-			$addListingAttr = ' data-bs-toggle="modal"';
-		}
-	}
-?>
+@php
+	$promoPackages ??= [];
+	$promoPackagesErrorMessage ??= '';
+	
+	$subsPackages ??= [];
+	$subsPackagesErrorMessage ??= '';
+	
+	$isAllTypesOfPackageExist = (!empty($promoPackages) && !empty($subsPackages));
+	$isAllTypesOfPackageNotExist = (empty($promoPackages) && empty($subsPackages));
+	$errorMessage = t('no_packages_found');
+	
+	// Get the active tab
+	$defaultPackageType = config('settings.listing_form.default_package_type');
+	$packageType = request()->query('type', $defaultPackageType);
+	
+	// Get the active tab (by checking if its packages exist)
+	$packageType = ($packageType == 'promotion' && !empty($promoPackages)) ? 'promotion' : 'subscription';
+	$packageType = ($packageType == 'subscription' && !empty($subsPackages)) ? 'subscription' : 'promotion';
+	
+	// Set the active tab classes
+	$promoLinkClass = ($packageType == 'promotion') ? 'active' : '';
+	$subsLinkClass = ($packageType == 'subscription') ? 'active' : '';
+	$promoContentClass = !empty($promoLinkClass) ? 'show ' . $promoLinkClass : '';
+	$subsContentClass = !empty($subsLinkClass) ? 'show ' . $subsLinkClass : '';
+@endphp
 @section('content')
 	@includeFirst([config('larapen.core.customizedViewPath') . 'common.spacer', 'common.spacer'])
 	<div class="main-container inner-page">
@@ -21,72 +49,71 @@
 			</h1>
 			<hr class="center-block small mt-0">
 			
-			<p class="text-center">
-				{{ t('premium_plans_hint') }}
-			</p>
-			
-			<div class="row mt-5 mb-md-5 justify-content-center">
-				@if (is_array($packages) && count($packages) > 0)
-					@foreach($packages as $package)
-						<?php
-							$boxClass = (data_get($package, 'recommended') == 1) ? ' border-color-primary' : '';
-							$boxHeaderClass = (data_get($package, 'recommended') == 1) ? ' bg-primary border-color-primary text-white' : '';
-							$boxBtnClass = (data_get($package, 'recommended') == 1) ? ' btn-primary' : ' btn-outline-primary';
-						?>
-						<div class="col-md-4">
-							<div class="card mb-4 box-shadow{{ $boxClass }}">
-								<div class="card-header text-center{{ $boxHeaderClass }}">
-									<h4 class="my-0 fw-normal pb-0 h4">{{ data_get($package, 'short_name') }}</h4>
-								</div>
-								<div class="card-body">
-									<h1 class="text-center">
-										<span class="fw-bold">
-											@if (data_get($package, 'currency.in_left') == 1)
-												{!! data_get($package, 'currency.symbol') !!}
-											@endif
-											{{ \App\Helpers\Number::format(data_get($package, 'price')) }}
-											@if (data_get($package, 'currency.in_left') == 0)
-												{!! data_get($package, 'currency.symbol') !!}
-											@endif
-										</span>
-										<small class="text-muted">/ {{ t('package_entity') }}</small>
-									</h1>
-									<ul class="list list-border text-center mt-3 mb-4">
-										@if (is_array(data_get($package, 'description_array')) && count(data_get($package, 'description_array')) > 0)
-											@foreach(data_get($package, 'description_array') as $option)
-												<li>{!! $option !!}</li>
-											@endforeach
-										@else
-											<li> *** </li>
-										@endif
-									</ul>
-									<?php
-									$pricingUrl = '';
-									if (str_starts_with($addListingUrl, '#')) {
-										$pricingUrl = '' . $addListingUrl;
-									} else {
-										$pricingUrl = $addListingUrl . '?package=' . data_get($package, 'id');
-									}
-									?>
-									<a href="{{ $pricingUrl }}"
-									   class="btn btn-lg btn-block{{ $boxBtnClass }}"{!! $addListingAttr !!}
-									>
-										{{ t('get_started') }}
-									</a>
-								</div>
-							</div>
+			@if (!$isAllTypesOfPackageNotExist)
+				@if ($isAllTypesOfPackageExist)
+					<ul class="nav nav-pills justify-content-center mb-3" id="pills-tab" role="tablist">
+						<li class="nav-item" role="presentation">
+							<button class="nav-link {{ $promoLinkClass }}"
+							        id="pills-promotion-tab"
+							        data-bs-toggle="pill"
+							        data-bs-target="#pills-promotion"
+							        type="button"
+							        role="tab"
+							        aria-controls="pills-promotion"
+							        aria-selected="false"
+							>{{ t('promo_packages_tab') }}</button>
+						</li>
+						<li class="nav-item" role="presentation">
+							<button class="nav-link {{ $subsLinkClass }}"
+							        id="pills-subscription-tab"
+							        data-bs-toggle="pill"
+							        data-bs-target="#pills-subscription"
+							        type="button"
+							        role="tab"
+							        aria-controls="pills-subscription"
+							        aria-selected="true"
+							>{{ t('subs_packages_tab') }}</button>
+						</li>
+					</ul>
+				@endif
+				
+				<div class="tab-content" id="pills-tabContent">
+					@if (!empty($promoPackages))
+						<div class="tab-pane fade {{ $promoContentClass }}"
+						     id="pills-promotion"
+						     role="tabpanel"
+						     aria-labelledby="pills-promotion-tab"
+						>
+							@include('pages.pricing.promo-packages', [
+								'packages' => $promoPackages,
+								'message'  => $promoPackagesErrorMessage
+							])
 						</div>
-					@endforeach
-				@else
+					@endif
+					@if (!empty($subsPackages))
+						<div class="tab-pane fade {{ $subsContentClass }}"
+						     id="pills-subscription"
+						     role="tabpanel"
+						     aria-labelledby="pills-subscription-tab"
+						>
+							@include('pages.pricing.subs-packages', [
+								'packages' => $subsPackages,
+								'message'  => $subsPackagesErrorMessage
+							])
+						</div>
+					@endif
+				</div>
+			@else
+				<div class="row mt-5 mb-md-5 justify-content-center">
 					<div class="col-md-6 col-sm-12 text-center">
 						<div class="card bg-light">
 							<div class="card-body">
-								{{ $message ?? null }}
+								{{ $errorMessage ?? null }}
 							</div>
 						</div>
 					</div>
-				@endif
-			</div>
+				</div>
+			@endif
 		
 		</div>
 	</div>

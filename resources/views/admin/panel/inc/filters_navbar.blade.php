@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-filters mb-0 py-1 px-3">
 	{{-- Brand and toggle get grouped for better mobile display --}}
 	<a class="nav-item d-none d-lg-block">
-		<span class="fas fa-filter"></span>
+		<span class="fa-solid fa-filter"></span>
 	</a>
 	<button class="navbar-toggler"
 			type="button"
@@ -11,7 +11,7 @@
 			aria-expanded="false"
 			aria-label="Toggle filters"
 	>
-		<i class="fas fa-filter"></i> {{ trans('admin.Filters') }}
+		<i class="fa-solid fa-filter"></i> {{ trans('admin.Filters') }}
 	</button>
 	
 	{{-- Collect the nav links, forms, and other content for toggling --}}
@@ -23,7 +23,7 @@
 			@endforeach
 			<li>
 				<a href="#" id="remove_filters_button" class="nav-link {{ count(request()->input()) != 0 ? '' : 'invisible' }}">
-					<i class="fa fa-eraser"></i> {{ trans('admin.Remove filters') }}
+					<i class="fa-solid fa-eraser"></i> {{ trans('admin.Remove filters') }}
 				</a>
 			</li>
 		</ul>
@@ -85,7 +85,7 @@
 @endpush
 
 @push('crud_list_scripts')
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.18.2/URI.min.js" type="text/javascript"></script>
+	<script src="{{ asset('assets/plugins/URI.js/1.18.2/URI.min.js') }}" type="text/javascript"></script>
 	<script>
 		function addOrUpdateUriParameter(uri, parameter, value) {
 			var newUrl = normalizeAmpersand(uri);
@@ -108,7 +108,7 @@
 		}
 		
 		// button to remove all filters
-		jQuery(document).ready(function ($) {
+		onDocumentReady((event) => {
 			$("#remove_filters_button").click(function (e) {
 				e.preventDefault();
 				

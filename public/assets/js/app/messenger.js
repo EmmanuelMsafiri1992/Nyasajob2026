@@ -1,7 +1,20 @@
-
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 if (typeof loadingImage === 'undefined') {
-	var loadingImage = '/images/loading.gif';
+	var loadingImage = '/images/spinners/fading-line.gif';
 }
 if (typeof loadingErrorMessage === 'undefined') {
 	var loadingErrorMessage = 'Threads could not be loaded.';
@@ -13,7 +26,7 @@ if (typeof actionText === 'undefined') {
 	var actionText = 'Action';
 }
 
-$(function () {
+onDocumentReady((event) => {
 	$('ul.dropdown-menu-sort li').click(function (e) {
 		$('ul.dropdown-menu-sort li').removeClass('active');
 		$(this).addClass('active');
@@ -203,7 +216,7 @@ function makeAction(currentPageFilter, url, clickedEl, checkedCheckboxes) {
 				} else {
 					let isImportant = clickedEl.hasClass('markAsNotImportant');
 					titleIs = isImportant ? title.important : title.notImportant;
-					clickedEl.find('i').toggleClass('fas far');
+					clickedEl.find('i').toggleClass('fa-solid fa-regular');
 					clickedEl.toggleClass('markAsNotImportant markAsImportant');
 					clickedEl.attr('title', titleIs).attr('data-original-title', titleIs).tooltip('hide');
 					if (typeof xhr.baseUrl !== 'undefined') {

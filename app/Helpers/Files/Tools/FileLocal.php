@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Files\Tools;
 
 use RecursiveDirectoryIterator;
@@ -75,7 +90,7 @@ class FileLocal
 		$empty = true;
 		
 		// Fix the path end 'DIRECTORY_SEPARATOR' for globe()
-		$path = rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+		$path = str($path)->finish(DIRECTORY_SEPARATOR)->toString();
 		
 		if (!is_dir($path)) return true;
 		
@@ -114,7 +129,7 @@ class FileLocal
 	 * @param string $path
 	 * @param array $filenames
 	 */
-	public static function removeUnwantedFiles(string $path, array $filenames = [])
+	public static function removeUnwantedFiles(string $path, array $filenames = []): void
 	{
 		if (empty($filenames)) {
 			// Default unwanted filenames

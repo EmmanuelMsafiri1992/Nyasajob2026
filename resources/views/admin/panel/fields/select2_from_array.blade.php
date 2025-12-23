@@ -1,31 +1,41 @@
 {{-- select2 from array --}}
+@php
+	$field ??= [];
+	
+	$field['options'] ??= [];
+	$field['allows_multiple'] ??= false;
+	$field['allows_null'] ??= false;
+	
+	$name = $field['name'];
+	$name = $field['allows_multiple'] ? $name . '[]' : $name;
+	
+	$multipleAttr = $field['allows_multiple'] ? ' multiple' : '';
+	
+	$fieldValue = $field['value'] ?? ($field['default'] ?? null);
+	$fieldValue = old($field['name'], $fieldValue);
+@endphp
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-	<label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+	<label class="form-label fw-bolder">
+		{!! $field['label'] !!}
+		@if (isset($field['required']) && $field['required'])
+			<span class="text-danger">*</span>
+		@endif
+	</label>
 	@include('admin.panel.fields.inc.translatable_icon')
 	<select
-			name="{{ $field['name'] }}@if (isset($field['allows_multiple']) && $field['allows_multiple']==true)[]@endif"
-			style="width: 100%"
-			@include('admin.panel.inc.field_attributes', ['default_class' =>  'form-select select2_from_array'])
-			@if (isset($field['allows_multiple']) && $field['allows_multiple']==true)multiple @endif
+			name="{{ $name }}" style="width: 100%"
+			@include('admin.panel.inc.field_attributes', ['default_class' => 'form-select select2_from_array'])
+			{!! $multipleAttr !!}
 	>
-		
-		@if (isset($field['allows_null']) && $field['allows_null']==true)
+		@if ($field['allows_null'])
 			<option value="">-</option>
 		@endif
-		
-		@php
-			$field['value'] = (isset($field['value']) && !empty($field['value']))
-				? $field['value']
-				: ($field['default'] ?? null);
-		@endphp
-		@if (isset($field['options']) && !empty($field['options']))
+		@if (!empty($field['options']))
 			@foreach ($field['options'] as $key => $value)
-				<option value="{{ $key }}"
-						@if (isset($field['value']) && ($key==$field['value'] || (is_array($field['value']) && in_array($key, $field['value'])))
-							|| ( ! is_null( old($field['name']) ) && old($field['name']) == $key))
-						selected
-						@endif
-				>{!! $value !!}</option>
+				@php
+					$selectedAttr = ($key == $fieldValue || (is_array($fieldValue) && in_array($key, $fieldValue))) ? ' selected' : '';
+				@endphp
+				<option value="{{ $key }}"{!! $selectedAttr !!}>{!! $value !!}</option>
 			@endforeach
 		@endif
 	</select>
@@ -45,7 +55,7 @@
 	@push('crud_fields_styles')
 	{{-- include select2 css--}}
 	<link href="{{ asset('assets/plugins/select2/css/select2.min.css') }}" rel="stylesheet" type="text/css" />
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+	<link href="{{ asset('assets/plugins/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
 	@endpush
 	
 	{{-- FIELD JS - will be loaded in the after_scripts section --}}
@@ -53,7 +63,7 @@
 	{{-- include select2 js--}}
 	<script src="{{ asset('assets/plugins/select2/js/select2.js') }}"></script>
 	<script>
-		jQuery(document).ready(function($) {
+		onDocumentReady((event) => {
 			// trigger select2 for each untriggered select2 box
 			$('.select2_from_array').each(function (i, obj) {
 				if (!$(obj).hasClass("select2-hidden-accessible"))

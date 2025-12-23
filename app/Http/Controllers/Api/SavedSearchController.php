@@ -1,9 +1,24 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Helpers\Search\PostQueries;
-use App\Http\Controllers\Api\Post\Search\CategoryTrait;
-use App\Http\Controllers\Api\Post\Search\LocationTrait;
+use App\Http\Controllers\Api\Post\List\Search\CategoryTrait;
+use App\Http\Controllers\Api\Post\List\Search\LocationTrait;
 use App\Http\Resources\EntityCollection;
 use App\Http\Resources\SavedSearchResource;
 use App\Models\SavedSearch;
@@ -27,20 +42,19 @@ class SavedSearchController extends BaseController
 	 * @queryParam perPage int Items per page. Can be defined globally from the admin settings. Cannot be exceeded 100. Example: 2
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
 		
-		$countryCode = request()->get('country_code', config('country.code'));
+		$perPage = getNumberOfItemsPerPage('saved_search', request()->integer('perPage'));
+		$countryCode = request()->input('country_code', config('country.code'));
 		
 		// Get Saved Searches
-		$savedSearches = SavedSearch::countryOf($countryCode)
-			->where('user_id', $user->id);
+		$savedSearches = SavedSearch::inCountry($countryCode)
+			->where('user_id', $authUser->getAuthIdentifier());
 		
-		$embed = explode(',', request()->get('embed'));
+		$embed = explode(',', request()->input('embed'));
 		
 		if (in_array('user', $embed)) {
 			$savedSearches->with('user');
@@ -51,7 +65,7 @@ class SavedSearchController extends BaseController
 		}
 		
 		// Sorting
-		$orderBy = request()->get('orderBy');
+		$orderBy = request()->input('orderBy');
 		if (request()->request->has('sort')) {
 			request()->request->replace(['sort' => $orderBy]);
 		} else {
@@ -59,7 +73,7 @@ class SavedSearchController extends BaseController
 		}
 		$savedSearches = $this->applySorting($savedSearches, ['created_at']);
 		
-		$savedSearches = $savedSearches->paginate($this->perPage);
+		$savedSearches = $savedSearches->paginate($perPage);
 		
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
@@ -69,7 +83,7 @@ class SavedSearchController extends BaseController
 		
 		$resourceCollection = new EntityCollection(class_basename($this), $savedSearches);
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -84,21 +98,19 @@ class SavedSearchController extends BaseController
 	 *
 	 * @param $id
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function show($id): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
 		
-		$countryCode = request()->get('country_code', config('country.code'));
+		$countryCode = request()->input('country_code', config('country.code'));
 		
 		// Get Saved Searches
-		$savedSearch = SavedSearch::countryOf($countryCode)
-			->where('user_id', $user->id)
+		$savedSearch = SavedSearch::inCountry($countryCode)
+			->where('user_id', $authUser->getAuthIdentifier())
 			->where('id', $id);
 		
-		$embed = explode(',', request()->get('embed'));
+		$embed = explode(',', request()->input('embed'));
 		
 		if (in_array('user', $embed)) {
 			$savedSearch->with('user');
@@ -140,18 +152,35 @@ class SavedSearchController extends BaseController
 			request()->query->add(['r' => $query['r']]);
 		}
 		
+		// Get the listings type parameter
+		$allowedFilters = ['search', 'premium'];
+		$filterBy = $query['filterBy'] ?? null;
+		$filterBy = in_array($filterBy, $allowedFilters) ? $filterBy : 'search';
+		
+		// Get the items per page number
+		$perPage = getNumberOfItemsPerPage('posts', request()->integer('perPage'));
+		
+		// Get the saved search order
+		$orderBy = $query['orderBy'] ?? null;
+		$orderBy = ($orderBy != 'random') ? $orderBy : null;
+		
+		$input = [
+			'op'      => $filterBy,
+			'perPage' => $perPage,
+			'orderBy' => $orderBy,
+		];
+		
 		// PreSearch
 		$location = $this->getLocation();
 		$preSearch = [
-			'cat'     => $this->getCategory(),
-			'city'    => $location['city'] ?? null,
-			'admin'   => $location['admin'] ?? null,
-			'perPage' => $this->perPage,
+			'cat'   => $this->getCategory(),
+			'city'  => $location['city'] ?? null,
+			'admin' => $location['admin'] ?? null,
 		];
 		
 		// Search
 		$queriesToRemove = array_merge(['embed', 'sort'], array_keys($query));
-		$searchData = (new PostQueries($preSearch))->fetch($queriesToRemove);
+		$searchData = (new PostQueries($input, $preSearch))->fetch($queriesToRemove);
 		
 		$preSearch = $searchData['preSearch'] ?? [];
 		$preSearch['query'] = $query;
@@ -177,7 +206,7 @@ class SavedSearchController extends BaseController
 			'result'  => $resource,
 		];
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 	
 	/**
@@ -198,7 +227,7 @@ class SavedSearchController extends BaseController
 	{
 		$guard = 'sanctum';
 		if (!auth($guard)->check()) {
-			return $this->respondUnAuthorized();
+			return apiResponse()->unauthorized();
 		}
 		
 		$data = [
@@ -207,11 +236,11 @@ class SavedSearchController extends BaseController
 		];
 		
 		// Get the 'url' field
-		$queryUrl = $request->input('url');
+		$queryUrl = $request->input('search_url');
 		if (empty($queryUrl)) {
 			$data['message'] = 'The "url" field need to be filled.';
 			
-			return $this->apiResponse($data, 400);
+			return apiResponse()->json($data, 400);
 		}
 		
 		// Extract the keyword by extracting the 'q' parameter of the filled 'url'
@@ -220,19 +249,22 @@ class SavedSearchController extends BaseController
 		parse_str($query, $tab);
 		$keyword = $tab['q'];
 		
-		// Get the 'count_posts' field
-		$countPosts = $request->input('count_posts');
+		// Get the 'results_count' field
+		$resultsCount = $request->input('results_count');
 		if ($keyword == '') {
-			$data['message'] = 'The "count_posts" field need to be filled.';
+			$data['message'] = 'The "results_count" field need to be filled.';
 			
-			return $this->apiResponse($data, 400);
+			return apiResponse()->json($data, 400);
 		}
 		
 		$data['success'] = true;
 		
-		$user = auth($guard)->user();
+		$authUser = auth($guard)->user();
 		
-		$savedSearch = SavedSearch::where('user_id', $user->id)->where('keyword', $keyword)->where('query', $query);
+		$savedSearch = SavedSearch::where('user_id', $authUser->getAuthIdentifier())
+			->where('keyword', $keyword)
+			->where('query', $query);
+		
 		if ($savedSearch->count() > 0) {
 			// Delete SavedSearch
 			$savedSearch->delete();
@@ -242,10 +274,10 @@ class SavedSearchController extends BaseController
 			// Store SavedSearch
 			$savedSearchArray = [
 				'country_code' => config('country.code'),
-				'user_id'      => $user->id,
+				'user_id'      => $authUser->getAuthIdentifier(),
 				'keyword'      => $keyword,
 				'query'        => $query,
-				'count'        => $countPosts,
+				'count'        => $resultsCount,
 			];
 			$savedSearch = new SavedSearch($savedSearchArray);
 			$savedSearch->save();
@@ -256,7 +288,7 @@ class SavedSearchController extends BaseController
 			$data['result'] = $resource;
 		}
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 	
 	/**
@@ -272,7 +304,10 @@ class SavedSearchController extends BaseController
 	 */
 	public function destroy(string $ids): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
+		if (empty($authUser)) {
+			return apiResponse()->unauthorized();
+		}
 		
 		$data = [
 			'success' => false,
@@ -287,7 +322,7 @@ class SavedSearchController extends BaseController
 		$res = false;
 		foreach ($ids as $id) {
 			$savedSearch = SavedSearch::query()
-				->where('user_id', $user->id)
+				->where('user_id', $authUser->getAuthIdentifier())
 				->where('id', $id)
 				->first();
 			
@@ -308,6 +343,6 @@ class SavedSearchController extends BaseController
 			}
 		}
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 }

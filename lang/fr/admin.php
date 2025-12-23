@@ -256,7 +256,7 @@ return [
     'Archived' => 'Archived',
     'Name' => 'Name',
     'Provider Name' => 'Provider Name',
-    'Type' => 'Type',
+    'type' => 'Type',
     'Entry' => 'Entry',
     'Slug' => 'Slug',
     'Will be automatically generated from your name, if left empty' => 'Will be automatically generated from your name, if left empty.',
@@ -310,14 +310,14 @@ return [
     'Thousand Separator' => 'Thousand Separator',
     'Enter the thousand separator' => 'Enter the thousand separator',
     'thousand_separator_hint' => 'Ex: "," => 150,000.00 [or] whitespace => 150 000.000',
-    'Short Name' => 'Short Name',
-    'Short name for ribbon label' => 'Short name for ribbon label.',
+    'short_name_label' => 'Short Name',
+    'short_name_hint_detailed' => 'Short name for ribbon label.',
     'Ribbon' => 'Ribbon',
     'Show ads with ribbon when viewing ads in search results list' => 'Show jobs with ribbon when viewing jobs in search results list.',
     'Show ads with a badge' => 'Show jobs with a badge (in addition)',
     'Duration' => 'Duration',
-    'duration_in_days' => 'Duration (in days)',
-    'Duration to show posts' => 'Duration to show posts (in days). You need to schedule the AdsCleaner command.',
+    'expiration_time_in_days' => 'Duration (in days)',
+    'expiration_time_hint' => 'Duration to show posts (in days). You need to schedule the AdsCleaner command.',
     'Page Name Color' => 'Page Name Color',
     'Page Title Color' => 'Page Title Color',
     'Describe what makes your ad unique' => 'Describe what makes your ad unique',
@@ -344,7 +344,6 @@ return [
     'Receive newsletter' => 'Receive newsletter',
     'Receive advice' => 'Receive advice',
     'Blocked' => 'Blocked',
-    'Locale Code' => 'Locale Code (eg. en_US)',
     'Script' => 'Script',
     'Enter the script code' => 'Enter the script code (latn, etc.)',
     'Russian Pluralization' => 'Russian Pluralization',
@@ -353,7 +352,7 @@ return [
     'Unactivated' => 'Unactivated',
     'Posts Stats' => 'Posts Stats',
     'Users Stats' => 'Users Stats',
-    'Latest Ads' => 'Latest Ads',
+    'Latest Listings' => 'Latest Listings',
     'Latest Users' => 'Latest Users',
     'No ads found' => 'No jobs found',
     'No users found' => 'No users found',
@@ -378,20 +377,20 @@ return [
     'Version' => 'Version',
     'Author' => 'Author',
     'Display Name' => 'Display Name',
-    'The plugin plugin has been successfully installed' => 'The plugin ":plugin_name" has been successfully installed',
-    'The plugin plugin has been uninstalled' => 'The plugin ":plugin_name" has been uninstalled',
+    'plugin_installed_successfully' => 'The plugin ":plugin_name" has been successfully installed',
+    'plugin_uninstalled_successfully' => 'The plugin ":plugin_name" has been uninstalled',
     'The plugin plugin has been removed' => 'The plugin ":plugin_name" has been removed',
     'The plugin has been successfully installed' => 'The plugin has been successfully installed',
     'The plugin has been uninstalled' => 'The plugin has been uninstalled',
-    'The plugin has been removed' => 'The plugin has been removed',
-    'Failed to install the plugin name' => 'Failed to install the plugin ":plugin_name"',
-    'Failed to Uninstall the plugin name' => 'Failed to Uninstall the plugin ":plugin_name"',
-    'Failed to remove the plugin name' => 'Failed to remove the plugin ":plugin_name"',
+    'plugin_removed_successfully' => 'The plugin has been removed',
+    'plugin_installation_failed' => 'Failed to install the plugin ":plugin_name"',
+    'plugin_uninstallation_failed' => 'Failed to Uninstall the plugin ":plugin_name"',
+    'plugin_removal_failed' => 'Failed to remove the plugin ":plugin_name"',
     'Failed to install the plugin' => 'Failed to install the plugin',
     'Failed to Uninstall the plugin' => 'Failed to Uninstall the plugin',
     'Failed to remove the plugin' => 'Failed to remove the plugin',
     'Featured' => 'En vedette',
-    'Expired' => 'Périmé',
+    'expired' => 'Périmé',
     'demo_mode_message' => 'Cette fonction a été désactivée en mode de démonstration.',
     'Homepage' => 'Homepage',
     'home section' => 'home section',
@@ -403,11 +402,12 @@ return [
     'Keywords' => 'Keywords',
     'you_can_use_dynamic_variables' => 'Vous pouvez utiliser des variables dynamiques telques: <strong>{app.name}</strong> et <strong>{country.name}</strong> - Exemple: {app.name} sera remplacée par le nom de votre site et {country.name} par le pays sélectionné.',
     'admin_division_type_label' => 'Type de Division Administrative',
-    'admin_division_type_hint' => 'ex: 0 => Aucune, 1 => Division Admin. 1, 2 => Division Admin. 2
+    'admin_division_type_hint' => 'This parameter allows you to categorize cities by a type of administrative division in certain locations on the site. For example, when selecting a city while posting listings or by clicking on ":moreCities" from the location section of the home page.
+<br>NOTE:
 <ul>
-    <li>Selecting <code>0</code> (i.e. <code>None</code>) means that city can be selected directly from the country\'s cities list.</li>
-    <li>Selecting <code>1</code> (i.e. <code>Admin. Division 1</code>) means that to select a city users will need to browse the cities list per Admin. Division 1.</li>
-    <li>Selecting <code>2</code> (i.e. <code>Admin. Division 2</code>) means that to select a city users will need to browse the cities list per Admin. Division 2 <strong style="font-weight: bold;">(Not recommended)</strong>. Before selecting this option, make sure that all cities are linked with their Admin. Division 2 (that is not the case by default with the GeoNames database).</li>
+    <li>Selecting <code>:none</code> means that city can be selected directly from the country\'s city list.</li>
+    <li>Selecting <code>:adminDivision1</code> means that to select a city users will need to browse the city list per Administrative Division 1.</li>
+    <li><strong style="font-weight: bold;">(Not recommended)</strong> Selecting <code>:adminDivision2</code> means that to select a city users will need to browse the city list per Administrative Division 2. Before selecting this option, make sure that all cities are linked with their Administrative Division 2 (that is not the case by default with the GeoNames database).</li>
 </ul>',
     'Verified Email' => 'Email vérifiée',
     'Verified Phone' => 'Téléphone vérifié',
@@ -464,8 +464,8 @@ return [
     'Approve' => 'Approuver',
     'Approved' => 'Approuvé',
     'tracking_code_hint' => 'Collez votre code de suivi de Google Analytics (ou autre) ici. Ce code s\'ajoutera dans le footer de vos pages.',
-    'do_not_include_script_tags' => 'Veuillez <strong>ne pas</strong> inclure les balises &lt;script&gt;.',
-    'do_not_include_style_tags' => 'Veuillez <strong>ne pas</strong> inclure les balises &lt;style&gt;.',
+    'do_not_include_script_tags' => 'Veuillez <strong>ne pas</strong> inclure les balises <code>&lt;script&gt;</code>.',
+    'do_not_include_style_tags' => 'Veuillez <strong>ne pas</strong> inclure les balises <code>&lt;style&gt;</code>.',
     'company' => 'entreprise',
     'companies' => 'entreprises',
     'job' => 'emploi',
@@ -554,8 +554,8 @@ return [
 <br><code>%B %e, %Y %k:%M</code> => January 9, 2020 8:45 (23:15)
 <br>...
 <br>More information on <a href=\'https://www.php.net/manual/en/function.strftime.php\' target=\'_blank\'>php.net</a>">strftime()</a>).',
-    'app_date_format_hint_help' => '<a href="javascript: void(0);" data-bs-toggle="popover" data-html="true" title="Recommendation" data-bs-content="As this will be applied globally (if you don\'t plan to set formats per language...), set it as basic as possible to prevent any compatibility issue between languages formats: e.g. don\'t use <strong>escaped hard characters or words</strong> that cannot be replaced."><i class="far fa-life-ring"></i></a>',
-    'country_date_format_hint_help' => '<a href="javascript: void(0);" data-bs-toggle="popover" data-html="true" title="Recommendation" data-bs-content="As this will be applied by ignoring language date format, set it as basic as possible to prevent any compatibility issue between languages formats: e.g. don\'t use <strong>escaped hard characters or words</strong> that cannot be replaced."><i class="far fa-life-ring"></i></a>',
+    'app_date_format_hint_help' => '<a href="javascript: void(0);" data-bs-toggle="popover" data-html="true" title="Recommendation" data-bs-content="As this will be applied globally (if you don\'t plan to set formats per language...), set it as basic as possible to prevent any compatibility issue between languages formats: e.g. don\'t use <strong>escaped hard characters or words</strong> that cannot be replaced."><i class="fa-regular fa-life-ring"></i></a>',
+    'country_date_format_hint_help' => '<a href="javascript: void(0);" data-bs-toggle="popover" data-html="true" title="Recommendation" data-bs-content="As this will be applied by ignoring language date format, set it as basic as possible to prevent any compatibility issue between languages formats: e.g. don\'t use <strong>escaped hard characters or words</strong> that cannot be replaced."><i class="fa-regular fa-life-ring"></i></a>',
     'admin_date_format_info' => '<div class="card bg-light-inverse rounded mb-0">
 <div class="card-body">
 <p><strong>NOTE:</strong> This format will be applied to the dates from the Admin Panel and to the front office dates when date format is not set from the Languages or from the Countries management areas. So, the front-office dates format can be also set per <a href=":languagesUrl">Language</a> or per <a href=":countriesUrl">Country</a>.</p>
@@ -587,16 +587,24 @@ return [
 <br>Use the <strong>ISO format</strong> rather than PHP-specific format and use inner translations rather than language packages you need to install on every machine where you deploy your application. The dates format can be changed globally from the <a href=":appSettingUrl">Dates</a> section of this setting page.</p>
 </div>
 </div>',
-    'elapsed_time_from_now_label' => 'Display Date as "Elapsed Time From Now"',
-    'listing_elapsed_time_from_now_hint' => 'e.g. 3 seconds ago, 6 minutes ago, 1 hour ago, 5 days ago, 3 months ago, 1 year ago.
-<br>This will be applied for dates in the past from listing pages only.
-<br>Note: Dates format can be edited from the <a href="#admin#/languages">Languages</a> management area.',
-    'details_elapsed_time_from_now_hint' => 'e.g. 3 seconds ago, 6 minutes ago, 1 hour ago, 5 days ago, 3 months ago, 1 year ago.
-<br>This will be applied for dates in the past from ads\' details page only.
-<br>Note: Dates format can be edited from the <a href="#admin#/languages">Languages</a> management area.',
-    'hide_dates_label' => 'Hide the Dates',
-    'listing_hide_dates_hint' => 'This option will hide dates on the listing page and on the homepage.',
-    'details_hide_dates_hint' => 'This option will hide dates on the ads\' details page.',
+    'date_from_now_label' => 'Display Date as "Difference in a human-readable format from current instance to now"',
+    'listing_date_from_now_hint' => 'e.g. 3 seconds ago, 6 minutes ago, 1 hour ago, 5 days ago, 3 months ago, 1 year ago.
+<br>NOTE:
+<ul>
+<li>This will be applied for dates in the past from listing pages only.</li>
+<li>This option can be configured from the <a href=":appUrl" target="_blank">:app</a> settings page.</li>
+<li>Dates format can be edited from the <a href=":languagesUrl">Languages</a> management area.</li>
+</ul>',
+    'details_date_from_now_hint' => 'e.g. 3 seconds ago, 6 minutes ago, 1 hour ago, 5 days ago, 3 months ago, 1 year ago.
+<br>NOTE:
+<ul>
+<li>This will be applied for dates in the past from listings\' details page only.</li>
+<li>This option can be configured from the <a href=":appUrl" target="_blank">:app</a> settings page.</li>
+<li>Dates format can be edited from the <a href=":languagesUrl">Languages</a> management area.</li>
+</ul>',
+    'hide_date_label' => 'Hide the date',
+    'listing_hide_date_hint' => 'This option will hide date on the listings list page and on the homepage.',
+    'details_hide_date_hint' => 'This option will hide date on the listings\' details page.',
     'style_html_frontend' => '<h3>Front-End</h3>',
     'Front Skin' => 'Front Skin',
     'style_html_customize_front' => '<h4>Customize the Front Style</h4>',
@@ -644,10 +652,7 @@ return [
     'list_html_displaying' => '<h3>Displaying</h3>',
     'Listing Page Display Mode' => 'Listing Page Display Mode',
     'Grid View Columns' => 'Grid View Columns',
-    'Ads per page' => 'Ads per page',
-    'Number of ads per page' => 'Number of ads per page (> 4 and < 40)',
     'Items per page' => 'Items per page',
-    'Number of items per page' => 'Number of items per page (> 4 and < 40)',
     'Listing Page Left Sidebar' => 'Listing Page Left Sidebar',
     'list_html_distance' => '<h3>Distance</h3>',
     'Max Search Distance' => 'Max Search Distance',
@@ -657,21 +662,15 @@ return [
     'Distance Interval' => 'Distance Interval',
     'The interval between filter distances' => 'The interval between filter distances (shown on the search results page)',
     'single_html_publication' => '<h3>Publication</h3>',
-    'Pictures Limit' => 'Pictures Limit',
-    'Tags Limit' => 'Tags Limit',
+    'pictures_limit_label' => 'Pictures Limit per Listing',
+    'tags_limit_label' => 'Tags Limit per Listing',
     'Allow Guests to post Ads' => 'Allow Guests to post Ads',
     'Allow listings to be reviewed by Admins' => 'Allow ads to be reviewed by Admins',
     'Allow Guests to contact Sellers' => 'Allow Guests to contact Sellers',
     'Allow Guests to apply Jobs' => 'Allow Guests to apply Jobs',
-    'edition_sep_value' => '<h3>Edition</h3>',
-    'wysiwyg_editor_title_value' => '<h4>WYSIWYG Editor</h4>',
+    'wysiwyg_editor_title_value' => '<h3>WYSIWYG Editor</h3>',
     'wysiwyg_editor_label' => 'Allow a WYSIWYG Editor',
     'wysiwyg_editor_hint' => 'This need to be disabled to activate other WYSIWYG Editor.',
-    'wysiwyg_editor_none' => 'None',
-    'wysiwyg_editor_simditor' => 'Simditor',
-    'wysiwyg_editor_tinymce' => 'TinyMCE',
-    'wysiwyg_editor_summernote' => 'Summernote',
-    'wysiwyg_editor_ckeditor' => 'CKEditor',
     'single_html_external_services' => '<h3>External Services</h3>',
     'Show Ads on Google Maps' => 'Show Ads on Google Maps (Single Page Only)',
     'show_ads_on_google_maps_hint' => 'You have to enter your Google Maps API key at: <br>Admin panel → Settings → General → Others → Google Maps.',
@@ -705,7 +704,7 @@ return [
     'mail_mandrill_secret_label' => 'Mandrill Secret',
     'driver_sparkpost_title' => '<h3>Sparkpost</h3>',
     'mail_sparkpost_secret_label' => 'Sparkpost Secret',
-    'mail_other_sep_value' => '<h3>Other Configurations</h3>',
+    'mail_notification_types_title' => '<h3>Notification Types</h3>',
     'mail_email_sender_label' => 'Email Sender',
     'mail_email_sender_hint' => 'Transactional Email Sender. Example: noreply@yoursite.com',
     'SMS Driver' => 'SMS Driver',
@@ -732,13 +731,12 @@ return [
     'twilio_sms_service_sid_hint' => 'From your Twilio console, create a <a href="https://www.twilio.com/console/sms/services" target="_blank">Messaging</a> service and get its <code>SID</code>. See the <a href="https://www.twilio.com/docs/messaging/services" target="_blank">Messaging Services</a>\' documentation.',
     'twilio_debug_to_label' => 'Debug To',
     'twilio_debug_to_hint' => 'Specify a number where all messages should be routed. This can be used in development/staging environments for testing.',
-    'sms_other_sep_value' => '<h3>Other Configurations</h3>',
+    'sms_notification_types_title' => '<h3>Notification Types</h3>',
     'phone_verification_label' => 'Enable Phone Verification',
     'phone_verification_hint' => 'If both the <code>:email_verification_label</code> and this option are enabled, users will need to choose an auth field (email or phone) to fill on the registration form and on the listings creation form (That is to say, it will not be possible for users to fill both these fields simultaneously on these form).',
     'messenger_notifications_label' => 'Enable SMS Message',
     'messenger_notifications_hint' => 'Send a SMS in addition for each message between users. NOTE: You will have a lot to spend on the SMS sending credit.',
     'google_site_verification_label' => 'Google site verification content',
-    'alexa_verify_id_label' => 'Alexa site verification content',
     'msvalidate_label' => 'Bing site verification content',
     'yandex_verification_label' => 'Yandex site verification content',
     'seo_site_verification_hint' => 'NOTE: This site verification is related to meta tag verification. So, enter the meta content value.',
@@ -751,17 +749,17 @@ return [
     'min_file_size_hint' => 'Min File Size (in KB)',
     'max_file_size_label' => 'Max File Size',
     'max_file_size_hint' => 'Max File Size (in KB)',
-    'geolocation_active_label' => 'Enable Geolocation',
-    'geolocation_active_hint' => 'Localize the user\'s country from its IP address.',
+    'geoip_activation_label' => 'Enable Geolocation',
+    'geoip_activation_hint' => 'Localize the user\'s country from its IP address.',
     'Default Country' => 'Default Country',
     'eg_default_country' => 'Default country (ISO alpha-2 codes - e.g. US)',
-    'show_country_flag_label' => 'Show country flag in header',
-    'Facebook Page URL' => 'Facebook Page URL',
-    'Twitter URL' => 'Twitter URL',
-    'Tiktok URL' => 'Tiktok URL',
-    'LinkedIn URL' => 'LinkedIn URL',
-    'Pinterest URL' => 'Pinterest URL',
-    'Instagram URL' => 'Instagram URL',
+    'show_country_flag_label' => 'Show country flag',
+    'facebook_page_url' => 'Facebook Page URL',
+    'x_url' => 'X URL',
+    'tiktok_url' => 'Tiktok URL',
+    'linkedin_url' => 'LinkedIn URL',
+    'pinterest_url' => 'Pinterest URL',
+    'instagram_url' => 'Instagram URL',
     'Hide Powered by Info' => 'Hide Powered by Info',
     'Powered by' => 'Powered by',
     'other_html_google_maps' => '<h3>Google Maps</h3>',
@@ -779,15 +777,15 @@ return [
     'cron_ads_clear_sep_value' => '<h3>Ads Clear Command</h3>',
     'cron_ads_clear_info_value' => 'You can execute this command manually by running the command line below in your terminal/console: <br><div class="alert alert-light"><code>/usr/bin/php /path/to/your/website/artisan listings:purge</code></div>',
     'cron_ads_clear_info_value_real' => 'You can execute this command manually by running the command line below in your terminal/console: <br><div class="alert alert-light"><code>:phpBinaryPath :basePath/artisan listings:purge</code></div>',
-    'unactivated_posts_expiration_label' => 'Unactivated Ads Expiration',
-    'unactivated_posts_expiration_hint' => 'In days (Delete the unactivated ads after this expiration)',
-    'activated_posts_expiration_label' => 'Activated Ads Expiration',
-    'activated_posts_expiration_hint' => 'In days (Archive the activated ads after this expiration)',
-    'archived_posts_expiration_label' => 'Archived Ads Expiration',
-    'archived_posts_expiration_hint' => 'In days (Delete the archived ads after this expiration)',
+    'unactivated_listings_expiration_label' => 'Unactivated Ads Expiration',
+    'unactivated_listings_expiration_hint' => 'In days (Delete the unactivated ads after this expiration)',
+    'activated_listings_expiration_label' => 'Activated Ads Expiration',
+    'activated_listings_expiration_hint' => 'In days (Archive the activated ads after this expiration)',
+    'archived_listings_expiration_label' => 'Archived Ads Expiration',
+    'archived_listings_expiration_hint' => 'In days (Delete the archived ads after this expiration)',
     'cron_test_sep_value' => '<h3>Test the Ads Clear command</h3>',
     'cron_settings_details' => 'You can run manually the Ads Clear command by clicking the button below. <br><strong>CAUTION</strong><br>- All the expired paid ads (also called: premium or featured ads) will become regular ads (also called: normal or free ads).<br>&nbsp;&nbsp;You have to setup the premium ads expiration duration from: Setup -> Packages.<br>- All expired active regular ads will be archived. <br>- All expired inactive regular ads will be deleted.<br>- All expired archived regular ads will be deleted.',
-    'cron_settings_details_btn' => '<a href="#admin#/actions/call_ads_cleaner_command" class="btn btn-primary"><i class="fa fa-play-circle-o"></i> Run Manually</a>',
+    'cron_settings_details_btn' => '<a href="#admin#/actions/call_ads_cleaner_command" class="btn btn-primary"><i class="fa-regular fa-circle-play"></i> Run Manually</a>',
     'Show the Country Cities' => 'Show the Country Cities',
     'Show the bottom button' => 'Show the bottom button',
     'Border Width' => 'Border Width',
@@ -856,9 +854,9 @@ return [
     'homepage sections' => 'homepage sections',
     'You cannot delete the default language' => 'You cannot delete the default language.',
     'You cannot disable the default language' => 'You cannot disable the default language.',
-    'other_html_head_js' => '<h3>JavaScript (in the &lt;head&gt; section)</h3>',
+    'other_html_head_js' => '<h3>JavaScript (in the <code>&lt;head&gt;</code> section)</h3>',
     'JavaScript Code' => 'JavaScript Code',
-    'js_code_hint' => 'Paste your JavaScript code here to put it in the &lt;head&gt; section of HTML pages.',
+    'js_code_hint' => 'Paste your JavaScript code here to put it in the <code>&lt;head&gt;</code> section of HTML pages.',
     'Filters' => 'Filters',
     'Remove filters' => 'Remove filters',
     'Date range' => 'Date range',
@@ -902,7 +900,7 @@ return [
     'cat_display_type_op_4' => 'Picture List',
     'cat_display_type_op_5' => 'Normal List (Categories + Children)',
     'cat_display_type_op_6' => 'Normal List Styled (Categories + Children)',
-    'cat_display_type_hint' => 'This will be applied to the homepage categories section and to the categories selection modal during listings posting.
+    'cat_display_type_hint' => 'This will be applied to the homepage categories section only.
 <br>NOTE: Nested display types: <code>:type_1</code> and <code>:type_2</code> are not recommended as they can cause performance issues with large data.',
     'Max Subcategories' => 'Max Subcategories',
     'Max subcategories displayed by default' => 'Max subcategories displayed by default',
@@ -920,14 +918,14 @@ return [
 </div>
 </div>',
     'Main Picture' => 'Main Picture',
-    'Edit the ad of this picture' => 'Edit the ad of this picture',
-    'Edit the ad' => 'Edit the ad',
+    'Edit the listing of this picture' => 'Edit the listing of this picture',
+    'Edit the listing' => 'Edit the listing',
     'Edit' => 'Edit',
     'Delete' => 'Delete',
     'No pictures found' => 'No pictures found.',
     'Information' => 'Information',
-    'help_translatable_table' => 'To translate this list you have to select a language by clicking on the dropdown button <a class="btn btn-xs btn-primary dropdown-toggle dropdown-toggle-split text-white" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="sr-only">Toggle</span></a> icon located at the right of each <a class="btn btn-xs btn-primary text-white"><i class="far fa-edit"></i> Edit</a> button.',
-    'help_translatable_column' => 'Translatable fields can be identified by the <i class="fas fa-flag-checkered"></i> icon before or after their label in the form.',
+    'help_translatable_table' => 'To translate this list you have to select a language by clicking on the dropdown button <a class="btn btn-xs btn-primary dropdown-toggle dropdown-toggle-split text-white" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="sr-only">Toggle</span></a> icon located at the right of each <a class="btn btn-xs btn-primary text-white"><i class="fa-regular fa-pen-to-square"></i> Edit</a> button.',
+    'help_translatable_column' => 'Translatable fields can be identified by the <i class="fa-solid fa-flag-checkered"></i> icon before or after their label in the form.',
     'To' => 'To',
     'From' => 'From',
     'Reset the homepage sections reorder' => 'Reset the homepage sections reorder.',
@@ -937,15 +935,15 @@ return [
     'The homepage sections reorganization were been reset successfully' => 'The homepage sections reorganization were been reset successfully.',
     'All the homepage settings were been reset successfully' => 'All the homepage settings were been reset successfully.',
     'No action has been performed' => 'No action has been performed.',
-    'seo_html_multi_countries_urls' => '<h3>Multi-countries URLs Optimization</h3>',
-    'multi_countries_urls_optimization_warning' => '<div class="card text-white bg-warning rounded mb-0">
+    'seo_html_multi_country_urls' => '<h3>Multi-countries URLs Optimization</h3>',
+    'multi_country_urls_optimization_warning' => '<div class="card text-white bg-warning rounded mb-0">
 <div class="card-body">
 <p><strong style="font-weight: bold;">Warning!</strong> This option is useless if you use the app for only one country, and it should only be activated when launching your website. By enabling this option several days after launching your site, many of the URLs on your site will be changed, which could lead to several 404 errors with old URLs indexed by search engines. <br>And by changing this value, your "config/routes.php" file will be reset.</p>
 </div>
 </div>',
     'Enable The Multi-countries URLs Optimization' => 'Enable The Multi-countries URLs Optimization',
-    'multi_countries_urls_optimization_hint' => 'Enabling this option will optimize your website\'s URLs for the multi-country functionality and allow the indexation of content for each enabled country.',
-    'multi_countries_urls_optimization_info' => '<div class="card text-white bg-info rounded mb-0">
+    'multi_country_urls_optimization_hint' => 'Enabling this option will optimize your website\'s URLs for the multi-country functionality and allow the indexation of content for each enabled country.',
+    'multi_country_urls_optimization_info' => '<div class="card text-white bg-info rounded mb-0">
 <div class="card-body">
 <p><strong style="font-weight: bold;">Note:</strong></p>
 <ul>
@@ -971,8 +969,6 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
     'create_a_new_backup_files' => 'Backup only generated files',
     'create_a_new_backup_app' => 'Backup only app files',
     'Admin panel' => 'Admin panel',
-    'Force UTF-8 encoding for Dates' => 'Force UTF-8 encoding for Dates',
-    'date_force_utf8_hint' => 'You have to consider this option only if <a class="" data-bs-toggle="tooltip" title="If the Dashboard Charts don\'t display, this means your server doesn\'t handle the UTF-8 encoding properly. You can enable this option to force the encoding. You must disable this option if unreadable characters appear in your dates, and contact your host provider for help about the UTF-8 encoding." style="cursor: pointer;">the Dashboard Charts don\'t display</a>.',
     'Hide Links' => 'Hide Links',
     'getSearchForm_html_background' => '<h3>Background</h3>',
     'getSearchForm_background_image_hint' => 'Choose a picture from your computer.<br>You can set a background image by country in Settings &rarr; International &rarr; Countries &rarr; [Edit] &rarr; Background Image',
@@ -996,17 +992,16 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
     'language_info_line_update' => '<div class="card bg-light-inverse rounded mb-0">
 <div class="card-body">
 <h4>Information</h4>
-<p>The language files are available in the <code>/lang/:abbr</code> directory.</p>
+<p>The language files are available in the <code>/lang/:code</code> directory.</p>
 </div>
 </div>',
-    'language_abbr_field_hint' => 'The files of the languages with a check mark (&#10004;) are included in the script by default.<br>List of languages whose files are included by default: :languages',
+    'language_code_field_hint' => 'The files of the languages with a check mark (<code>&#10004;</code>) are included in the script by default.<br>List of languages whose files are included by default: :languages',
     'Use the codes below' => 'Use the codes below:',
     'eg_currencies_field' => 'eg. USD,EUR,CHF',
     'Default country currency' => 'Default country currency',
     'eg_languages_field' => 'eg. en,de,fr,it',
-    'find_my_purchase_code' => 'Get your purchase code <a href="https://help.market.envato.com/hc/en-us/articles/202822600-Where-Is-My-Purchase-Code-" target="_blank">here</a>.',
+    'find_my_purchase_code' => 'Get your purchase code <a href=":purchaseCodeFindingUrl" target="_blank">here</a>.',
     'purchase_code_placeholder' => 'Enter the plugin\'s purchase code',
-    'plugin_purchase_code_invalid_message' => 'There was a problem checking the purchase code related to the ":plugin_name" plugin.',
     'Cannot delete the current country when the Domain Mapping plugin is installed' => 'Cannot delete the current country when the Domain Mapping plugin is installed.',
     'Number of cities to display by default' => 'Number of cities to display by default.',
     'Cities Columns' => 'Cities Columns',
@@ -1074,13 +1069,13 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
     'auto_registration_option_1' => 'Enabled (Show the option in the ad creating form)',
     'auto_registration_option_2' => 'Enabled (Hide the option in the ad creating form)',
     'auto_registration_hint' => 'Enable or Disable auto-registration option by submitting the ad form.',
-    'manually_archived_posts_expiration_label' => 'Manually Archived Ads Expiration',
-    'manually_archived_posts_expiration_hint' => 'In days (Delete the manually archived ads after this expiration)',
-    'guests_can_contact_authors_label' => 'Allow Guests to contact ads Authors',
+    'manually_archived_listings_expiration_label' => 'Manually Archived Ads Expiration',
+    'manually_archived_listings_expiration_hint' => 'In days (Delete the manually archived ads after this expiration)',
+    'guest_can_contact_authors_label' => 'Allow Guests to contact ads Authors',
     'others_sep_value' => '<h3>Autres</h3>',
-    'guests_can_contact_authors_hint' => 'Autoriser les invités à contacter les auteurs d\'annonces. Si cette case est décochée, seuls les utilisateurs enregistrés peuvent contacter les auteurs des annonces et voir le numéro de téléphone de leurs auteurs.',
-    'pictures_limit_hint' => 'Nombre maximum de photos autorisées par annonce.',
-    'guests_can_post_listings_hint' => 'Autoriser les invités à publier des annonces. Si cette case n\'est pas cochée, seuls les utilisateurs enregistrés peuvent publier des annonces.',
+    'guest_can_contact_authors_hint' => 'Autoriser les invités à contacter les auteurs d\'annonces. Si cette case est décochée, seuls les utilisateurs enregistrés peuvent contacter les auteurs des annonces et voir le numéro de téléphone de leurs auteurs.',
+    'pictures_limit_hint' => 'Nombre maximum de photos autorisées par annonce. Sauf si l\'annonce est publiée avec un forfait ou avec une offre permettant plus de photos. Consultez les options de <code>Admin panel → Settings → Packages</code> pour plus d\'information.',
+    'guest_can_submit_listings_hint' => 'Autoriser les invités à publier des annonces. Si cette case n\'est pas cochée, seuls les utilisateurs enregistrés peuvent publier des annonces.',
     'listings_review_activation_hint' => 'Si cette option est activée, toutes les nouvelles annonces devront être approuvées par un utilisateur administrateur avant d\'être diffusées au public.',
     'publication_form_type_label' => 'Type de formulaire',
     'publication_form_type_option_1' => 'Formulaire à plusieurs étapes',
@@ -1088,23 +1083,40 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
     'publication_form_type_hint' => 'En sélectionnant le "Formulaire à étape unique", le champ images peut être rendu obligatoire ou non. ',
     'picture_mandatory_label' => 'Rendre le champ images obligatoire',
     'picture_mandatory_hint' => 'En activant cette option, au moins une image dans le champ images sera obligatoire.',
-    'social_login_activation_label' => 'Enable Social Login',
-    'social_login_activation_hint' => 'Allow users to connect via social networks. NOTE: Let empty the fields of a social network to disable it (him alone).',
-    'facebook_sep_value' => '<h3>Facebook</h3>',
-    'facebook_sep_1_value' => 'Create a Facebook App <a href="https://developers.facebook.com/" target="_blank">here</a>. The "OAuth redirect URI" is: (http:// or https://) yoursite.com<strong>/auth/facebook/callback</strong> or www.yoursite.com<strong>/auth/facebook/callback</strong>',
+    'social_auth_enabled_label' => 'Enable Social Login',
+    'social_auth_enabled_hint' => 'Allow users to connect via social networks. NOTE: After enabling a social network, its API parameters are required to display it to users.',
+    'facebook_title' => '<h3>Facebook</h3>',
+    'facebook_oauth_info' => 'Create a Facebook App <a href="https://developers.facebook.com/" target="_blank">here</a>. The "OAuth redirect URI" is: <code>:baseUrl/auth/facebook/callback</code>',
+    'facebook_oauth_domainmapping' => ', but as the "Domain Mapping" plugin is installed, the valid base URL address are those linked to each country. i.e. for Switzerland: (<code>http://</code> or <code>https://</code>) <code>ch.domain.tld/auth/facebook/callback</code> or <code>domain.ch/auth/facebook/callback</code>',
     'facebook_client_id_label' => 'Facebook Client ID',
     'facebook_client_secret_label' => 'Facebook Client Secret',
-    'linkedin_sep_value' => '<h3>LinkedIn</h3>',
-    'linkedin_sep_1_value' => 'Create a LinkedIn App <a href="https://www.linkedin.com/developer/apps" target="_blank">here</a>. The "OAuth redirect URI" is: (http:// or https://) yoursite.com<strong>/auth/linkedin/callback</strong> or www.yoursite.com<strong>/auth/linkedin/callback</strong>',
+    'linkedin_title' => '<h3>LinkedIn</h3>',
+    'linkedin_oauth_info' => 'Create a LinkedIn App <a href="https://www.linkedin.com/developer/apps" target="_blank">here</a>. The "OAuth redirect URI" is: <code>:baseUrl/auth/linkedin/callback</code>',
+    'linkedin_oauth_domainmapping' => ', but as the "Domain Mapping" plugin is installed, the valid base URL address are those linked to each country. i.e. for Switzerland: (<code>http://</code> or <code>https://</code>) <code>ch.domain.tld/auth/linkedin/callback</code> or <code>domain.ch/auth/linkedin/callback</code>',
     'linkedin_client_id_label' => 'LinkedIn Client ID',
     'linkedin_client_secret_label' => 'LinkedIn Client Secret',
-    'twitter_sep_value' => '<h3>Twitter</h3>',
-    'twitter_sep_1_value' => 'Create a Twitter App <a href="https://apps.twitter.com/" target="_blank">here</a>. The "OAuth redirect URI" is: (http:// or https://) yoursite.com<strong>/auth/twitter/callback</strong> or www.yoursite.com<strong>/auth/twitter/callback</strong><br>
-NOTE: Before configuring your Twitter app in the script, you have to change its Permissions (on developer.twitter.com) by enabling the "Request email address from users" option.',
+    'twitter_oauth_2_title' => '<h3>Twitter (OAuth 2.0)</h3>',
+    'twitter_oauth_2_info' => 'Create a Twitter App <a href="https://apps.twitter.com/" target="_blank">here</a>. The "OAuth 2.0 redirect URI" is: <code>:baseUrl/auth/twitter-oauth-2/callback</code>',
+    'twitter_oauth_2_domainmapping' => ', but as the "Domain Mapping" plugin is installed, the valid base URL address are those linked to each country. i.e. for Switzerland: (<code>http://</code> or <code>https://</code>) <code>ch.domain.tld/auth/twitter-oauth-2/callback</code> or <code>domain.ch/auth/twitter-oauth-2/callback</code>',
+    'twitter_oauth_2_note' => '<br>NOTE:
+<ul>
+<li>Before configuring your Twitter app in the script, you have to change its Permissions (on developer.twitter.com) by enabling the "Request email address from users" option.</li>
+</ul>',
+    'twitter_oauth_2_client_id_label' => 'Twitter (OAuth 2.0) Client ID',
+    'twitter_oauth_2_client_secret_label' => 'Twitter (OAuth 2.0) Client Secret',
+    'twitter_oauth_1_title' => '<h3>Twitter (OAuth 1.0)</h3>',
+    'twitter_oauth_1_info' => 'Create a Twitter App <a href="https://apps.twitter.com/" target="_blank">here</a>. The "OAuth 1.0 redirect URI" is: <code>:baseUrl/auth/twitter/callback</code>',
+    'twitter_oauth_1_domainmapping' => ', but as the "Domain Mapping" plugin is installed, the valid base URL address are those linked to each country. i.e. for Switzerland: (<code>http://</code> or <code>https://</code>) <code>ch.domain.tld/auth/twitter/callback</code> or <code>domain.ch/auth/twitter/callback</code>',
+    'twitter_oauth_1_note' => '<br>NOTE:
+<ul>
+<li>Before configuring your Twitter app in the script, you have to change its Permissions (on developer.twitter.com) by enabling the "Request email address from users" option.</li>
+<li>If the Twitter OAuth 2.0 information is provided, the login with Twitter OAuth 1.0 will be ignored.</li>
+</ul>',
     'twitter_client_id_label' => 'Twitter Client ID',
     'twitter_client_secret_label' => 'Twitter Client Secret',
-    'google_sep_value' => '<h3>Google</h3>',
-    'google_sep_1_value' => 'Configure your Google console <a href="https://console.developers.google.com/" target="_blank">here</a>. The "Authorized Redirect URI" is: (http:// or https://) yoursite.com<strong>/auth/google/callback</strong> or www.yoursite.com<strong>/auth/google/callback</strong>',
+    'google_title' => '<h3>Google</h3>',
+    'google_oauth_info' => 'Configure your Google console <a href="https://console.developers.google.com/" target="_blank">here</a>. The "Authorized Redirect URI" is: <code>:baseUrl/auth/google/callback</code>',
+    'google_oauth_domainmapping' => ', but as the "Domain Mapping" plugin is installed, the valid base URL address are those linked to each country. i.e. for Switzerland: (<code>http://</code> or <code>https://</code>) <code>ch.domain.tld/auth/google/callback</code> or <code>domain.ch/auth/google/callback</code>',
     'google_client_id_label' => 'Google Client ID',
     'google_client_secret_label' => 'Google Client Secret',
     'languages_sep_value' => '<h3>Languages</h3>',
@@ -1157,31 +1169,6 @@ NOTE: Before configuring your Twitter app in the script, you have to change its 
     'memcached_servers_host_hint' => '.',
     'memcached_servers_port_label' => 'Server #:num Port',
     'memcached_servers_port_hint' => '.',
-    'redis_sep_value' => '<h3>Redis</h3>',
-    'redis_client_label' => 'Client',
-    'redis_client_hint' => 'Using <a href="https://github.com/phpredis/phpredis" target="_blank">PhpRedis</a> as Redis client requires its PHP extension to be installed via PECL. The extension is more complex to install but may yield better performance for applications that make heavy use of Redis.',
-    'redis_cluster_activation_label' => 'Use Cluster',
-    'redis_cluster_activation_hint' => 'By enabling this option you have to provide the cluster(s) information below.',
-    'redis_cluster_label' => 'Cluster',
-    'redis_cluster_hint' => '.',
-    'redis_server_sep_value' => '<h4>Redis Server (Unused if Cluster is used)</h4>',
-    'redis_host_label' => 'Host',
-    'redis_host_hint' => '.',
-    'redis_password_label' => 'Password',
-    'redis_password_hint' => '.',
-    'redis_port_label' => 'Port',
-    'redis_port_hint' => '.',
-    'redis_database_label' => 'Database',
-    'redis_database_hint' => '.',
-    'redis_clusters_sep_value' => '<h4>Redis Clusters (Unused if Cluster is not used)</h4>',
-    'redis_cluster_host_label' => 'Cluster #:num Host',
-    'redis_cluster_host_hint' => '.',
-    'redis_cluster_password_label' => 'Cluster #:num Password',
-    'redis_cluster_password_hint' => '.',
-    'redis_cluster_port_label' => 'Cluster #:num Port',
-    'redis_cluster_port_hint' => '.',
-    'redis_cluster_database_label' => 'Cluster #:num Database',
-    'redis_cluster_database_hint' => '.',
     'lazy_loading_sep_value' => '<h3>Lazy Loading</h3>',
     'lazy_loading_activation_label' => 'Enable Lazy Loading',
     'lazy_loading_activation_hint' => 'Improve some pages speed be enabling the Lazy Loading option for the ads images and decrease the bandwidth consumption.
@@ -1232,17 +1219,15 @@ NOTE: Before configuring your Twitter app in the script, you have to change its 
     'img_resize_upsize_label' => 'UpSize',
     'img_resize_upsize_hint' => 'Keep image from being upsized.',
     'img_resize_logo_sep_value' => '<h4>Logo Dimensions</h4>',
+    'img_resize_logo_admin_sep_value' => '<h4>Admin Logo Dimensions</h4>',
     'img_resize_cat_sep_value' => '<h4>Categories Icons</h4>',
     'img_resize_type_sep_value' => '<h3>Thumbnails Types</h3>',
     'img_resize_type_width_label' => 'Width',
     'img_resize_type_width_hint' => 'Width (in pixel)',
     'img_resize_type_height_label' => 'Height',
     'img_resize_type_height_hint' => 'Height (in pixel)',
-    'img_resize_type_resize_type_label' => 'Type Of Resize',
-    'img_resize_type_resize_type_option_0' => 'Resize',
-    'img_resize_type_resize_type_option_1' => 'Fit',
-    'img_resize_type_resize_type_option_2' => 'ResizeCanvas',
-    'img_resize_type_resize_type_hint' => '<ul>
+    'img_resize_type_resize_method_label' => 'Type Of Resize',
+    'img_resize_type_resize_method_hint' => '<ul>
 <li><strong>Resize</strong>: Simple resize.</li>
 <li><strong>Fit</strong>: Crop and resize combined.</li>
 <li><strong>ResizeCanvas</strong>: Resize image boundaries.</li>
@@ -1252,26 +1237,17 @@ NOTE: Before configuring your Twitter app in the script, you have to change its 
     'img_resize_type_upsize_label' => 'UpSize',
     'img_resize_type_upsize_hint' => 'Keep image from being upsized. <br>NOTE: Only applied for the resize types: Resize and Fit.',
     'img_resize_type_position_label' => 'Position/Anchor',
-    'img_resize_type_position_option_0' => 'Top Left',
-    'img_resize_type_position_option_1' => 'Top',
-    'img_resize_type_position_option_2' => 'Top Right',
-    'img_resize_type_position_option_3' => 'Left',
-    'img_resize_type_position_option_4' => 'Center',
-    'img_resize_type_position_option_5' => 'Right',
-    'img_resize_type_position_option_6' => 'Bottom Left',
-    'img_resize_type_position_option_7' => 'Bottom',
-    'img_resize_type_position_option_8' => 'Bottom Right',
     'img_resize_type_position_hint' => 'Set a position where cutout will be positioned. Or set a point from where the image resizing is going to happen. <br>NOTE: Only applied for the resize types: Fit and ResizeCanvas.',
     'img_resize_type_relative_label' => 'Relative',
     'img_resize_type_relative_hint' => 'Determine that the resizing is going to happen in relative mode. Meaning that the values of width or height will be added or substracted from the current height of the image. <br>NOTE: Only applied for the resize type: ResizeCanvas.',
-    'img_resize_type_bg_color_label' => 'BG Color',
+    'img_resize_type_bgColor_label' => 'BG Color',
     'img_resize_type_bg_color_hint' => 'A background color for the new areas of the image. <br>NOTE: Only applied for the resize types: ResizeCanvas.',
     'img_resize_small_sep_value' => '<h4><strong>A) Small Thumbnails (Companies logos)</strong></h4>',
     'img_resize_medium_sep_value' => '<h4><strong>B) Medium Thumbnails (Companies logos)</strong></h4>',
     'img_resize_big_sep_value' => '<h4><strong>C) Big Thumbnails (Companies logos)</strong></h4>',
     'img_resize_large_sep_value' => '<h4><strong>D) Large Thumbnails (Companies logos)</strong></h4>',
     'clear_images_thumbnails_sep_value' => '<h3>Clear Images Thumbnails</h3>',
-    'clear_images_thumbnails_btn_value' => '<a href="#admin#/actions/clear_images_thumbnails" class="btn btn-primary"><i class="fa fa-refresh"></i> Clear Thumbnails</a>',
+    'clear_images_thumbnails_btn_value' => '<a href="#admin#/actions/clear_images_thumbnails" class="btn btn-primary"><i class="fa-solid fa-arrows-rotate"></i> Clear Thumbnails</a>',
     'clear_images_thumbnails_info_value' => 'By changing the thumbnails parameters above, you have to clear the existing images thumbnails. <br>And by clearing the thumbnails, they will be automatically regenerate with the current thumbnails resize values by visiting the website.',
     'distance_calculation_formula_label' => 'Distance Calculation Formula',
     'haversine_formula' => 'Haversine',
@@ -1286,7 +1262,7 @@ NOTE: Before configuring your Twitter app in the script, you have to change its 
 <li><a href="https://fr.wikipedia.org/wiki/Orthodromie" target="_blank">Orthodromy</a>: An orthodromic or great-circle route on the Earth\'s surface is the shortest possible real way between any two points. Requires MySQL 5.5 or greater.</li>
 <li><a href="https://dev.mysql.com/doc/refman/5.7/en/spatial-convenience-functions.html#function_st-distance-sphere" target="_blank">MySQL 5.7 Spherical Calculation</a>: Returns the mimimum spherical distance between two points and/or multipoints on a sphere. Requires MySQL 5.7.6 or greater.</li>
 </ul>',
-    'remove_url_title_value' => '<h4>Remove Links and URLs</h4><p>Remove all links and URLs from the description. Note: This will not apply for admin users content.</p>',
+    'remove_url_title_value' => '<h3>Remove Links and URLs</h3><p>Remove all links and URLs from the description. Note: This will not apply for admin users content.</p>',
     'remove_element_before_label' => 'Before the content saving',
     'remove_element_before_hint' => 'Remove the elements during the form sending.',
     'remove_element_after_label' => 'During the content rendering',
@@ -1354,7 +1330,7 @@ NOTE: Before configuring your Twitter app in the script, you have to change its 
     'maximum_storage_in_megabytes_label' => 'Delete Oldest Backups When Using More Megabytes Than',
     'maximum_storage_in_megabytes_hint' => 'After cleaning up the backups remove the oldest backup until this amount of megabytes has been reached.',
     'backups_list_value' => '<h3>Backups List</h3>',
-    'backup_link_btn_value' => '<a class="btn btn-primary" href="#admin#/backups"><i class="fa fa-hdd-o"></i> Go to the Backups</a>',
+    'backup_link_btn_value' => '<a class="btn btn-primary" href="#admin#/backups"><i class="fa-regular fa-hard-drive"></i> Go to the Backups</a>',
     'backup_link_btn_hint_value' => 'Click on the button above to display all the backups or to make manual backups.',
     'permissions_roles' => 'Permissions/Roles',
     'Has Admins Permissions' => 'Has Admins Permissions',
@@ -1376,10 +1352,10 @@ NOTE: During the execution, we disable the PHP execution time limit with <code>i
     'files_max_input_vars_limit' => 'ERROR: Editing this file requires increasing the PHP "max_input_vars" variable value to at least :number on your server yourself or by making this request at your hosting provider. Example: max_input_vars=:number',
     'Files' => 'Files',
     'backend_title_separator' => '<h3 class="mt-5">Admin Panel</h3>',
-    'logo_dark_label' => 'Admin Logo Dark',
-    'logo_dark_hint' => 'Admin logo for light background zone',
-    'logo_light_label' => 'Admin Logo Light',
-    'logo_light_hint' => 'Admin logo for dark background zone',
+    'logo_dark_label' => 'Logo Dark',
+    'logo_dark_hint' => 'Logo for light background zone',
+    'logo_light_label' => 'Logo Light',
+    'logo_light_hint' => 'Logo for dark background zone',
     'login_bg_image_label' => 'Login Page Background Image',
     'login_bg_image_hint' => 'Image for the admin panel\'s login page\'s background',
     'admin_logo_bg_label' => 'Logo Background Color',
@@ -1405,18 +1381,18 @@ NOTE: During the execution, we disable the PHP execution time limit with <code>i
     'non_featured' => 'Non Featured',
     'pushed' => 'Pushed',
     'reorder_rebuilding_nodes' => 'NOTE: L\'application recrée les noeuds des categories après la réorganisation. Cette requête pourrait donc prendre un peu de temps lors de son exécution.',
-    'publication_duration' => 'Publication Duration',
-    'promo_duration' => 'Promotion Duration',
-    'promo_duration_hint' => 'Duration to promote posts (in days). You need to schedule the AdsCleaner command.',
+    'expiration_time_label' => 'Publication Duration',
+    'promotion_time' => 'Promotion Time',
+    'promotion_time_hint' => 'Duration to promote posts (in days). You need to schedule the AdsCleaner command.',
     'package_pictures_limit_hint' => 'Maximum number of pictures allowed per ad. Requires to force ads posting from the Pricing Page.',
     'package_description_hint' => 'This will appear on the "Pricing" page. Enter one option (advantage) per line or separate them by comma, semicolon or point.',
     'facebook_ads' => 'Facebook Ads',
     'google_ads' => 'Google Ads',
-    'twitter_ads' => 'Twitter Ads',
+    'x_ads' => 'X Ads',
     'linkedin_ads' => 'LinkedIn Ads',
     'facebook_ads_duration' => 'Facebook Ads (Duration)',
     'google_ads_duration' => 'Google Ads (Duration)',
-    'twitter_ads_duration' => 'Twitter Ads (Duration)',
+    'x_ads_duration' => 'X Ads (Duration)',
     'linkedin_ads_duration' => 'LinkedIn Ads (Duration)',
     'external_sponsored_ads_hint' => 'Enter a number (in days) greater than 0 to enable this option. Enter 0 to disable it. NOTE: By enabling this option, you accept to sponsor (manually) all the posts that will be belong to this package on <strong>:provider</strong>.',
     'recommended' => 'Recommended',
@@ -1425,7 +1401,13 @@ NOTE: During the execution, we disable the PHP execution time limit with <code>i
     'pricing_page_option_0' => 'Disable',
     'pricing_page_option_1' => 'Under the "Add Listing" button (Force ads posting from Pricing)',
     'pricing_page_option_2' => 'Add a new link in the top menu',
-    'pricing_page_hint' => 'Before enabling the Pricing Page you need to have at least one Package and one Payment Method activated.',
+    'pricing_page_hint' => 'NOTE:
+<ul>
+	<li>Important: Before enabling the Pricing Page you need to have at least one Package and one Payment Method activated.</li>
+	<li><code>Disable</code> means that the pricing page link will not be shown in the website header.</li>
+	<li><code>Under the "Add Listing" button (Force listings posting from Pricing)</code> means that the listing creation button link will be replaced by the pricing page link, forcing guests or users that don\'t have a valid subscription to get one before posting new listings. Note: To avoid excessive memory consumption that could degrade the application performance, checking the limitation of the number of listings linked to the users\' subscription will be done downstream (when trying to publish new listings).</li>
+	<li><code>Add a new link in the top menu</code> means that the pricing page link will be shown in the website header.</li>
+</ul>',
     'hide_on_mobile_label' => 'Hide small screens (e.g. mobile)',
     'hide_on_mobile_hint' => 'By checking this option, this section will be hidden small screens (e.g. mobile).',
     'is_responsive_label' => 'Is it a responsive advertising?',
@@ -1563,17 +1545,9 @@ Let the provider place ads for you. Add one piece of code to your site and allow
     'Password' => 'Password',
     'Gender' => 'Gender',
     'Country' => 'Country',
-    'validate_driver_label' => 'Validate the driver\'s parameters',
-    'validate_mail_driver_hint' => 'Check if the Driver\'s parameters are valid. <a href="javascript: void(0);" data-bs-toggle="popover" data-html="true" title="Validate the Driver\'s parameters" data-bs-content="<ul>
-<li>By saving this form the system will try to send an email example to validate the filled parameters.</li>
-<li>If no errors occur and you don\'t receive the example email, inspect your spams and if you don\'t have it in your spams, you should contact your mail sending server\'s provider for more information about that.</li>
-<li>To save this form regardless of the validity of the filled parameters, you have to uncheck this field.</li>
-</ul>">More information</a>.',
-    'validate_sms_driver_hint' => 'Check if the Driver\'s parameters are valid. <a href="javascript: void(0);" data-bs-toggle="popover" data-html="true" title="Validate the Driver\'s parameters" data-bs-content="<ul>
-<li>By saving this form the system will try to send a SMS example to validate the filled parameters.</li>
-<li>If no errors occur and you don\'t receive the example SMS, inspect your logs on the SMS sending provider website, and in the worst case you should contact the provider for more information about that.</li>
-<li>To save this form regardless of the validity of the filled parameters, you have to uncheck this field.</li>
-</ul>">More information</a>.',
+    'driver_test_label' => 'Test the driver\'s parameters',
+    'mail_driver_test_hint' => 'Check if the Driver\'s parameters are valid.',
+    'sms_driver_test_hint' => 'Check if the Driver\'s parameters are valid.',
     'auth_required_to_report_abuse_label' => 'Authentication required to report abuses',
     'auth_required_to_report_abuse_hint' => 'Allow only logged users to report abuses.',
     'count_posts_info' => '<h3>Number of Posts</h3>',
@@ -1649,8 +1623,8 @@ Let the provider place ads for you. Add one piece of code to your site and allow
     'geoip_driver_label' => 'GeoIP Driver',
     'geoip_driver_hint' => 'Select the service that will be used to localize the user\'s country.
 <br>NOTE: Most of these services have a free version. But for more accuracy or for professional or commercial use, the pro version of these services are recommended.',
-    'validate_geoip_driver_label' => 'Validate the Driver\'s response',
-    'validate_geoip_driver_hint' => 'Validate the Driver\'s response. This validation includes (if available) the validation of its parameters. Random IP address is used during this validation.',
+    'geoip_driver_test_label' => 'Validate the Driver\'s response',
+    'geoip_driver_test_hint' => 'Validate the Driver\'s response. This validation includes (if available) the validation of its parameters. Random IP address is used during this validation.',
     'geoip_driver_pro_label' => 'Use pro version of this service',
     'dbip_info' => '<div class="card bg-light-inverse rounded mb-0">
 <div class="card-body">
@@ -1804,4 +1778,350 @@ WARNING: Before changing this option, it is important to note that restrictions 
     'display_states_search_tip_hint' => 'Display (or hide) the states search tooltip in listings search forms.',
     'background_image_darken_label' => 'Background Image Darken',
     'background_image_darken_hint' => 'Background Image Darken (From 0.0 to 1.0 per step of 0.05). Note: The option uses the <code>linear-gradient()</code> CSS function.',
+    'promotion_package' => 'promotion package',
+    'promotion_packages' => 'promotion packages',
+    'subscription_package' => 'subscription package',
+    'subscription_packages' => 'subscription packages',
+    'promotion' => 'promotion',
+    'promotions' => 'promotions',
+    'subscription' => 'subscription',
+    'subscriptions' => 'subscriptions',
+    'forbidden' => 'Forbidden access.',
+    'short_name_hint' => 'Short Name.',
+    'promotion_time_in_days' => 'Duration (in days)',
+    'premium_listings' => '<h3>Premium Listings</h3>',
+    'premium_listings_notes' => '<div class="card bg-light-inverse rounded mb-0">
+<div class="card-body">
+<span style="font-weight: bold;">IMPORTANT</span>
+<ul>
+<li>To use this option, you have to enable the premium listings feature.</li>
+<li>To enabled the premium listings feature on your website, you have to:
+	<ol>
+		<li>Add new packages and activate them from <code>Admin panel → Settings → Packages</code>. You can also activate the default packages.</li>
+		<li>Activate one or several payment methods from the <code>Admin panel → Settings → Payment Methods</code></li>
+	</ol>
+</li>
+<li>Premium listings are sorted based on the order of their packages.
+<br>It is therefore important to carefully reorder your packages from the <code>Admin panel → Settings → Packages</code>.
+<br>More information about the packages and the premium listings order is available <a href="https://support.laraclassifier.com/help-center/articles/18/8/35/configuring-the-packages#premium-listings-display-and-sorting" target="_blank">here</a>.</li>
+</ul>
+</div>
+</div>',
+    'premium_listings_in_searches_title' => '<h5 style="font-weight: bold;">Display the premium listings first in search results pages</h5>',
+    'premium_first_label' => 'In search results (Except By Category & By Location)',
+    'premium_first_hint' => 'Display premium listings first, in search results globally (Except when category or city filter is enabled).',
+    'premium_first_category_label' => 'In search results (By Category)',
+    'premium_first_category_hint' => 'Display premium listings first, in search results filtered by category.',
+    'premium_first_location_label' => 'In search results (By Location)',
+    'premium_first_location_hint' => 'Display premium listings first, in search results filtered by location.',
+    'free_listings_in_premium_title' => '<h5 style="font-weight: bold;">Display (or not) the free listings to complete premium listings when browsing premium listings</h5>',
+    'free_listings_in_premium_label' => 'Enabled free listings in premium listings results (Not recommended)',
+    'free_listings_in_premium_hint' => 'Note: Although this option can be useful in some cases, it is not recommended.
+<br/>By browsing premium listings results pages,
+	<ul>
+	<li>If this option is not checked, only premium listings will be displayed.</li>
+	<li>If this option is checked, the premium listing will be displayed first, completed with the free listings.</li>
+	</ul>',
+    'inline_req_unsupported_column_type' => 'The column type ":columnType" is not supported to make inline requests.',
+    'inline_req_condition' => 'Conditions are not meet to make inline request on the ":table" table and the ":column" column.',
+    'inline_req_skip_default_country' => 'The default country can not be disabled.',
+    'inline_req_geonames_data_import_error' => 'Error encountered during the country\'s data importing.',
+    'inline_req_geonames_data_removing_error' => 'Error encountered during the country\'s data removing.',
+    'listings_limit_label' => 'Listings Limit per User',
+    'listings_limit_hint' => 'The maximum number of listings allowed per user (for lifetime). Except if user has subscribed to an offer that allows him to publish more. NOTE: Active subscriptions change the listings number limit to be monthly instead of for lifetime. Check out:
+<ul><li>the <code>Admin panel → Settings → Packages → Subscription</code> options for more information.</li></ul>',
+    'interval_label' => 'Interval',
+    'interval_hint' => 'The subscription\'s validity period. ie. Period after which subscriptions will expire.',
+    'subs_listings_limit_label' => 'Listings Limit',
+    'subs_listings_limit_hint' => 'Maximum number of listings allowed using this subscription.',
+    'subs_pictures_limit_hint' => 'Maximum number of pictures allowed per listing using this subscription.',
+    'package_price_hint' => '<div class="card bg-light-inverse rounded mb-0">
+<div class="card-body">You have to check out the minimum amount required by the installed payment gateway providers.
+<br><br><strong style="font-weight: bold;">NOTE:</strong> You can set <code>0.00</code> as price but it is important to note that:
+<ul>
+<li>It is not possible to have several packages with price equal to <code>0.00</code>. Only one is allowed.</li>
+<li>The package with <code>0.00</code> as price will be considered as basic package (With null effect).</li>
+<li>No payment will be make when price is equal to <code>0.00</code>.</li>
+<li>The options of the selected package whose price is equal to <code>0.00</code> will not apply to its listings, to its users or to its users\' listings. They will be considered as basic listings or basic users, related to the package type.</li>
+</ul>
+</div>
+</div>',
+    'fake_payment' => 'Fake Payment (Pushed)',
+    'real_payment' => 'Real Payment',
+    'has_promotion' => 'Has Promotion',
+    'has_subscription' => 'Has Subscription',
+    'has_valid_promotion' => 'Has Valid Promotion',
+    'has_valid_subscription' => 'Has Valid Subscription',
+    'with_fake_payment' => 'With Fake Payment (Pushed)',
+    'with_real_payment' => 'With Real Payment',
+    'default_package_type_label' => 'Default Package Type',
+    'default_package_type_hint' => 'Select the type of package to display by default on the pricing page.',
+    'honeypot_title' => '<h3>Honeypot</h3>',
+    'honeypot_enabled_label' => 'Enable Honeypot (Spam Protection)',
+    'honeypot_enabled_hint' => 'Detect and stop bots requests on forms. More information <a href="https://en.wikipedia.org/wiki/Honeypot_(computing)" target="_blank">here</a>.',
+    'honeypot_name_field_name_label' => 'Name of the honeypot field',
+    'honeypot_name_field_name_hint' => 'Here you can specify name of the honeypot field. Any requests that submit a non-empty value for this name will be discarded. Make sure this name does not collide with a form field that is actually used.',
+    'honeypot_randomize_name_field_name_label' => 'Randomize the honeypot field name',
+    'honeypot_randomize_name_field_name_hint' => 'When this is activated there will be a random string added to the name_field_name. This improves the protection against bots.',
+    'honeypot_valid_from_timestamp_label' => 'Valid the honeypot from timestamp',
+    'honeypot_valid_from_timestamp_hint' => 'When this is activated, requests will be checked if form is submitted faster than this amount of seconds.',
+    'honeypot_valid_from_field_name_label' => 'Valid from field name',
+    'honeypot_valid_from_field_name_hint' => 'This field contains the name of a form field that will be used to verify if the form wasn\'t submitted too quickly. Make sure this name does not collide with a form field that is actually used.',
+    'honeypot_amount_of_seconds_label' => 'Amount of seconds',
+    'honeypot_amount_of_seconds_hint' => 'If the form is submitted faster than this amount of seconds the form submission will be considered invalid.',
+    'honeypot_respond_to_spam_with_label' => 'Respond to spam with',
+    'honeypot_respond_to_spam_with_hint' => 'This is responsible for sending a response to requests that are detected as being spammy.',
+    'honeypot_field_name_required_message' => '[Honeypot] The ":attribute" field is required.',
+    'honeypot_reserved_field_name_error_message' => '[Honeypot] :attribute: The name ":attributeValue" is a system-reserved name.',
+    'iso_date_format_hint_bj' => 'Accepted formats: Date <a href="javascript: void(0);" data-bs-toggle="popover-bj" data-html="true" title="ISO format" data-bs-content="<code>YYYY-MM-DD HH:mm</code> => 2020-01-09 08:45 (23:15)
+<br><code>D MMM YYYY h:mm a</code> => 9 Jan 2020 8:45 am (11:15 pm)
+<br><code>D MMMM YYYY H:mm</code> => 9 January 2020 8:45 (23:15)
+<br><code>MMM Do, YYYY h:mm a</code> => Jan 9th, 2020 8:45 am (11:15 pm)
+<br><code>MMMM Do, YYYY H:mm</code> => January 9th, 2020 8:45 (23:15)
+<br><code>lll</code> => Jan 9, 2020 8:45:21 PM (23:15)
+<br><code>llll</code> => Wed, Jan 9, 2020 8:45:21 PM (23:15)
+<br>...
+<br>More information on <a href=\'https://carbon.nesbot.com/docs/#api-localization\' target=\'_blank\'>ISO Format</a> patterns">ISO format</a> patterns.',
+    'php_date_format_hint_bj' => 'Accepted formats: PHP-specific dates formats (<a href="javascript: void(0);" data-bs-toggle="popover-bj" title="DateTimeInterface::format()" data-bs-content="<code>Y-m-d H:i</code> => 2020-01-09 08:45 (23:15)
+<br><code>j M Y g:i a</code> => 9 Jan 2020 8:45 am (11:15 pm)
+<br><code>j F Y G:i</code> => 9 January 2020 8:45 (23:15)
+<br><code>M jS, Y g:i a</code> => Jan 9th, 2020 8:45 am (11:15 pm)
+<br><code>F jS, Y G:i</code> => January 9th, 2020 8:45 (23:15)
+<br><code>c</code> => 2020-01-09T08:45:21+00:00 (23:15)
+<br><code>r</code> => Wed, 09 Jan 2020 08:45:21 +0200 (23:15)
+<br>...
+<br>More information on <a href=\'https://www.php.net/manual/en/datetime.format.php\' target=\'_blank\'>php.net</a>" data-html="true">DateTimeInterface::format()</a> or <a href="javascript: void(0);" data-bs-toggle="popover-bj" data-html="true" title="strftime()" data-bs-content="<code>%Y-%m-%d %H:%M</code> => 2020-01-09 08:45 (23:15)
+<br><code>%e %b %Y %k:%M</code> => 9 Jan 2020 8:45 (23:15)
+<br><code>%e %B %Y %k:%M</code> => 9 January 2020 8:45 (23:15)
+<br><code>%b %e, %Y %k:%M</code> => Jan 9, 2020 8:45 (23:15)
+<br><code>%B %e, %Y %k:%M</code> => January 9, 2020 8:45 (23:15)
+<br>...
+<br>More information on <a href=\'https://www.php.net/manual/en/function.strftime.php\' target=\'_blank\'>php.net</a>">strftime()</a>).',
+    'create_from_ip' => 'Create from IP address',
+    'latest_update_ip' => 'Latest update IP address',
+    'locale_code_hint_bj' => 'List of locales available (installed) on your server. <a href="javascript: void(0);" data-bs-toggle="popover-bj" data-html="true" title="Notes" data-bs-content="<ul>
+<li>It is strongly recommended to prioritize locales without codeset. i.e. Prioritize <code>de_CH</code> than <code>de_CH.ISO8859-1</code>.</li>
+<li>If you encounter encoding issues (very rare case), it is recommended to prioritize locales with <code>UTF-8</code> (or <code>utf8</code>) as codeset. <br>However, if you have changed the encoding of your site, you have to select locales with appropriate codeset.</li>
+</ul>">Important notes</a>.',
+    'empty_locales_list' => 'Warning: Impossible to get the server\'s locales list. Please make sure that the PHP exec() function is enabled on the server. However, a known list of locales is proposed in the ":field" field, but in certain cases, their selection may cause issues.',
+    'listing_info_title' => '<h3>Listing Info</h3>',
+    'listing_info_description' => '<div class="card bg-light-inverse rounded mb-0">
+<div class="card-body">
+<h4 class="mt-0">Hide/Show listing\'s info</h4>
+<p>Hiding certain listing\'s breadcrumb elements (like: category or location) can slightly improve listings list pages performance.</p>
+</div>
+</div>',
+    'hide_post_type_label' => 'Hide the listing type',
+    'hide_post_type_hint' => 'This option will hide listing type on the listings list page and on the homepage.',
+    'hide_category_label' => 'Hide the category',
+    'hide_category_hint' => 'This option will hide category on the listings list page and on the homepage.',
+    'hide_location_label' => 'Hide the location',
+    'hide_location_hint' => 'This option will hide location on the listings list page and on the homepage.',
+    'hide_salary_label' => 'Hide the salary',
+    'hide_salary_hint' => 'This option will hide salary on the listings list page and on the homepage.',
+    'hide_excerpt_label' => 'Hide the description\'s excerpt',
+    'hide_excerpt_hint' => 'This option will hide description excerpt on the listings list page and on the homepage.',
+    'locale' => 'Locale',
+    'lang_script_label' => 'Script',
+    'lang_script_hint' => 'ISO 15924 Language Script Code.',
+    'fill_missing_trans_texts_label' => 'Add missing database texts to translate',
+    'fill_missing_trans_texts_hint' => '<span class="badge bg-light-warning text-dark">It will be rare that you need to use this option.</span>
+<br>This option is useful when you have not yet translated all translatable columns in your database for a language and want to set that language as <code>:fallbackLocale</code>.
+<br>It allows to automatically fill texts you need to translate for the language. This option is taken to account only when the language is set as <code>:fallbackLocale</code> language.
+<br><span class="badge bg-light-danger text-dark">WARNING</span> Using this option requires a lot of server resources and may take some time. It all depends on the size of your database. So, only use this option if absolutely necessary.',
+    'fill_missing_trans_texts_fallback' => 'This option is reserved to set a language as fallback language.',
+    'width_label' => 'Width',
+    'width_hint' => 'Width (in pixel)',
+    'height_label' => 'Height',
+    'height_hint' => 'Height (in pixel)',
+    'language_code_unique_store' => 'This language already exists. Please select another language.',
+    'language_code_unique_update' => 'This language already exists. Please delete the existing language before performing this operation.',
+    'localization_country_region' => '<h3>Country / Region</h3>',
+    'localization_language' => '<h3>Language</h3>',
+    'localization_geolocation' => '<h3>Geolocation</h3>',
+    'country_flag_shape_label' => 'Country flag shapes',
+    'country_flag_shape_hint' => 'Select a shape style for the country flags.',
+    'country_spoken_languages_label' => 'Country\'s spoken languages',
+    'country_spoken_languages_hint' => 'List of languages spoken in the country, in order of popularity or in order of importance.
+<br>Enter the <a href=":url">language codes</a> (ISO 639-1 or regional code) separated by comma.
+<br>If a language code is not available in the system, it will be not be taken to account until you added it.',
+    'show_country_spoken_languages_label' => 'Show only languages spoken in the country',
+    'country_spoken_languages_option_0' => 'Disabled',
+    'country_spoken_languages_option_1' => 'Active',
+    'country_spoken_languages_option_2' => 'Active (By including the English language)',
+    'country_spoken_languages_option_3' => 'Active (By including the main language)',
+    'show_country_spoken_languages_hint' => 'Show only languages spoken in the website\'s country as available languages.
+	<br>Note: You have to define the spoken languages of the countries by updating the ":field" field of the <a href=":url" target="_blank">country</a> edit form.
+	<br>Options:
+	<ul>
+	<li><code>:option_0</code>: All the app\'s languages will be displayed for the users in the front.</li>
+	<li><code>:option_1</code>: Only the country\'s spoken languages that are available in the system will be displayed.</li>
+	<li><code>:option_2</code>: The English language will be displayed in addition with the country\'s spoken languages. You have to make sure that the English language is available in the system.</li>
+	<li><code>:option_3</code>: The app\'s main (or default) language will be displayed in addition with the country\'s spoken languages.</li>
+	</ul>',
+    'show_country_flag_option_0' => 'Disabled',
+    'show_country_flag_option_1' => 'In next to the logo',
+    'show_country_flag_option_2' => 'Replacing the language selection icon',
+    'show_country_flag_hint' => 'Show the selected country\'s flag in the front.
+	<br>Options:
+	<ul>
+	<li><code>:option_0</code>: The country flag will be hidden.</li>
+	<li><code>:option_1</code>: The country flag will be shown in next of the logo (right of the logo) for desktop view. On mobile view, this will be hidden.</li>
+	<li><code>:option_2</code>: The country flag will replace the language selection icon. And the country flag link will be moved as a new item of the languages drop down menu.</li>
+	</ul>',
+    'localization_front_header' => '<h3>Front Header UI</h3>',
+    'none' => 'None',
+    'admin_division1' => 'Administrative Division 1',
+    'admin_division2' => 'Administrative Division 2',
+    'Number of ads per page' => 'Number of ads per page (> 4 and < 40)',
+    'dark_mode_label' => 'Allow Dark Mode in Front',
+    'dark_mode_hint' => 'Allow logged users to set the Dark Mode in the front.',
+    'driver_mailersend_title' => '<h3>MailerSend</h3>',
+    'driver_mailersend_info' => 'Get a MailerSend Account <a href="https://www.mailersend.com/" target="_blank">here</a>.',
+    'mail_mailersend_api_key_label' => 'MailerSend API Key',
+    'mail_mailersend_api_key_hint' => 'Your MailerSend API Key.',
+    'setting_not_found' => 'The ":setting" setting is not found.',
+    'setting_reset_success' => 'The ":setting" setting is reset successfully.',
+    'setting_reset_not_allowed' => 'The ":setting" setting is allowed to be reset.',
+    'per_page_title' => '<h3>Number of items per page</h3>',
+    'per_page_info' => '<div class="card bg-light-inverse rounded mb-0">
+<div class="card-body">These options allow you to define the number of items per page (and items to take when pagination is not available) by type of entries in the front. <br><strong class="fw-bold">Important:</strong>
+<ul>
+<li>Please be careful about the values you enter, as this may affect your website\'s performance (and loading time).</li>
+<li>Click on this <a href=":url" class="btn btn-sm btn-danger confirm-simple-action"><i class="fa-solid fa-rotate-left"></i> Factory Values</a> button to reset these options to factory settings.</li>
+</ul>
+</div></div>',
+    'per_page_label' => 'Global items per page',
+    'per_page_hint' => 'Items per page for global entries. This is applied when the option for a specific entity is not filled or when there is no option for an entity.',
+    'specific_per_page_hint' => 'Number of items per page. The global items per page will be used if this is not filled.',
+    'categories_per_page_label' => 'Categories per page',
+    'cities_per_page_label' => 'Cities per page',
+    'companies_per_page_label' => 'Companies per page',
+    'countries_per_page_label' => 'Countries per page',
+    'payments_per_page_label' => 'Promotions (Transactions) per page',
+    'posts_per_page_label' => 'Listings per page',
+    'resumes_per_page_label' => 'Resumes per page',
+    'saved_posts_per_page_label' => 'Saved listings per page',
+    'saved_search_per_page_label' => 'Saved searches per page',
+    'subadmin1_per_page_label' => 'Sub-admin. 1 per page',
+    'subadmin2_per_page_label' => 'Sub-admin. 2 per page',
+    'subscriptions_per_page_label' => 'Subscriptions per page',
+    'threads_per_page_label' => 'Discussions per page',
+    'threads_messages_per_page_label' => 'Messages per page',
+    'pagination_limit_title' => '<h3>Number of items to take (Limit), when pagination is not available</h3>',
+    'pagination_limit_info' => 'You can set custom values for the number of items to display when pagination is not available, unlike the number of items to display in home page <a href=":sectionsUrl">sections</a> (<a href=":citiesUrl">cities</a>, <a href=":categoriesUrl">categories</a>, the <a href=":postsUrl">latest listings</a>, <a href=":premiumPostsUrl">premium listings</a> or <a href=":companiesUrl">companies</a> sections) which have their own limitation options.',
+    'similar_posts_limit_label' => 'Similar listings limit',
+    'similar_posts_limit_hint' => 'Number of listings to show for similar listings. The global items per page will be used as limit if this is not filled. A high number will affect your website\'s performance. The <code>Similar listings</code> option can be activated or disabled <a href=":url">here</a>.',
+    'categories_limit_label' => 'Categories to take',
+    'categories_limit_hint' => 'Number of categories to take when pagination is not available. The global items per page will be used as limit if this is not filled. The categories are displayed according to the order you defined from the admin panel. This option applies to categories of the same depth.',
+    'cities_limit_label' => 'Cities to take',
+    'cities_limit_hint' => 'Number of cities to take when pagination is not available. The global items per page will be used as limit if this is not filled. When pagination is not available, cities are displayed from most to least populated (based on population size) except in auto-completion. A high number for this option will affect your website\'s performance.',
+    'auto_complete_cities_limit_label' => 'Cities to take (in auto-completion)',
+    'auto_complete_cities_limit_hint' => 'Number of cities to take for the auto complete feature. The global items per page will be used as limit if this is not filled. A high number for this option will affect your website\'s performance.',
+    'specific_limit_hint' => 'Number of items to take. The global items per page will be used as limit if this is not filled.',
+    'pagination_limit_location_title' => '<h3>Number of items to take (in Locations Select Boxes)</h3>',
+    'pagination_limit_location_info' => 'Number of locations items to take when the <code>Search in Select Box</code> is set for the <code>City Selection Mode</code> option <a href=":url">here</a>.',
+    'subadmin1_select_limit_label' => 'Sub-admin. 1 to take (in Select Box)',
+    'subadmin2_select_limit_label' => 'Sub-admin. 2 to take (in Select Box)',
+    'cities_select_limit_label' => 'Cities to take (in SelectBox)',
+    'social_link_info' => '<div class="card bg-light-inverse rounded mb-0">
+<div class="card-body">Display your pages and profiles on social networks at the bottom of the pages. Leave blank (or do not fill in) the fields of social networks that you do not want to display.</div></div>',
+    'youtube_url' => 'Youtube URL',
+    'vimeo_url' => 'Vimeo URL',
+    'vk_url' => 'VK (VKontakte) URL',
+    'tumblr_url' => 'Tumblr URL',
+    'flickr_url' => 'Flickr URL',
+    'social_share_title' => '<h3>Available Social Media</h3>',
+    'social_share_info' => '<div class="card bg-light-inverse rounded mb-0">
+<div class="card-body">Allow listings visitors to share them on social media.
+<br><strong>Note:</strong> The share icons will appear on the sidebar of the listings details page only.
+</div></div>',
+    'facebook_share_hint' => 'Enable sharing on Facebook',
+    'twitter_share_hint' => 'Enable sharing on X (Twitter)',
+    'linkedin_share_hint' => 'Enable sharing on LinkedIn',
+    'whatsapp_share_hint' => 'Enable sharing on WhatsApp',
+    'telegram_share_hint' => 'Enable sharing on Telegram',
+    'snapchat_share_hint' => 'Enable sharing on Snapchat',
+    'messenger_share_hint' => 'Enable sharing on Facebook Messenger',
+    'facebook_app_id' => 'Facebook App ID',
+    'facebook_app_id_hint' => 'The Facebook Messenger sharing requires a Facebook App ID.',
+    'pinterest_share_hint' => 'Enable sharing on Pinterest',
+    'vk_share_hint' => 'Enable sharing on VK (VKontakte)',
+    'tumblr_share_hint' => 'Enable sharing on Tumblr',
+    'og_image_title' => '<h3>Fallback Image (for some Social Media)</h3>',
+    'og_image_info' => 'Image to display when the page has no images when sharing on some social media.',
+    'vector_charts_limit_label' => 'Days Limit in Vector Charts',
+    'countries_charts_limit_label' => 'Countries Limit in Countries Charts',
+    'general_separator_title' => '<h3>General Fields & Options</h3>',
+    'form_cat_selection_title' => '<h3>Category Selection</h3>',
+    'form_cat_display_type_label' => 'Categories\' type of display',
+    'form_cat_display_type_hint' => 'This will be applied to the categories selection modal during listings posting.',
+    'date_from_now_options_title' => '<h5 class="fw-bold">Options for when Date should be displayed as "<span>Difference in a human-readable format from current instance to now</span>":</h5>
+<div class="card bg-light-inverse rounded mb-0">
+<div class="card-body">
+<p><strong>NOTE:</strong> Option available in the <a href=":listingsListUrl" target="_blank">:listingsList</a> and <a href=":listingPageUrl" target="_blank">:listingPage</a> settings pages.</p>
+</div>
+</div>',
+    'date_from_now_modifier_label' => 'Date Difference\'s Modifier',
+    'date_from_now_modifier_hint' => '<ol>
+	<li>No modifiers - e.g. 2 days</li>
+	<li>Add ago/from now modifier - e.g. 2 days ago, from 3 hours</li>
+	<li>Add before/after modifier - e.g. 2 days before, 3 hours after</li>
+</ol>',
+    'date_from_now_short_label' => 'Displays short format of time units',
+    'date_from_now_short_hint' => 'e.g. 1h ago, 2d ago, 1w ago, 3y ago<br>NOTE: This option will only apply to locales with the ability to shorten the time unit.',
+    'card_light_inverse' => '<div class="card bg-light-inverse text-dark rounded mb-0"><div class="card-body">:content</div></div>',
+    'card_light_warning' => '<div class="card bg-light-warning text-dark rounded mb-0"><div class="card-body">:content</div></div>',
+    'card_info' => '<div class="card bg-info text-white rounded mb-0"><div class="card-body">:content</div></div>',
+    'card_warning' => '<div class="card bg-warning text-white rounded mb-0"><div class="card-body">:content</div></div>',
+    'driver_resend_title' => '<h3>Resend</h3>',
+    'driver_resend_info' => 'Get a Resend Account <a href="https://resend.com/" target="_blank">here</a>.',
+    'mail_resend_api_key_label' => 'Resend API Key',
+    'mail_resend_api_key_hint' => 'Your Resend API Key.',
+    'driver_brevo_title' => '<h3>Brevo</h3>',
+    'driver_brevo_info' => 'Get a Brevo Account <a href="https://www.brevo.com/" target="_blank">here</a>.',
+    'mail_brevo_api_key_label' => 'Brevo API Key',
+    'mail_brevo_api_key_hint' => 'Your Brevo API Key.',
+    'driver_test_title' => '<h3>Test the driver\'s parameters</h3>',
+    'mail_driver_test_info' => '<ul>
+<li>If this option is enabled, by saving the form the system will try to send an email example to validate the filled parameters.</li>
+<li>And all future emails sent by the app will be sent to the email address filled in the <span class="fw-bold">:alwaysTo</span> field.</li>
+<li>If no errors occur, and you don\'t receive the example email, inspect your spams and if you don\'t have it in your spams, this means that the mails are successfully sent by the app but not delivered, so you should contact the mail sending provider (or your hosting provider) for more information about that.</li>
+<li>To save this form regardless of the validity of the filled parameters, you have to uncheck this field.</li>
+<li><span class="fw-bold text-danger">IMPORTANT: As soon as the parameters are validated and the test mail has been received, you have to disable this option to allow the app to send next mails to recipients.</span></li>
+</ul>',
+    'email_always_to_label' => 'Always Send Mails To',
+    'email_always_to_hint' => 'Receive all the mails sent from the app to this email address. To back to the normal way to let the app send the mails to their real recipients, you have to disable the <span class="fw-bold">:option</span> option.',
+    'email_always_to_activated' => 'Mail driver test mode will be activated and the system will try to send a test e-mail after submitting the form. Eventual future e-mails will also no longer send to recipients... They will be sent to: ${alwaysToValue} as long as mail driver test mode is activated.',
+    'email_to_admin_activated' => 'Mail driver test mode will be activated and the system will try to send a test e-mail after submitting the form. This e-mail will be sent to the website\'s email address filled in the Admin panel → Settings → General → Application, if not, it will be sent to the admin user.',
+    'email_always_to_disabled' => 'The mail driver test mode will be disabled after submitting the form. Everything will back to normal. Future e-mails will be sent to their respective recipients.',
+    'sms_driver_test_info' => '<ul>
+<li>By saving this form the system will try to send a SMS example to validate the filled parameters.</li>
+<li>If no errors occur, and you don\'t receive the example SMS, inspect your logs on the SMS sending provider website, and in the worst case you should contact the provider for more information about that.</li>
+<li>To save this form regardless of the validity of the filled parameters, you have to uncheck this field.</li>
+</ul>',
+    'sms_to_label' => 'Send this test SMS to',
+    'sms_to_hint' => 'Receive the test SMS to this mobile phone number. <br>Note: The transactional SMSs will continue to be sent to their recipients.',
+    'sms_to_activated' => 'SMS driver test mode will be activated and the system will try to send a test SMS after submitting the form. This SMS will be sent to: ${smsToValue}.',
+    'sms_to_admin_activated' => 'SMS driver test mode will be activated and the system will try to send a test SMS after submitting the form. This SMS will be sent to the website\'s phone number filled in the Admin panel → Settings → General → Application, if not, it will be sent to the admin user phone number. So you have to make sure that admin user(s) has/have their phone number filled.',
+    'sms_to_disabled' => 'The SMS driver test mode will be disabled after submitting the form.',
+    'listing_id_hashing_title' => '<h3>Listings\' ID Hashing</h3>',
+    'facebook_enabled_label' => 'Enable Facebook',
+    'facebook_enabled_hint' => 'Allow users to log in with Facebook',
+    'linkedin_enabled_label' => 'Enable LinkedIn',
+    'linkedin_enabled_hint' => 'Allow users to log in with LinkedIn',
+    'twitter_oauth_2_enabled_label' => 'Enable X/Twitter (Oauth2)',
+    'twitter_oauth_2_enabled_hint' => 'Allow users to log in with X/Twitter (Oauth2)',
+    'twitter_oauth_1_enabled_label' => 'Enable X/Twitter (Oauth1)',
+    'twitter_oauth_1_enabled_hint' => 'Allow users to log in with X/Twitter (Oauth1)',
+    'google_enabled_label' => 'Enable Google',
+    'google_enabled_hint' => 'Allow users to log in with Google',
+    'phone_validator_label' => 'Phone Validator',
+    'phone_validator_hint' => 'When the <code>:enable_phone_as_auth_field_label</code> option is activated, the phone number entered by users need to be mobile phone number to allow them to receive SMS, unlike a fixed-line number which cannot receive SMS. So the system uses a tool (based on the Google\'s <code>libphonenumber</code> library) that can validate users phone numbers. However, in some regions (e.g. the USA), it is impossible to distinguish between fixed-line and mobile numbers by looking at the phone number itself. And some mobile numbers in some countries may be identified as fixed-line numbers. You can therefore select the validation rule that you find most suitable for your website.
+	<br><br><span>IMPORTANT:</span> When phone numbers validation is disabled or when phone numbers are not properly validated to be sure they are mobile numbers, errors can be occurred during SMS sending (and some SMS will not be delivered) due to the fact that some phone numbers will be not mobile numbers.',
+    'phone_validator_op_0' => 'None (Not Recommended)',
+    'phone_validator_op_1' => 'Accept only valid mobile number (Strict)',
+    'phone_validator_op_2' => 'Accept possible mobile number (Recommended)',
+    'phone_validator_op_3' => 'Accept valid phone number (Mobile or Fixed-Line)',
+    'phone_validator_op_4' => 'Accept possible phone number (Mobile or Fixed-Line)',
 ];

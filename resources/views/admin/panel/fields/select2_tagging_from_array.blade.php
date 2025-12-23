@@ -1,24 +1,45 @@
 {{-- select2 tagging from array --}}
-<?php
-$var_name = str_replace('[]', '', $field['name']);
-$var_name = str_replace('][', '.', $var_name);
-$var_name = str_replace('[', '.', $var_name);
-$var_name = str_replace(']', '', $var_name);
-$required = (isset($field['rules']) && isset($field['rules'][$var_name]) && in_array('required', explode('|', $field['rules'][$var_name]))) ? true : '';
-?>
+@php
+	$field ??= [];
+	
+	$field['allows_multiple'] ??= false;
+	
+	$name = $field['name'];
+	$name = $field['allows_multiple'] ? $name . '[]' : $name;
+	
+	$field['options'] ??= [];
+	$field['rules'] ??= [];
+	
+	$varName = str_replace('[]', '', $name);
+	$varName = str_replace('][', '.', $varName);
+	$varName = str_replace('[', '.', $varName);
+	$varName = str_replace(']', '', $varName);
+	
+	$fieldRules = $field['rules'][$varName] ?? [];
+	$fieldRules = is_string($fieldRules) ? explode('|', $fieldRules) : $fieldRules;
+	$fieldRules = is_array($fieldRules) ? $fieldRules : [];
+	
+	$required = in_array('required', $fieldRules) ? true : '';
+	
+	$multipleAttr = $field['allows_multiple'] ? ' multiple' : '';
+	
+	$tags = old('tags', $field['options'] ?? []);
+@endphp
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+	    {!! $field['label'] !!}
+	    @if (isset($field['required']) && $field['required'])
+		    <span class="text-danger">*</span>
+	    @endif
+    </label>
     @include('admin.panel.fields.inc.translatable_icon')
-	<select
-			name="{{ $field['name'] }}@if (isset($field['allows_multiple']) && $field['allows_multiple']==true)[]@endif"
-			style="width: 100%"
+	<select name="{{ $name }}" style="width: 100%"
 			@include('admin.panel.inc.field_attributes', ['default_class' =>  'form-select select2_tagging_from_array'])
-			@if (isset($field['allows_multiple']) && $field['allows_multiple']==true)multiple @endif
+			{!! $multipleAttr !!}
 	>
-		<?php $tags = old('tags', $field['options'] ?? []); ?>
 		@if (!empty($tags))
 			@foreach ($tags as $key => $value)
-					<option selected="selected">{{ $value }}</option>
+				<option selected="selected">{{ $value }}</option>
 			@endforeach
 		@endif
     </select>
@@ -39,7 +60,7 @@ $required = (isset($field['rules']) && isset($field['rules'][$var_name]) && in_a
     @push('crud_fields_styles')
 		{{-- include select2 css--}}
 		<link href="{{ asset('assets/plugins/select2/css/select2.min.css') }}" rel="stylesheet" type="text/css" />
-		<link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+		<link href="{{ asset('assets/plugins/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
     @endpush
     
     {{-- FIELD JS - will be loaded in the after_scripts section --}}
@@ -47,7 +68,7 @@ $required = (isset($field['rules']) && isset($field['rules'][$var_name]) && in_a
     {{-- include select2 js--}}
     <script src="{{ asset('assets/plugins/select2/js/select2.js') }}"></script>
     <script>
-		jQuery(document).ready(function($) {
+	    onDocumentReady((event) => {
 			{{-- Trigger select2 for each untriggered select2_tagging_from_array box --}}
 			$('.select2_tagging_from_array').each(function (i, obj) {
 				if (!$(obj).hasClass("select2-hidden-accessible"))
@@ -59,11 +80,11 @@ $required = (isset($field['rules']) && isset($field['rules'][$var_name]) && in_a
 			});
 			
 			{{-- Tagging with multi-value Select Boxes --}}
-			<?php
-			$tagsLimit = (int)config('settings.single.tags_limit', 15);
-			$tagsMinLength = (int)config('settings.single.tags_min_length', 2);
-			$tagsMaxLength = (int)config('settings.single.tags_max_length', 30);
-			?>
+			@php
+				$tagsLimit = (int)config('settings.listing_form.tags_limit', 15);
+				$tagsMinLength = (int)config('settings.listing_form.tags_min_length', 2);
+				$tagsMaxLength = (int)config('settings.listing_form.tags_max_length', 30);
+			@endphp
 			let selectTagging = $('.select2_tagging_from_array').select2({
 				theme: 'bootstrap',
 				tags: true,
@@ -108,8 +129,8 @@ $required = (isset($field['rules']) && isset($field['rules'][$var_name]) && in_a
 			});
 			
 			{{-- select2: If error occured, apply Bootstrap's error class --}}
-			@if ($errors->has($var_name . '.*'))
-				$('select[name^="{{ $var_name }}"]').closest('div').addClass('is-invalid');
+			@if ($errors->has($varName . '.*'))
+				$('select[name^="{{ $varName }}"]').closest('div').addClass('is-invalid');
 			@endif
 		});
     </script>

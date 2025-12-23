@@ -1,15 +1,29 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use App\Helpers\Cookie;
 use App\Models\Language;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 
 class SetDefaultLocale
 {
-	protected static $cacheExpiration = 3600;
+	protected static int $cacheExpiration = 3600;
 	
 	/**
 	 * Handle an incoming request.
@@ -17,17 +31,16 @@ class SetDefaultLocale
 	 * @param \Illuminate\Http\Request $request
 	 * @param \Closure $next
 	 * @return mixed
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function handle(Request $request, Closure $next)
 	{
 		// Exception for Install & Upgrade Routes
-		if (
-			str_contains(Route::currentRouteAction(), 'InstallController')
-			|| str_contains(Route::currentRouteAction(), 'UpgradeController')
-			|| str_contains(Route::currentRouteAction(), 'LocaleController@setLocale')
-		) {
+		if (isFromInstallOrUpgradeProcess()) {
+			return $next($request);
+		}
+		
+		// Exception for Locale Routes (Important)
+		if (str_contains(currentRouteAction(), 'LocaleController@setLocale')) {
 			return $next($request);
 		}
 		
@@ -40,8 +53,8 @@ class SetDefaultLocale
 		// If the 'Website Country Language' detection option is activated
 		// And if a Country has been selected (through the 'country' parameter)
 		// Then, remove saved Language Code session (without apply it to the system)
-		if (config('settings.app.auto_detect_language') == '2') {
-			if (request()->has('country') && request()->get('country') == config('country.code')) {
+		if (config('settings.localization.auto_detect_language') == 'from_country') {
+			if (request()->query('country') == config('country.code')) {
 				$this->forgetSavedLang();
 				$this->setTranslationOfCurrentCountry();
 				
@@ -53,22 +66,26 @@ class SetDefaultLocale
 		if ($this->savedLangExists()) {
 			$langCode = $this->getSavedLang();
 			
-			$lang = cache()->remember('language.' . $langCode, self::$cacheExpiration, function () use ($langCode) {
-				return Language::where('abbr', $langCode)->first();
+			$cacheId = 'language.' . $langCode;
+			$lang = cache()->remember($cacheId, self::$cacheExpiration, function () use ($langCode) {
+				return Language::where('code', $langCode)->first();
 			});
 			
 			if (!empty($lang)) {
 				// Config: Language (Updated)
-				config()->set('lang.abbr', $lang->abbr);
+				config()->set('lang.code', $lang->code);
 				config()->set('lang.locale', $lang->locale);
+				config()->set('lang.iso_locale', $lang->iso_locale);
+				config()->set('lang.tag', $lang->tag);
 				config()->set('lang.direction', $lang->direction);
 				config()->set('lang.russian_pluralization', $lang->russian_pluralization);
 				config()->set('lang.date_format', $lang->date_format ?? null);
 				config()->set('lang.datetime_format', $lang->datetime_format ?? null);
 				
-				// Apply Country's Language Code to the system
-				config()->set('app.locale', $langCode);
-				app()->setLocale($langCode);
+				// Apply the country's language to the app
+				// & to the system (if its locale is available on the server)
+				app()->setLocale(config('lang.code'));
+				systemLocale()->setLocale(config('lang.locale'));
 			}
 		}
 		
@@ -79,8 +96,10 @@ class SetDefaultLocale
 	
 	/**
 	 * Set the translation of the current Country
+	 *
+	 * @return void
 	 */
-	private function setTranslationOfCurrentCountry()
+	private function setTranslationOfCurrentCountry(): void
 	{
 		if (config()->has('country.name')) {
 			$countryName = getColumnTranslation(config('country.name'));
@@ -101,19 +120,17 @@ class SetDefaultLocale
 	}
 	
 	/**
-	 * @return array|mixed|string|null
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @return string|null
 	 */
-	private function getSavedLang()
+	private function getSavedLang(): ?string
 	{
 		if (config('larapen.core.storingUserSelectedLang') == 'cookie') {
 			$langCode = Cookie::get('langCode');
 		} else {
-			$langCode = session()->get('langCode');
+			$langCode = session('langCode');
 		}
 		
-		return $langCode;
+		return is_string($langCode) ? $langCode : null;
 	}
 	
 	/**
@@ -121,7 +138,7 @@ class SetDefaultLocale
 	 *
 	 * @return void
 	 */
-	private function forgetSavedLang()
+	private function forgetSavedLang(): void
 	{
 		if (config('larapen.core.storingUserSelectedLang') == 'cookie') {
 			Cookie::forget('langCode');

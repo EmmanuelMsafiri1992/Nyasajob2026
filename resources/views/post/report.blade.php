@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @section('content')
@@ -8,7 +21,7 @@
 			<div class="row clearfix">
 				
 				@includeFirst([config('larapen.core.customizedViewPath') . 'post.inc.notification', 'post.inc.notification'])
-					
+				
 				<div class="col-md-12">
 					<div class="contact-form">
 						
@@ -22,16 +35,23 @@
 						
 						<form role="form" method="POST" action="{{ \App\Helpers\UrlGen::reportPost($post) }}">
 							{!! csrf_field() !!}
+							@honeypot
 							<fieldset>
 								<div class="row">
 									{{-- report_type_id --}}
-									<?php $reportTypeIdError = (isset($errors) and $errors->has('report_type_id')) ? ' is-invalid' : ''; ?>
+									@php
+										$reportTypeIdError = (isset($errors) && $errors->has('report_type_id')) ? ' is-invalid' : '';
+									@endphp
 									<div class="col-md-6 col-12 mb-3 required">
-										<label for="report_type_id" class="control-label{{ $reportTypeIdError }}">{{ t('Reason') }} <sup>*</sup></label>
+										<label for="report_type_id" class="control-label{{ $reportTypeIdError }}">
+											{{ t('Reason') }} <sup>*</sup>
+										</label>
 										<select id="reportTypeId" name="report_type_id" class="form-control selecter{{ $reportTypeIdError }}">
 											<option value="">{{ t('Select a reason') }}</option>
 											@foreach($reportTypes as $reportType)
-												<option value="{{ $reportType->id }}" {{ (old('report_type_id', 0)==$reportType->id) ? 'selected="selected"' : '' }}>
+												<option value="{{ $reportType->id }}"
+														{{ (old('report_type_id', 0)==$reportType->id) ? ' selected="selected"' : '' }}
+												>
 													{{ $reportType->name }}
 												</option>
 											@endforeach
@@ -39,23 +59,36 @@
 									</div>
 									
 									{{-- email --}}
-									@if (auth()->check() and isset(auth()->user()->email))
+									@if (auth()->check() && isset(auth()->user()->email))
 										<input type="hidden" name="email" value="{{ auth()->user()->email }}">
 									@else
-										<?php $emailError = (isset($errors) and $errors->has('email')) ? ' is-invalid' : ''; ?>
+										@php
+											$emailError = (isset($errors) && $errors->has('email')) ? ' is-invalid' : '';
+										@endphp
 										<div class="col-md-6 col-12 mb-3 required">
 											<label for="email" class="control-label">{{ t('Your Email') }} <sup>*</sup></label>
-											<div class="input-group">
-												<span class="input-group-text"><i class="far fa-envelope"></i></span>
-												<input id="email" name="email" type="text" maxlength="60" class="form-control{{ $emailError }}" value="{{ old('email') }}">
+											<div class="input-group{{ $emailError }}">
+												<span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
+												<input id="email"
+												       name="email"
+												       data-valid-type="email"
+												       type="text"
+												       maxlength="60"
+												       class="form-control{{ $emailError }}"
+												       value="{{ old('email') }}"
+												>
 											</div>
 										</div>
 									@endif
-								
+									
 									{{-- message --}}
-									<?php $messageError = (isset($errors) and $errors->has('message')) ? ' is-invalid' : ''; ?>
+									@php
+										$messageError = (isset($errors) && $errors->has('message')) ? ' is-invalid' : '';
+									@endphp
 									<div class="col-md-12 col-12 mb-3 required">
-										<label for="message" class="control-label">{{ t('Message') }} <sup>*</sup> <span class="text-count"></span></label>
+										<label for="message" class="control-label">
+											{{ t('Message') }} <sup>*</sup> <span class="text-count"></span>
+										</label>
 										<textarea id="message"
 												  name="message"
 												  class="form-control{{ $messageError }}"
@@ -70,7 +103,7 @@
 									<input type="hidden" name="abuseForm" value="1">
 									
 									<div class="mb-3">
-										<a href="{{ rawurldecode(URL::previous()) }}" class="btn btn-default btn-lg">{{ t('Back') }}</a>
+										<a href="{{ rawurldecode(url()->previous()) }}" class="btn btn-default btn-lg">{{ t('Back') }}</a>
 										<button type="submit" class="btn btn-primary btn-lg">{{ t('Send Report') }}</button>
 									</div>
 								</div>
@@ -85,5 +118,9 @@
 @endsection
 
 @section('after_scripts')
-	<script src="{{ url('assets/js/form-validation.js') }}"></script>
+	<script>
+		onDocumentReady((event) => {
+			formValidate("form", formValidateOptions);
+		});
+	</script>
 @endsection

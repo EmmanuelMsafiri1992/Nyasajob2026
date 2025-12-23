@@ -7,6 +7,7 @@ use App\Models\CourseEnrollment;
 use App\Helpers\UrlGen;
 use Larapen\LaravelMetaTags\Facades\MetaTag;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Web\Public\FrontController;
 use Illuminate\Http\Request;
 
 class CourseController extends FrontController

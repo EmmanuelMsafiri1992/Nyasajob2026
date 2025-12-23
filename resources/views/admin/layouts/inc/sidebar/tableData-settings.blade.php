@@ -22,12 +22,26 @@
 		</a>
 	</li>
 @endif
-@if (auth()->user()->can('package-list') || userHasSuperAdminPermissions())
+@if (auth()->user()->can('package-list')|| userHasSuperAdminPermissions())
 	<li class="sidebar-item">
-		<a href="{{ admin_url('packages') }}" class="sidebar-link">
-			<i class="mdi mdi-adjust"></i>
-			<span class="hide-menu">{{ trans('admin.packages') }}</span>
+		<a href="#packages" class="sidebar-link has-arrow">
+			<i class="mdi mdi-adjust"></i> <span class="hide-menu">{{ trans('admin.packages') }}</span>
 		</a>
+		<ul aria-expanded="false" class="collapse second-level">
+			<li class="sidebar-item">
+				<a href="{{ admin_url('packages/promotion') }}" class="sidebar-link">
+					<i class="mdi mdi-adjust"></i>
+					<span class="hide-menu">{{ trans('admin.promotion') }}</span>
+				</a>
+			</li>
+			<li class="sidebar-item">
+				<a href="{{ admin_url('packages/subscription') }}" class="sidebar-link">
+					<i class="mdi mdi-adjust"></i>
+					<span class="hide-menu">{{ trans('admin.subscription') }}</span>
+				</a>
+			</li>
+			<li class="sidebar-item">&nbsp;</li>
+		</ul>
 	</li>
 @endif
 @if (auth()->user()->can('payment-method-list') || userHasSuperAdminPermissions())
@@ -52,8 +66,8 @@
 	|| userHasSuperAdminPermissions()
 )
 	<li class="sidebar-item">
-		<a href="#international" class="has-arrow sidebar-link">
-			<i class="fa fa-globe"></i> <span class="hide-menu">{{ trans('admin.international') }}</span>
+		<a href="#international" class="sidebar-link has-arrow">
+			<i class="fa-solid fa-globe"></i> <span class="hide-menu">{{ trans('admin.international') }}</span>
 		</a>
 		<ul aria-expanded="false" class="collapse second-level">
 			@if (auth()->user()->can('country-list') || userHasSuperAdminPermissions())

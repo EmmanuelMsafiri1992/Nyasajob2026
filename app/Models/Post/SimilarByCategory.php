@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Post;
 
 use App\Models\Category;
@@ -37,9 +52,9 @@ trait SimilarByCategory
 			'phone_verified_at',
 			'reviewed_at',
 			$postsTable . '.created_at',
-			$postsTable . '.archived_at'
+			$postsTable . '.archived_at',
 		];
-		if (isFromApi() && !isFromTheAppsWebEnvironment()) {
+		if (isFromApi() && !doesRequestIsFromWebApp()) {
 			$select[] = $postsTable . '.description';
 			$select[] = 'user_id';
 			$select[] = 'contact_name';
@@ -61,7 +76,7 @@ trait SimilarByCategory
 				$similarCatIds[] = $this->category->id;
 			} else {
 				if (!empty($this->category->parent_id)) {
-					$similarCatIds   = Category::childrenOf($this->category->parent_id)->get()
+					$similarCatIds = Category::childrenOf($this->category->parent_id)->get()
 						->keyBy('id')
 						->keys()
 						->toArray();
@@ -73,8 +88,8 @@ trait SimilarByCategory
 		}
 		
 		// Default Filters
-		$posts->currentCountry()->verified()->unarchived();
-		if (config('settings.single.listings_review_activation')) {
+		$posts->inCountry()->verified()->unarchived();
+		if (config('settings.listing_form.listings_review_activation')) {
 			$posts->reviewed();
 		}
 		
@@ -90,12 +105,24 @@ trait SimilarByCategory
 		}
 		
 		// Relations
-		$posts->with('postType')->has('postType');
-		$posts->with('category', fn ($query) => $query->with('parent'))->has('category');
-		$posts->with('salaryType')->has('salaryType');
-		$posts->with('city')->has('city');
+		$posts->has('postType');
+		if (!config('settings.listings_list.hide_post_type')) {
+			$posts->with('postType');
+		}
+		$posts->has('category');
+		if (!config('settings.listings_list.hide_category')) {
+			$posts->with('category', fn ($query) => $query->with('parent'));
+		}
+		$posts->has('salaryType');
+		if (!config('settings.listings_list.hide_salary')) {
+			$posts->with('salaryType');
+		}
+		$posts->has('city');
+		if (!config('settings.listings_list.hide_location')) {
+			$posts->with('city');
+		}
 		$posts->with('savedByLoggedUser');
-		$posts->with('latestPayment', fn ($query) => $query->with('package'));
+		$posts->with('payment', fn($query) => $query->with('package'));
 		$posts->with('user');
 		$posts->with('user.permissions');
 		
@@ -104,7 +131,7 @@ trait SimilarByCategory
 		}
 		
 		// Set ORDER BY
-		// $posts->orderBy('created_at', 'DESC');
+		// $posts->orderByDesc('created_at');
 		$seed = rand(1, 9999);
 		$posts->inRandomOrder($seed);
 		

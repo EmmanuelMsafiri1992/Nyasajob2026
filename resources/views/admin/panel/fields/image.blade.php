@@ -1,3 +1,8 @@
+@php
+	use Illuminate\Support\Facades\Storage;
+	
+	$field ??= [];
+@endphp
 <div data-preview="#{{ $field['name'] }}"
 	data-aspectRatio="{{ $field['aspect_ratio'] ?? 0 }}"
 	data-crop="{{ $field['crop'] ?? false }}"
@@ -12,14 +17,29 @@
 		{{-- Wrap the image or canvas element with a block element (container) --}}
 		<div class="row d-flex justify-content-center mt-3 mb-3">
 			<div class="col-sm-6 text-center">
-				<?php
-				$prefix = $field['prefix'] ?? '';
-				$fileUrl = (isset($field['value']) && is_string($field['value']))
-					? \Storage::disk($field['disk'])->url($field['value'])
-					: ($field['default'] ?? \Storage::disk($field['disk'])->url(config('larapen.core.picture.default')));
-				$fileUrl = $prefix . old($field['name'], $fileUrl);
-				?>
-				<img id="mainImage" class="rounded" src="{{ url($fileUrl) }}">
+				@php
+					$diskName = $field['disk'] ?? null;
+					
+					// Get default picture & its URL
+					$defaultPicture = config('larapen.media.picture');
+					$defaultPictureUrl = Storage::disk($diskName)->url($defaultPicture);
+					
+					// Get default value (Need to be sent|filled as URL)
+					$defaultValue = $field['default'] ?? null;
+					$defaultValue = (!empty($defaultValue) && is_string($defaultValue)) ? $defaultValue : $defaultPictureUrl;
+					
+					// Get value (Sent|filled as storage path)
+					$value = $field['value'] ?? null;
+					
+					// Get the picture's URL
+					$pictureUrl = (!empty($value) && is_string($value)) ? Storage::disk($diskName)->url($value) : $defaultValue;
+					$pictureUrl = old($field['name'], $pictureUrl);
+					
+					// Get the picture's URL with prefix path (If filled)
+					$prefix = $field['prefix'] ?? '';
+					$pictureUrl = $prefix . $pictureUrl;
+				@endphp
+				<img id="mainImage" class="rounded" src="{{ url($pictureUrl) }}">
 			</div>
 			@if (isset($field['crop']) && $field['crop'])
 				<div class="col-sm-3 text-center">
@@ -40,13 +60,13 @@
 				<input type="hidden" id="hiddenImage" name="{{ $field['name'] }}">
 			</label>
 			@if (isset($field['crop']) && $field['crop'])
-				<button class="btn btn-secondary" id="rotateLeft" type="button" style="display: none;"><i class="fa fa-rotate-left"></i></button>
-				<button class="btn btn-secondary" id="rotateRight" type="button" style="display: none;"><i class="fa fa-rotate-right"></i></button>
-				<button class="btn btn-secondary" id="zoomIn" type="button" style="display: none;"><i class="fa fa-search-plus"></i></button>
-				<button class="btn btn-secondary" id="zoomOut" type="button" style="display: none;"><i class="fa fa-search-minus"></i></button>
-				<button class="btn btn-warning" id="reset" type="button" style="display: none;"><i class="fa fa-times"></i></button>
+				<button class="btn btn-secondary" id="rotateLeft" type="button" style="display: none;"><i class="fa-solid fa-rotate-left"></i></button>
+				<button class="btn btn-secondary" id="rotateRight" type="button" style="display: none;"><i class="fa-solid fa-rotate-right"></i></button>
+				<button class="btn btn-secondary" id="zoomIn" type="button" style="display: none;"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+				<button class="btn btn-secondary" id="zoomOut" type="button" style="display: none;"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+				<button class="btn btn-warning" id="reset" type="button" style="display: none;"><i class="fa-solid fa-xmark"></i></button>
 			@endif
-			<button class="btn btn-danger" id="remove" type="button"><i class="fa fa-trash"></i></button>
+			<button class="btn btn-danger" id="remove" type="button"><i class="fa-regular fa-trash-can"></i></button>
 		</div>
 		
 		{{-- HINT --}}
@@ -120,7 +140,7 @@
     {{-- YOUR JS HERE --}}
     <script src="{{ asset('assets/plugins/cropper/dist/cropper.min.js') }}"></script>
     <script>
-		jQuery(document).ready(function($) {
+	    onDocumentReady((event) => {
 			// Loop through all instances of the image field
 			$('form div.image').each(function(index){
 				// Find DOM elements under this form-group element
@@ -233,8 +253,6 @@
 			});
 		});
     </script>
-    
-    
     @endpush
 @endif
 {{-- End of Extra CSS and JS --}}

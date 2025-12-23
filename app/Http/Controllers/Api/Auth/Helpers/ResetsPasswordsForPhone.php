@@ -1,7 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Auth\Helpers;
 
-use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\Front\ResetPasswordRequest;
 use App\Models\PasswordReset;
 use App\Models\Permission;
 use App\Models\User;
@@ -30,10 +45,10 @@ trait ResetsPasswordsForPhone
 		if (empty($passwordReset)) {
 			$msg = t('The entered code is invalid');
 			
-			return $this->respondError($msg);
+			return apiResponse()->error($msg);
 		}
 		
-		return $this->respondSuccess();
+		return apiResponse()->success();
 	}
 	
 	/**
@@ -46,7 +61,7 @@ trait ResetsPasswordsForPhone
 	 * @bodyParam password_confirmation string required The confirmation of the user's password. Example: null
 	 * @bodyParam device_name string required The user's device name. Example: null
 	 *
-	 * @param \App\Http\Requests\ResetPasswordRequest $request
+	 * @param \App\Http\Requests\Front\ResetPasswordRequest $request
 	 * @return \Illuminate\Http\JsonResponse
 	 */
 	public function resetForPhone(ResetPasswordRequest $request): \Illuminate\Http\JsonResponse
@@ -59,7 +74,7 @@ trait ResetsPasswordsForPhone
 		if (empty($passwordReset)) {
 			$msg = t('The code does not match your email or phone number');
 			
-			return $this->respondError($msg);
+			return apiResponse()->error($msg);
 		}
 		
 		// Get User
@@ -67,7 +82,7 @@ trait ResetsPasswordsForPhone
 		if (empty($user)) {
 			$msg = t('The entered value is not registered with us');
 			
-			return $this->respondError($msg);
+			return apiResponse()->error($msg);
 		}
 		
 		// Update the User

@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Auth\Traits;
 
 use App\Models\Post;
@@ -18,8 +33,6 @@ trait RecognizedUserActionsTrait
 	 *
 	 * @param $user
 	 * @return void
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function findAndMatchPostsToUser($user): void
 	{
@@ -34,7 +47,8 @@ trait RecognizedUserActionsTrait
 			&& !empty($user->email_verified_at)
 		);
 		if ($isVerifiedEmail) {
-			Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
+			Post::query()
+				->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
 				->where('email', $user->email)
 				->update(['user_id' => $user->id]);
 		}
@@ -46,7 +60,8 @@ trait RecognizedUserActionsTrait
 			&& !empty($user->phone_verified_at)
 		);
 		if ($isVerifiedPhone) {
-			Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
+			Post::query()
+				->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
 				->where('phone', $user->phone)
 				->update(['user_id' => $user->id]);
 		}
@@ -58,8 +73,6 @@ trait RecognizedUserActionsTrait
 	 *
 	 * @param $post
 	 * @return void
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function findAndMatchUserToPost($post): void
 	{

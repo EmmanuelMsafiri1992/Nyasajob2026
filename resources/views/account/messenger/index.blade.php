@@ -1,11 +1,25 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
-<?php
-$apiResult ??= [];
-$threads = (array)data_get($apiResult, 'data');
-$totalThreads = (int)data_get($apiResult, 'meta.total', 0);
-?>
+@php
+    $apiResult ??= [];
+	$threads = (array)data_get($apiResult, 'data');
+	$totalThreads = (int)data_get($apiResult, 'meta.total', 0);
+@endphp
+
 @section('content')
 	@includeFirst([config('larapen.core.customizedViewPath') . 'common.spacer', 'common.spacer'])
     <div class="main-container">
@@ -19,7 +33,7 @@ $totalThreads = (int)data_get($apiResult, 'meta.total', 0);
                 <div class="col-md-9 page-content">
                     <div class="inner-box">
                         <h2 class="title-2">
-                            <i class="fas fa-envelope"></i> {{ t('inbox') }}
+                            <i class="fa-solid fa-envelope"></i> {{ t('inbox') }}
                         </h2>
                         
                         @if (session()->has('flash_notification'))
@@ -43,7 +57,7 @@ $totalThreads = (int)data_get($apiResult, 'meta.total', 0);
                                     
                                     <div class="btn-group mobile-only-inline">
                                         <a href="#" class="btn btn-primary text-uppercase">
-                                            <i class="fas fa-pen"></i>
+                                            <i class="fa-solid fa-pen"></i>
                                         </a>
                                     </div>
                                     <div class="btn-group hidden-sm">
@@ -88,7 +102,7 @@ $totalThreads = (int)data_get($apiResult, 'meta.total', 0);
                                     </div>
                                     
                                     <button type="button" id="btnRefresh" class="btn btn-default hidden-sm" data-bs-toggle="tooltip" title="{{ t('refresh') }}">
-                                        <span class="fas fa-sync-alt"></span>
+                                        <span class="fa-solid fa-rotate"></span>
                                     </button>
                                     
                                     <div class="btn-group hidden-sm">
@@ -153,7 +167,7 @@ $totalThreads = (int)data_get($apiResult, 'meta.total', 0);
 
 @section('after_scripts')
 	<script>
-        var loadingImage = '{{ url('images/loading.gif') }}';
+        var loadingImage = '{{ url('images/spinners/fading-line.gif') }}';
         var loadingErrorMessage = '{{ t('Threads could not be loaded') }}';
         var actionText = '{{ t('action') }}';
         var actionErrorMessage = '{{ t('This action could not be done') }}';

@@ -233,7 +233,7 @@
     'TD' => 'Tchad',
     'TF' => 'Terres australes françaises',
     'IO' => 'Territoire britannique de l\'océan Indien',
-    'PS' => 'Territoire palestinien',
+    'PS' => 'Palestine',
     'TH' => 'Thaïlande',
     'TL' => 'Timor oriental',
     'TG' => 'Togo',

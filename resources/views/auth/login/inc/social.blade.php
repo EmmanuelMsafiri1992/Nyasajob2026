@@ -1,56 +1,69 @@
-@if (socialLoginIsEnabled())
+@if (isSocialAuthEnabled())
 	@if (isset($boxedCol) && !empty($boxedCol) && is_numeric($boxedCol))
 		<div class="col-12">
 			<div class="row d-flex justify-content-center">
 				<div class="col-{{ $boxedCol }}"> {{-- col-8 --}}
 					@endif
 					
-					<?php
-					$sGutter = 'gx-2 gy-2';
-					if (isset($socialCol) && !empty($socialCol) && is_numeric($socialCol)) {
-						if ($socialCol >= 10) {
-							$sGutter = 'gx-2 gy-1';
+					@php
+						$sGutter = 'gx-2 gy-2';
+						if (isset($socialCol) && !empty($socialCol) && is_numeric($socialCol)) {
+							if ($socialCol >= 10) {
+								$sGutter = 'gx-2 gy-1';
+							}
+							$sCol = 'col-xl-6 col-lg-6 col-md-6';
+							$sCol = str_replace('-6', '-' . $socialCol, $sCol);
+						} else {
+							$sCol = 'col-xl-6 col-lg-6 col-md-6';
 						}
-						$sCol = 'col-xl-6 col-lg-6 col-md-6';
-						$sCol = str_replace('-6', '-' . $socialCol, $sCol);
-					} else {
-						$sCol = 'col-xl-6 col-lg-6 col-md-6';
-					}
-					?>
-					
-					<div class="row mb-3 d-flex justify-content-center {{ $sGutter }}">
-						@if (config('settings.social_auth.facebook_client_id') && config('settings.social_auth.facebook_client_secret'))
+						
+						$loginWithFacebook = t('login_with', ['media' => 'Facebook']);
+						$loginWithLinkedIn = t('login_with', ['media' => 'LinkedIn']);
+						$loginWithTwitter = t('login_with', ['media' => 'X (Twitter)']);
+						$loginWithGoogle = t('login_with', ['media' => 'Google']);
+					@endphp
+					<div class="row mb-3 social-media d-flex justify-content-center {{ $sGutter }}">
+						@if (isSocialAuthEnabled('facebook'))
 							<div class="{{ $sCol }} col-sm-12 col-12">
-								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-fb">
-									<a href="{{ url('auth/facebook') }}" title="{!! strip_tags(t('Login with Facebook')) !!}">
-										<i class="fab fa-facebook"></i> {!! t('Login with Facebook') !!}
+								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-facebook">
+									<a href="{{ url('auth/facebook') }}" title="{!! strip_tags($loginWithFacebook) !!}">
+										<i class="fa-brands fa-facebook"></i> {!! $loginWithFacebook !!}
 									</a>
 								</div>
 							</div>
 						@endif
-						@if (config('settings.social_auth.linkedin_client_id') && config('settings.social_auth.linkedin_client_secret'))
+						@if (isSocialAuthEnabled('linkedin'))
 							<div class="{{ $sCol }} col-sm-12 col-12">
-								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-lkin">
-									<a href="{{ url('auth/linkedin') }}" title="{!! strip_tags(t('Login with LinkedIn')) !!}">
-										<i class="fab fa-linkedin"></i> {!! t('Login with LinkedIn') !!}
+								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-linkedin">
+									<a href="{{ url('auth/linkedin') }}" title="{!! strip_tags($loginWithLinkedIn) !!}">
+										<i class="fa-brands fa-linkedin"></i> {!! $loginWithLinkedIn !!}
 									</a>
 								</div>
 							</div>
 						@endif
-						@if (config('settings.social_auth.twitter_client_id') && config('settings.social_auth.twitter_client_secret'))
+						@if (isSocialAuthEnabled('twitterOauth2'))
 							<div class="{{ $sCol }} col-sm-12 col-12">
-								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-tw">
-									<a href="{{ url('auth/twitter') }}" title="{!! strip_tags(t('Login with Twitter')) !!}">
-										<i class="fab fa-twitter"></i> {!! t('Login with Twitter') !!}
+								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-x-twitter">
+									<a href="{{ url('auth/twitter-oauth-2') }}" title="{!! strip_tags($loginWithTwitter) !!}">
+										<i class="fa-brands fa-x-twitter"></i> {!! $loginWithTwitter !!}
 									</a>
 								</div>
 							</div>
 						@endif
-						@if (config('settings.social_auth.google_client_id') && config('settings.social_auth.google_client_secret'))
+						@if (isSocialAuthEnabled('twitterOauth1'))
 							<div class="{{ $sCol }} col-sm-12 col-12">
-								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-ggl">
-									<a href="{{ url('auth/google') }}" title="{!! strip_tags(t('Login with Google')) !!}">
-										<i class="fab fa-google"></i> {!! t('Login with Google') !!}
+								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-x-twitter">
+									<a href="{{ url('auth/twitter') }}" title="{!! strip_tags($loginWithTwitter) !!}">
+										<i class="fa-brands fa-x-twitter"></i> {!! $loginWithTwitter !!}
+									</a>
+								</div>
+							</div>
+						@endif
+						@if (isSocialAuthEnabled('google'))
+							<div class="{{ $sCol }} col-sm-12 col-12">
+								<div class="col-xl-12 col-md-12 col-sm-12 col-12 btn btn-google">
+									<a href="{{ url('auth/google') }}" title="{!! strip_tags($loginWithGoogle) !!}">
+										<i class="fa-brands fa-google"></i> {!! $loginWithGoogle !!}
 									</a>
 								</div>
 							</div>

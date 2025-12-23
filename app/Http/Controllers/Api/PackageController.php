@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Models\Package;
@@ -17,23 +32,34 @@ class PackageController extends BaseController
 	 * @queryParam sort string The sorting parameter (Order by DESC with the given column. Use "-" as prefix to order by ASC). Possible values: lft. Example: -lft
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$embed = explode(',', request()->get('embed'));
+		$type = getRequestSegment(3);
+		$isPromoting = ($type == 'promotion');
+		$isSubscripting = ($type == 'subscription');
+		
+		$embed = explode(',', request()->input('embed'));
+		$locale = config('app.locale');
+		$page = request()->integer('page');
 		
 		// Cache control
 		$this->updateCachingParameters();
 		
 		// Cache ID
-		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->get('embed') : '';
-		$cacheId = 'packages.' . $cacheEmbedId . config('app.locale');
+		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
+		$cacheFiltersId = '.filters.' . $type;
+		$cachePageId = '.page.' . $page . '.of.' . $this->perPage;
+		$cacheId = 'packages.' . $cacheEmbedId . $cacheFiltersId . $cachePageId . $locale;
 		
 		// Cached Query
-		$packages = cache()->remember($cacheId, $this->cacheExpiration, function () use ($embed) {
-			$packages = Package::query()->applyCurrency();
+		$packages = cache()->remember($cacheId, $this->cacheExpiration, function () use ($isPromoting, $isSubscripting, $embed) {
+			$packages = Package::query();
+			
+			$packages->when($isPromoting, fn ($query) => $query->promotion());
+			$packages->when($isSubscripting, fn ($query) => $query->subscription());
+			
+			$packages->applyCurrency();
 			
 			if (in_array('currency', $embed)) {
 				$packages->with('currency');
@@ -52,7 +78,7 @@ class PackageController extends BaseController
 		
 		$message = ($packages->count() <= 0) ? t('no_packages_found') : null;
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -64,18 +90,16 @@ class PackageController extends BaseController
 	 *
 	 * @param $id
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function show($id): \Illuminate\Http\JsonResponse
 	{
-		$embed = explode(',', request()->get('embed'));
+		$embed = explode(',', request()->input('embed'));
 		
 		// Cache control
 		$this->updateCachingParameters();
 		
 		// Cache ID
-		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->get('embed') : '';
+		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
 		$cacheId = 'package.id.' . $id . '.' . $cacheEmbedId . config('app.locale');
 		
 		// Cached Query
@@ -98,6 +122,6 @@ class PackageController extends BaseController
 		
 		$resource = new PackageResource($package);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

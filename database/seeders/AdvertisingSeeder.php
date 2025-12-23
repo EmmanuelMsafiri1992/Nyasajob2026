@@ -18,8 +18,8 @@ class AdvertisingSeeder extends Seeder
 		$entries = [
 			[
 				'integration'          => 'unitSlot',
-				'is_responsive'        => '0',
 				'slug'                 => 'top',
+				'is_responsive'        => '0',
 				'provider_name'        => 'Google AdSense',
 				'description'          => 'advertising_unitSlot_hint',
 				'tracking_code_large'  => '',
@@ -29,8 +29,8 @@ class AdvertisingSeeder extends Seeder
 			],
 			[
 				'integration'          => 'unitSlot',
-				'is_responsive'        => '0',
 				'slug'                 => 'bottom',
+				'is_responsive'        => '0',
 				'provider_name'        => 'Google AdSense',
 				'description'          => 'advertising_unitSlot_hint',
 				'tracking_code_large'  => '',
@@ -40,8 +40,8 @@ class AdvertisingSeeder extends Seeder
 			],
 			[
 				'integration'          => 'autoFit',
-				'is_responsive'        => '1',
 				'slug'                 => 'auto',
+				'is_responsive'        => '1',
 				'provider_name'        => 'Google AdSense',
 				'description'          => 'advertising_autoFit_hint',
 				'tracking_code_large'  => '',

@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Helpers\Files\Storage\StorageDisk;
@@ -28,9 +43,9 @@ class HomeSectionObserver
 				if (array_key_exists('background_image', $homeSection->value)) {
 					if (
 						is_array($original['value'])
-						&& isset($original['value']['background_image'])
 						&& !empty($original['value']['background_image'])
 						&& $homeSection->value['background_image'] != $original['value']['background_image']
+						&& !str_contains($original['value']['background_image'], config('larapen.media.picture'))
 						&& $disk->exists($original['value']['background_image'])
 					) {
 						$disk->delete($original['value']['background_image']);
@@ -85,8 +100,9 @@ class HomeSectionObserver
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $homeSection
+	 * @return void
 	 */
-	private function clearCache($homeSection)
+	private function clearCache($homeSection): void
 	{
 		try {
 			cache()->flush();

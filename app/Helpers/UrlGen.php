@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers;
 
 use App\Helpers\UrlGen\ClearFiltersTrait;
@@ -28,7 +43,7 @@ class UrlGen
 			$path = '#';
 		}
 		
-		return $path;
+		return getAsString($path);
 	}
 	
 	/**
@@ -40,7 +55,7 @@ class UrlGen
 	{
 		$path = str_replace(['{slug}', '{hashableId}', '{id}'], [$slug, $id, $id], config('routes.post'));
 		
-		return (string)$path;
+		return getAsString($path);
 	}
 	
 	/**
@@ -55,9 +70,9 @@ class UrlGen
 	
 	/**
 	 * @param $entry
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function post($entry)
+	public static function post($entry): string
 	{
 		$entry = (is_array($entry)) ? Arr::toObject($entry) : $entry;
 		
@@ -67,60 +82,66 @@ class UrlGen
 			$url = url(self::postPath($entry));
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param $entry
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function reportPost($entry)
+	public static function reportPost($entry): string
 	{
 		$entry = (is_array($entry)) ? Arr::toObject($entry) : $entry;
 		
-		$entryId = hashId($entry->id);
+		$url = url('posts/' . hashId($entry->id) . '/report');
 		
-		return url('posts/' . $entryId . '/report');
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param bool $httpError
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function addPost(bool $httpError = false)
+	public static function addPost(bool $httpError = false): string
 	{
-		return (config('settings.single.publication_form_type') == '2')
+		$url = (config('settings.listing_form.publication_form_type') == '2')
 			? url('create')
 			: url('posts/create');
+		
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param $entry
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function editPost($entry)
+	public static function editPost($entry): string
 	{
 		$entry = (is_array($entry)) ? Arr::toObject($entry) : $entry;
 		
 		if (isset($entry->id)) {
-			$url = (config('settings.single.publication_form_type') == '2')
+			$url = (config('settings.listing_form.publication_form_type') == '2')
 				? url('edit/' . $entry->id)
 				: url('posts/' . $entry->id . '/edit');
 		} else {
 			$url = '#';
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param $cat
 	 * @param $city
 	 * @param array $exceptArr
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string|null
 	 */
-	public static function getCatParentUrl($cat, $city = null, array $exceptArr = [])
+	public static function getCatParentUrl($cat, $city = null, array $exceptArr = []): ?string
 	{
+		if (empty($cat)) {
+			return null;
+		}
+		
 		$cat = (is_array($cat)) ? Arr::toObject($cat) : $cat;
 		$city = (is_array($city)) ? Arr::toObject($city) : $city;
 		
@@ -140,12 +161,13 @@ class UrlGen
 		}
 		
 		$routeSearchPostsByCat = str_replace('{countryCode}/', '', config('routes.searchPostsByCat'));
-		$idx = (config('settings.seo.multi_countries_urls')) ? 2 : 1;
+		$idx = (config('settings.seo.multi_country_urls')) ? 2 : 1;
 		$catFirstSegment = request()->segment($idx);
 		
 		if (str_starts_with($routeSearchPostsByCat, $catFirstSegment . '/')) {
 			
-			if (isset($cat->parent) && !empty($cat->parent)) {
+			// Category permalink
+			if (!empty($cat->parent)) {
 				$catParentUrl = UrlGen::category($cat->parent, null, null, false, $exceptArr);
 			} else {
 				$catParentUrl = UrlGen::category($cat, null, null, false, $exceptArr);
@@ -153,6 +175,7 @@ class UrlGen
 			
 		} else {
 			
+			// Search base permalink + category queries string
 			if (request()->filled('c') && request()->filled('sc')) {
 				if (!in_array('sc', $exceptArr)) {
 					$exceptArr[] = 'sc';
@@ -169,12 +192,17 @@ class UrlGen
 					}
 				}
 			}
+			if (request()->filled('filterBy')) {
+				if (!in_array('filterBy', $exceptArr)) {
+					$exceptArr[] = 'filterBy';
+				}
+			}
 			
 			$catParentUrl = self::search([], $exceptArr);
 			
 		}
 		
-		return $catParentUrl;
+		return getAsString($catParentUrl);
 	}
 	
 	/**
@@ -183,10 +211,14 @@ class UrlGen
 	 * @param $city
 	 * @param bool $findParent
 	 * @param array $exceptArr
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string|null
 	 */
-	public static function category($entry, string $countryCode = null, $city = null, bool $findParent = true, array $exceptArr = [])
+	public static function category($entry, string $countryCode = null, $city = null, bool $findParent = true, array $exceptArr = []): ?string
 	{
+		if (empty($entry)) {
+			return null;
+		}
+		
 		$entry = (is_array($entry)) ? Arr::toObject($entry) : $entry;
 		$city = (is_array($city)) ? Arr::toObject($city) : $city;
 		
@@ -205,40 +237,49 @@ class UrlGen
 			$exceptArr[] = 'maxPrice';
 		}
 		
-		if (!empty($city) && isset($city->id)) {
-			if (isset($entry->parent) && !empty($entry->parent)) {
-				$params = [
-					'c'  => $entry->parent->id,
-					'sc' => $entry->id,
-					'l'  => $city->id,
-				];
+		// Search base permalink + category queries string
+		$locationExists = (!empty($city) && isset($city->id));
+		$filterByExists = request()->filled('filterBy');
+		if ($locationExists || $filterByExists) {
+			$params = [];
+			if (!empty($entry->parent)) {
+				$params['c'] = $entry->parent->id;
+				$params['sc'] = $entry->id;
 			} else {
 				if (!in_array('sc', $exceptArr)) {
 					$exceptArr[] = 'sc';
 				}
-				$params = [
-					'c' => $entry->id,
-					'l' => $city->id,
-				];
+				$params['c'] = $entry->id;
+			}
+			if ($locationExists) {
+				$params['l'] = $city->id;
+			}
+			if ($filterByExists) {
+				$params['filterBy'] = request()->input('filterBy');
 			}
 			
 			return self::search(array_merge(request()->except($exceptArr + array_keys($params)), $params), $exceptArr);
 		}
 		
+		// Category permalink
 		if (empty($countryCode)) {
 			$countryCode = config('country.code');
 		}
 		
 		$countryCodePath = '';
-		if (config('settings.seo.multi_countries_urls')) {
+		if (config('settings.seo.multi_country_urls')) {
 			if (!empty($countryCode)) {
 				$countryCodePath = strtolower($countryCode) . '/';
 			}
 		}
 		
 		if (isset($entry->slug)) {
-			if ($findParent && isset($entry->parent) && !empty($entry->parent)) {
-				$path = str_replace(['{countryCode}/', '{catSlug}', '{subCatSlug}'], ['', $entry->parent->slug, $entry->slug], config('routes.searchPostsBySubCat'));
+			if ($findParent && !empty($entry->parent)) {
+				$path = str_replace(
+					['{countryCode}/', '{catSlug}', '{subCatSlug}'],
+					['', $entry->parent->slug, $entry->slug],
+					config('routes.searchPostsBySubCat')
+				);
 			} else {
 				$path = str_replace(['{countryCode}/', '{catSlug}'], ['', $entry->slug], config('routes.searchPostsByCat'));
 			}
@@ -247,7 +288,7 @@ class UrlGen
 			$url = self::search([], $exceptArr);
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
 	/**
@@ -255,10 +296,14 @@ class UrlGen
 	 * @param string|null $countryCode
 	 * @param $cat
 	 * @param array $exceptArr
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string|null
 	 */
-	public static function city($entry, string $countryCode = null, $cat = null, array $exceptArr = [])
+	public static function city($entry, string $countryCode = null, $cat = null, array $exceptArr = []): ?string
 	{
+		if (empty($entry)) {
+			return null;
+		}
+		
 		$entry = (is_array($entry)) ? Arr::toObject($entry) : $entry;
 		$cat = (is_array($cat)) ? Arr::toObject($cat) : $cat;
 		
@@ -271,28 +316,33 @@ class UrlGen
 			$exceptArr[] = 'location';
 		}
 		
-		if (!empty($cat) && isset($cat->id)) {
-			if (isset($cat->parent) && !empty($cat->parent)) {
-				$params = [
-					'l'  => $entry->id,
-					'c'  => $cat->parent->id,
-					'sc' => $cat->id,
-				];
-			} else {
-				if (!in_array('sc', $exceptArr)) {
-					$exceptArr[] = 'sc';
+		// Search base permalink + location queries string
+		$categoryExists = (!empty($cat) && isset($cat->id));
+		$filterByExists = request()->filled('filterBy');
+		if ($categoryExists || $filterByExists) {
+			$params = [];
+			$params['l'] = $entry->id;
+			if ($categoryExists) {
+				if (!empty($cat->parent)) {
+					$params['c'] = $cat->parent->id;
+					$params['sc'] = $cat->id;
+				} else {
+					if (!in_array('sc', $exceptArr)) {
+						$exceptArr[] = 'sc';
+					}
+					$params['c'] = $cat->id;
 				}
-				$params = [
-					'l' => $entry->id,
-					'c' => $cat->id,
-				];
+			}
+			if ($filterByExists) {
+				$params['filterBy'] = request()->input('filterBy');
 			}
 			
 			return self::search(array_merge(request()->except($exceptArr + array_keys($params)), $params), $exceptArr);
 		}
 		
+		// Location permalink
 		if (empty($countryCode)) {
-			if (isset($entry->country_code) && !empty($entry->country_code)) {
+			if (!empty($entry->country_code)) {
 				$countryCode = $entry->country_code;
 			} else {
 				$countryCode = config('country.code');
@@ -300,14 +350,18 @@ class UrlGen
 		}
 		
 		$countryCodePath = '';
-		if (config('settings.seo.multi_countries_urls')) {
+		if (config('settings.seo.multi_country_urls')) {
 			if (!empty($countryCode)) {
 				$countryCodePath = strtolower($countryCode) . '/';
 			}
 		}
 		
 		if (isset($entry->id, $entry->name)) {
-			$path = str_replace(['{countryCode}/', '{city}', '{id}'], ['', $entry->slug ?? slugify($entry->name), $entry->id], config('routes.searchPostsByCity'));
+			$path = str_replace(
+				['{countryCode}/', '{city}', '{id}'],
+				['', $entry->slug ?? slugify($entry->name), $entry->id],
+				config('routes.searchPostsByCity')
+			);
 			$path = $countryCodePath . $path;
 			if (isAdminPanel()) {
 				$url = dmUrl($entry->country_code, $path);
@@ -318,16 +372,20 @@ class UrlGen
 			$url = '#';
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param $entry
 	 * @param string|null $countryCode
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string|null
 	 */
-	public static function user($entry, string $countryCode = null)
+	public static function user($entry, string $countryCode = null): ?string
 	{
+		if (empty($entry)) {
+			return null;
+		}
+		
 		$entry = (is_array($entry)) ? Arr::toObject($entry) : $entry;
 		
 		if (empty($countryCode)) {
@@ -335,13 +393,13 @@ class UrlGen
 		}
 		
 		$countryCodePath = '';
-		if (config('settings.seo.multi_countries_urls')) {
+		if (config('settings.seo.multi_country_urls')) {
 			if (!empty($countryCode)) {
 				$countryCodePath = strtolower($countryCode) . '/';
 			}
 		}
 		
-		if (isset($entry->username) && !empty($entry->username)) {
+		if (!empty($entry->username)) {
 			$path = str_replace(['{countryCode}/', '{username}'], ['', $entry->username], config('routes.searchPostsByUsername'));
 			$url = url($countryCodePath . $path);
 		} else {
@@ -353,22 +411,22 @@ class UrlGen
 			}
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param string $tag
 	 * @param string|null $countryCode
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function tag(string $tag, string $countryCode = null)
+	public static function tag(string $tag, string $countryCode = null): string
 	{
 		if (empty($countryCode)) {
 			$countryCode = config('country.code');
 		}
 		
 		$countryCodePath = '';
-		if (config('settings.seo.multi_countries_urls')) {
+		if (config('settings.seo.multi_country_urls')) {
 			if (!empty($countryCode)) {
 				$countryCodePath = strtolower($countryCode) . '/';
 			}
@@ -376,22 +434,24 @@ class UrlGen
 		
 		$path = str_replace(['{countryCode}/', '{tag}'], ['', $tag], config('routes.searchPostsByTag'));
 		
-		return url($countryCodePath . $path);
+		$url = url($countryCodePath . $path);
+		
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param string|null $countryCode
 	 * @param int|null $companyId
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function company(string $countryCode = null, int $companyId = null)
+	public static function company(string $countryCode = null, int $companyId = null): string
 	{
 		if (empty($countryCode)) {
 			$countryCode = config('country.code');
 		}
 		
 		$countryCodePath = '';
-		if (config('settings.seo.multi_countries_urls')) {
+		if (config('settings.seo.multi_country_urls')) {
 			if (!empty($countryCode)) {
 				$countryCodePath = strtolower($countryCode) . '/';
 			}
@@ -404,7 +464,7 @@ class UrlGen
 			$url = url($countryCodePath . config('routes.companies'));
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
 	/**
@@ -419,7 +479,7 @@ class UrlGen
 		}
 		
 		$countryCodePath = '';
-		if (config('settings.seo.multi_countries_urls')) {
+		if (config('settings.seo.multi_country_urls')) {
 			if (!empty($countryCode)) {
 				$countryCodePath = strtolower($countryCode) . '/';
 			}
@@ -433,7 +493,9 @@ class UrlGen
 			// request()->server->set('REQUEST_URI', $url);
 		}
 		
-		return url($url);
+		$url = url($url);
+		
+		return getAsString($url);
 	}
 	
 	/**
@@ -455,9 +517,9 @@ class UrlGen
 	
 	/**
 	 * @param $entry
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function page($entry)
+	public static function page($entry): string
 	{
 		$entry = (is_array($entry)) ? Arr::toObject($entry) : $entry;
 		
@@ -468,21 +530,21 @@ class UrlGen
 			$url = '#';
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
 	/**
 	 * @param string|null $countryCode
-	 * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\UrlGenerator|string
+	 * @return string
 	 */
-	public static function sitemap(string $countryCode = null)
+	public static function sitemap(string $countryCode = null): string
 	{
 		if (empty($countryCode)) {
 			$countryCode = config('country.code');
 		}
 		
 		$countryCodePath = '';
-		if (config('settings.seo.multi_countries_urls')) {
+		if (config('settings.seo.multi_country_urls')) {
 			if (!empty($countryCode)) {
 				$countryCodePath = strtolower($countryCode) . '/';
 			}
@@ -490,62 +552,64 @@ class UrlGen
 		
 		$path = str_replace(['{countryCode}/'], [''], config('routes.sitemap'));
 		
-		return url($countryCodePath . $path);
+		$url = url($countryCodePath . $path);
+		
+		return getAsString($url);
 	}
 	
-	public static function countries()
+	public static function countries(): string
 	{
 		$url = url(config('routes.countries'));
 		
 		if (doesCountriesPageCanBeLinkedToTheHomepage()) {
+			$url = str(config('app.url'))->finish('/')->toString();
+			
 			$crawler = new CrawlerDetect();
-			if ($crawler->isCrawler()) {
-				$url = rtrim(env('APP_URL'), '/') . '/';
-			} else {
-				$url = rtrim(env('APP_URL'), '/') . '/locale/' . config('app.locale');
+			if (!$crawler->isCrawler()) {
+				$url = $url . 'locale/' . config('app.locale');
 			}
 		}
 		
-		return $url;
+		return getAsString($url);
 	}
 	
-	public static function contact()
+	public static function contact(): string
 	{
-		return url(config('routes.contact'));
+		return getAsString(url(config('routes.contact')));
 	}
 	
-	public static function pricing()
+	public static function pricing(): string
 	{
-		return url(config('routes.pricing'));
+		return getAsString(url(config('routes.pricing')));
 	}
 	
-	public static function loginPath()
+	public static function loginPath(): string
 	{
-		return config('routes.login');
+		return getAsString(config('routes.login'));
 	}
 	
-	public static function logoutPath()
+	public static function logoutPath(): string
 	{
-		return config('routes.logout');
+		return getAsString(config('routes.logout'));
 	}
 	
-	public static function registerPath()
+	public static function registerPath(): string
 	{
-		return config('routes.register');
+		return getAsString(config('routes.register'));
 	}
 	
-	public static function login()
+	public static function login(): string
 	{
-		return url(self::loginPath());
+		return getAsString(url(self::loginPath()));
 	}
 	
-	public static function logout()
+	public static function logout(): string
 	{
-		return url(self::logoutPath());
+		return getAsString(url(self::logoutPath()));
 	}
 	
-	public static function register()
+	public static function register(): string
 	{
-		return url(self::registerPath());
+		return getAsString(url(self::registerPath()));
 	}
 }

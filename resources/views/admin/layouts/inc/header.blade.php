@@ -1,6 +1,10 @@
 <header class="topbar">
 	@php
 		$navbarTheme = (config('settings.style.admin_navbar_bg') == 'skin6') ? 'navbar-light' : 'navbar-dark';
+		$appName = strtolower(config('settings.app.name'));
+		$logoFactoryUrl = config('larapen.media.logo-factory');
+		$logoDarkUrl = config('settings.app.logo_dark_url', $logoFactoryUrl);
+		$logoLightUrl = config('settings.app.logo_light_url', $logoFactoryUrl);
 	@endphp
 	<nav class="navbar top-navbar navbar-expand-md {{ $navbarTheme }}">
 		
@@ -8,15 +12,23 @@
 			
 			{{-- This is for the sidebar toggle which is visible on mobile only --}}
 			<a class="nav-toggler waves-effect waves-light d-block d-md-none" href="javascript:void(0)">
-				<i class="fas fa-bars"></i>
+				<i class="fa-solid fa-list"></i>
 			</a>
 			
 			{{-- Logo --}}
 			<a class="navbar-brand" href="{{ url('/') }}" target="_blank">
 				{{-- Logo text --}}
 				<span class="logo-text m-auto">
-					<img src="{{ config('settings.app.logo_dark_url') }}" alt="{{ strtolower(config('settings.app.name')) }}" class="dark-logo img-fluid"/>
-					<img src="{{ config('settings.app.logo_light_url') }}" alt="{{ strtolower(config('settings.app.name')) }}" class="light-logo img-fluid"/>
+					<img src="{{ $logoDarkUrl }}"
+					     alt="{{ $appName }}"
+					     class="dark-logo img-fluid"
+					     style="width:auto; height:auto; max-width:200px; max-height:40px;"
+					/>
+					<img src="{{ $logoLightUrl }}"
+					     alt="{{ $appName }}"
+					     class="light-logo img-fluid"
+					     style="width:auto; height:auto; max-width:200px; max-height:40px;"
+					/>
 				</span>
 			</a>
 			
@@ -39,7 +51,7 @@
 			<ul class="navbar-nav me-auto">
 				<li class="nav-item">
 					<a class="nav-link sidebartoggler d-none d-md-block waves-effect waves-dark" href="javascript:void(0)">
-						<i class="fas fa-bars"></i>
+						<i class="fa-solid fa-list"></i>
 					</a>
 				</li>
 			</ul>

@@ -1,9 +1,23 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 
 class HtmlMinify
 {
@@ -15,10 +29,7 @@ class HtmlMinify
 	public function handle(Request $request, Closure $next)
 	{
 		// Exception for Install & Upgrade Routes
-		if (
-			str_contains(Route::currentRouteAction(), 'InstallController')
-			|| str_contains(Route::currentRouteAction(), 'UpgradeController')
-		) {
+		if (isFromInstallOrUpgradeProcess()) {
 			return $next($request);
 		}
 		
@@ -66,13 +77,12 @@ class HtmlMinify
 			' ',
 		];
 		
-		$miniBuffer = preg_replace($search, $replace, $buffer);
-		
-		if (empty($miniBuffer)) {
-			$miniBuffer = $buffer;
+		$minifiedBuffer = preg_replace($search, $replace, $buffer);
+		if (!empty($minifiedBuffer)) {
+			return $minifiedBuffer;
 		}
 		
-		return $miniBuffer;
+		return $buffer;
 	}
 	
 	/**
@@ -84,8 +94,8 @@ class HtmlMinify
 	private function minify2($buffer)
 	{
 		$search = [
-			'/\>[^\S ]+/us',       // Strip whitespaces after tags, except space
-			'/[^\S ]+\</us',       // Strip whitespaces before tags, except space
+			'/>[^\S ]+/us',        // Strip whitespaces after tags, except space
+			'/[^\S ]+</us',        // Strip whitespaces before tags, except space
 			'/(\s)+/us',           // Shorten multiple whitespace sequences
 			'/<!--(.|\s)*?-->/us', // Remove HTML comments
 		];
@@ -97,12 +107,11 @@ class HtmlMinify
 			'',
 		];
 		
-		$miniBuffer = preg_replace($search, $replace, $buffer);
-		
-		if (empty($miniBuffer)) {
-			$miniBuffer = $buffer;
+		$minifiedBuffer = preg_replace($search, $replace, $buffer);
+		if (!empty($minifiedBuffer)) {
+			return $minifiedBuffer;
 		}
 		
-		return $miniBuffer;
+		return $buffer;
 	}
 }

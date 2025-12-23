@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Company;
 
 use App\Helpers\Files\Upload;
@@ -68,10 +83,10 @@ trait SaveCompany
 		if ($request->hasFile('company.logo')) {
 			$param = [
 				'destPath' => 'files/' . strtolower($company->country_code) . '/' . $company->id,
-				'width'    => (int)config('larapen.core.picture.otherTypes.company.width', 800),
-				'height'   => (int)config('larapen.core.picture.otherTypes.company.height', 800),
-				'ratio'    => config('larapen.core.picture.otherTypes.company.ratio', '1'),
-				'upsize'   => config('larapen.core.picture.otherTypes.company.upsize', '1'),
+				'width'    => (int)config('larapen.media.resize.namedOptions.company-logo.width', 800),
+				'height'   => (int)config('larapen.media.resize.namedOptions.company-logo.height', 800),
+				'ratio'    => config('larapen.media.resize.namedOptions.company-logo.ratio', '1'),
+				'upsize'   => config('larapen.media.resize.namedOptions.company-logo.upsize', '1'),
 			];
 			$company->logo = Upload::image($param['destPath'], $request->file('company.logo'), $param);
 			

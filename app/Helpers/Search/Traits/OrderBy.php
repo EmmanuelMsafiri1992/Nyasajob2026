@@ -1,11 +1,26 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Search\Traits;
 
 use Illuminate\Support\Facades\DB;
 
 trait OrderBy
 {
-	protected function applyOrderBy()
+	protected function applyOrderBy(): void
 	{
 		if (!(isset($this->posts) && isset($this->postsTable) && isset($this->orderBy))) {
 			return;
@@ -17,12 +32,20 @@ trait OrderBy
 			'salaryAsc'  => ['name' => $this->postsTable . '.salary_max', 'order' => 'ASC'],
 			'salaryDesc' => ['name' => $this->postsTable . '.salary_max', 'order' => 'DESC'],
 			'date'       => ['name' => $this->postsTable . '.created_at', 'order' => 'DESC'],
-			// Check out the LocationFilter
-			// 'distance' => [],
-			// Check out the PaymentRelation
-			// 'premium'   => ['name' => 'tPackage.lft', 'order' => 'DESC'],
+			// KeywordFilter (by 'relevance') - Only if needed
+			// LocationFilter (by 'distance') - Only if needed
+			// PaymentRelation (by 'premium' or 'random') - Only used by the system
 		];
-		$this->orderByParametersFields = array_merge((array)$this->orderByParametersFields, $orderByParametersFields);
+		$this->orderByParametersFields = array_merge($this->orderByParametersFields, $orderByParametersFields);
+		
+		// Get requested order key
+		$requested = data_get($this->input, 'orderBy');
+		
+		// If random order is requested, apply it and don't continue
+		if ($requested == 'random') {
+			$this->posts->orderByRaw('RAND()');
+			return;
+		}
 		
 		// Apply the 'created_at' column for orderBy
 		// Check if the 'created_at' column is already apply for orderBy
@@ -36,8 +59,8 @@ trait OrderBy
 			$this->orderBy[] = $this->postsTable . '.created_at DESC';
 		}
 		
-		// Apply the requested Order
-		$requestedOrder = $this->getRequestedOrder();
+		// Apply the requested order
+		$requestedOrder = $this->getRequestedOrderStatement($requested);
 		if (!empty($requestedOrder)) {
 			if (!in_array($requestedOrder, $this->orderBy)) {
 				$this->orderBy[] = $requestedOrder;
@@ -78,30 +101,22 @@ trait OrderBy
 	}
 	
 	/**
-	 * Get the requested Order
+	 * Get the requested Order Statement
 	 *
+	 * @param $requested
 	 * @return string|null
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
-	public function getRequestedOrder()
+	public function getRequestedOrderStatement($requested): ?string
 	{
 		if (!isset($this->orderBy)) {
 			return null;
 		}
 		
-		$field = null;
-		if (request()->filled('orderBy')) {
-			$field = request()->get('orderBy');
-		}
-		
-		if (!isset($this->orderByParametersFields[$field])) {
+		if (!isset($this->orderByParametersFields[$requested])) {
 			return null;
 		}
 		
-		$requestedOrder = $this->orderByParametersFields[$field]['name'] . ' ' . $this->orderByParametersFields[$field]['order'];
-		
-		return $requestedOrder;
+		return $this->orderByParametersFields[$requested]['name'] . ' ' . $this->orderByParametersFields[$requested]['order'];
 	}
 	
 	/**
@@ -110,7 +125,7 @@ trait OrderBy
 	 * @param $requestedOrder
 	 * @return array
 	 */
-	private function getOrderByPriorities($requestedOrder)
+	private function getOrderByPriorities($requestedOrder): array
 	{
 		// Default Priorities
 		$orderByPriorities = [
@@ -119,8 +134,8 @@ trait OrderBy
 			'created_at'              => 88,
 		];
 		
-		if (config('settings.list.cities_extended_searches')) {
-			if (isset($this->city) && !empty($this->city)) {
+		if (config('settings.listings_list.cities_extended_searches')) {
+			if (!empty($this->city)) {
 				if (request()->filled('distance')) {
 					$orderByPriorities[config('distance.rename')] = 91;
 				}

@@ -1,10 +1,15 @@
 @php
 	$bottomAdvertising ??= [];
+	$isFromHome ??= false;
+
+	// Check if there's actual advertising content
+	$hasAdContent = !empty(data_get($bottomAdvertising, 'tracking_code_large'))
+		|| !empty(data_get($bottomAdvertising, 'tracking_code_medium'))
+		|| !empty(data_get($bottomAdvertising, 'tracking_code_small'));
 @endphp
-@if (!empty($bottomAdvertising))
+@if (!empty($bottomAdvertising) && $hasAdContent)
 	@php
 		$margin = '';
-		$isFromHome = (str_contains(Route::currentRouteAction(), 'Web\HomeController'));
 		if (!$isFromHome) {
 			$margin = ' mb-3';
 		}

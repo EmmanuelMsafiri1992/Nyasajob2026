@@ -1,13 +1,29 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers;
 
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Route;
 
 /*
- * The system locale need to be set in the 'AppServiceProvider'
- * by calling this method: \App\Helpers\SystemLocale::setLocale($locale);
+ * The system locale needs to be set in the 'AppServiceProvider'
+ * by calling this method: systemLocale()->setLocale($locale);
  */
+
 class Date
 {
 	/**
@@ -21,42 +37,41 @@ class Date
 		$timeZones = [];
 		
 		try {
-			if (empty($countryCode)) {
-				$timeZones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
-			} else {
-				$timeZones = \DateTimeZone::listIdentifiers(\DateTimeZone::PER_COUNTRY, $countryCode);
-			}
+			$timeZones = !empty($countryCode)
+				? \DateTimeZone::listIdentifiers(\DateTimeZone::PER_COUNTRY, $countryCode)
+				: \DateTimeZone::listIdentifiers();
 		} catch (\Throwable $e) {
 		}
 		
 		if (empty($timeZones)) {
-			$timeZones = (array)config('time-zones');
+			$timeZones = getTimeZoneRefList();
 		}
 		
-		return collect($timeZones)->mapWithKeys(function ($item) {
-			return [$item => $item];
-		})->toArray();
+		return collect($timeZones)
+			->mapWithKeys(fn ($tz) => [$tz => $tz])
+			->toArray();
 	}
 	
 	/**
 	 * Get the App's current Time Zone
 	 *
-	 * @return \Illuminate\Config\Repository|\Illuminate\Contracts\Foundation\Application|mixed
+	 * @return string
 	 */
-	public static function getAppTimeZone()
+	public static function getAppTimeZone(): string
 	{
 		$tz = config('ipCountry.time_zone', config('country.time_zone'));
 		$tz = isAdminPanel() ? config('app.timezone') : $tz;
 		
 		$guard = isFromApi() ? 'sanctum' : null;
-		if (auth($guard)->check()) {
-			$user = auth($guard)->user();
-			if (isset($user->time_zone) && !empty($user->time_zone)) {
-				$tz = $user->time_zone;
-			}
+		$authUser = auth($guard)->user();
+		
+		if (!empty($authUser)) {
+			$tz = !empty($authUser->time_zone) ? $authUser->time_zone : $tz;
 		}
 		
-		return self::isValidTimeZone($tz) ? $tz : 'UTC';
+		$tz = self::isValidTimeZone($tz) ? $tz : 'UTC';
+		
+		return getAsString($tz);
 	}
 	
 	/**
@@ -65,9 +80,9 @@ class Date
 	 *
 	 * @param $value
 	 * @param string $dateType
-	 * @return \Illuminate\Support\Carbon|string
+	 * @return string
 	 */
-	public static function format($value, string $dateType = 'date')
+	public static function format($value, string $dateType = 'date'): string
 	{
 		if ($value instanceof Carbon) {
 			$dateFormat = self::getAppDateFormat($dateType);
@@ -82,89 +97,102 @@ class Date
 			}
 		}
 		
-		return $value;
+		return getAsString($value);
 	}
 	
 	/**
 	 * @param $value
-	 * @return \Illuminate\Support\Carbon|string
+	 * @return string
 	 */
-	public static function formatFormNow($value)
+	public static function fromNow($value): string
 	{
 		if (!$value instanceof Carbon) {
-			return $value;
+			return getAsString($value);
 		}
 		
 		$formattedDate = self::format($value, 'datetime');
 		
+		// From Now Parameters
+		$modifier = config('settings.app.date_from_now_modifier', 'DIFF_RELATIVE_TO_NOW');
+		$syntax = defined('\Carbon\CarbonInterface::' . $modifier)
+			? constant('\Carbon\CarbonInterface::' . $modifier)
+			: CarbonInterface::DIFF_RELATIVE_TO_NOW;
+		$short = (config('settings.app.date_from_now_short', '0') == '1');
+		
+		if (doesRequestIsFromWebApp() || isFromAdminPanel()) {
+			$popover = ' data-bs-container="body"';
+			$popover .= ' data-bs-toggle="popover"';
+			$popover .= ' data-bs-trigger="hover"';
+			$popover .= ' data-bs-placement="bottom"';
+			$popover .= ' data-bs-content="' . $formattedDate . '"';
+			
+			if (config('lang.direction') == 'rtl') {
+				$popover = ' data-bs-toggle="tooltip" data-bs-placement="bottom" title="' . $formattedDate . '"';
+			}
+			
+			$out = '<span style="cursor: help;"' . $popover . '>';
+			$out .= $value->fromNow($syntax, $short);
+			$out .= '</span>';
+			
+			$value = $out;
+		} else {
+			$value = $value->fromNow($syntax, $short);
+		}
+		
+		return getAsString($value);
+	}
+	
+	/**
+	 * @param $value
+	 * @param bool $force
+	 * @return string
+	 */
+	public static function customFromNow($value, bool $force = false): string
+	{
 		$isFromPostsList = (
-			config('settings.list.elapsed_time_from_now')
+			config('settings.listings_list.date_from_now')
 			&& (
 				(
 					isFromApi()
 					&& (
-						str_contains(Route::currentRouteAction(), '\Api\PostController@index')
-						|| str_contains(Route::currentRouteAction(), '\Api\HomeSectionController')
-						|| str_contains(Route::currentRouteAction(), '\Api\SavedSearchController')
+						str_contains(currentRouteAction(), 'Api\PostController@index')
+						|| str_contains(currentRouteAction(), 'Api\HomeSectionController')
+						|| str_contains(currentRouteAction(), 'Api\SavedSearchController')
 					)
 				)
 				|| (
 					!isFromApi()
 					&& (
-						str_contains(Route::currentRouteAction(), '\Search')
-						|| str_contains(Route::currentRouteAction(), '\HomeController')
-						|| str_contains(Route::currentRouteAction(), '\Account')
+						str_contains(currentRouteAction(), 'Search\\')
+						|| str_contains(currentRouteAction(), 'HomeController')
+						|| str_contains(currentRouteAction(), 'Account\\')
 					)
 				)
 			)
 		);
 		
 		$isFromPostDetails = (
-			config('settings.single.elapsed_time_from_now')
+			config('settings.listing_page.date_from_now')
 			&& (
-				(isFromApi() && (str_contains(Route::currentRouteAction(), '\Api\PostController@show')))
-				|| (!isFromApi() && (str_contains(Route::currentRouteAction(), 'DetailsController')))
+				(isFromApi() && (str_contains(currentRouteAction(), 'Api\PostController@show')))
+				|| (!isFromApi() && (str_contains(currentRouteAction(), 'Post\ShowController')))
 			)
 		);
 		
-		try {
-			if ($isFromPostsList) {
-				if (isFromTheAppsWebEnvironment()) {
-					$popover = ' data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="bottom" data-bs-content="' . $formattedDate . '"';
-					if (config('lang.direction') == 'rtl') {
-						$popover = ' data-bs-toggle="tooltip" data-bs-placement="bottom" title="' . $formattedDate . '"';
-					}
-					
-					$out = '<span style="cursor: help;"' . $popover . '>';
-					$out .= $value->fromNow();
-					$out .= '</span>';
-					
-					$value = $out;
-				} else {
-					$value = $value->fromNow();
-				}
-			} else if ($isFromPostDetails) {
-				if (isFromTheAppsWebEnvironment()) {
-					$popover = ' data-bs-container="body" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="bottom" data-bs-content="' . $formattedDate . '"';
-					if (config('lang.direction') == 'rtl') {
-						$popover = ' data-bs-toggle="tooltip" data-bs-placement="bottom" title="' . $formattedDate . '"';
-					}
-					
-					$out = '<span style="cursor: help;"' . $popover . '>';
-					$out .= $value->fromNow();
-					$out .= '</span>';
-					
-					$value = $out;
-				} else {
-					$value = $value->fromNow();
-				}
-			} else {
-				$value = $formattedDate;
-			}
-		} catch (\Throwable $e) {
+		if ($force) {
+			return self::fromNow($value);
 		}
-		
-		return $value;
+		if ($isFromPostsList) {
+			return self::fromNow($value);
+		} else if ($isFromPostDetails) {
+			return self::fromNow($value);
+		} else {
+			if (!$value instanceof Carbon) {
+				return getAsString($value);
+			}
+			
+			return self::format($value, 'datetime');
+		}
 	}
 	
 	/**
@@ -177,16 +205,16 @@ class Date
 	{
 		$timeZones = self::getTimeZones();
 		
-		return (isset($timeZones[$timeZoneId]) && !empty($timeZones[$timeZoneId]));
+		return !empty($timeZones[$timeZoneId]);
 	}
 	
 	/**
 	 * Get the App Date Format
 	 *
 	 * @param string $dateType
-	 * @return bool|\Illuminate\Config\Repository|\Illuminate\Contracts\Foundation\Application|mixed|string
+	 * @return string
 	 */
-	private static function getAppDateFormat(string $dateType = 'date')
+	private static function getAppDateFormat(string $dateType = 'date'): string
 	{
 		$adminDateFormat = ($dateType == 'datetime')
 			? config('settings.app.datetime_format', config('larapen.core.datetimeFormat.default'))
@@ -206,16 +234,22 @@ class Date
 		
 		// For stats short dates
 		if ($dateType == 'stats') {
-			$dateFormat = (!config('settings.app.php_specific_date_format')) ? 'MMM DD' : '%b %d';
+			$dateFormat = !config('settings.app.php_specific_date_format') ? 'MMM DD' : '%b %d';
 		}
 		
 		// For backup dates
 		if ($dateType == 'backup') {
-			$dateFormat = (!config('settings.app.php_specific_date_format')) ? 'DD MMMM YYYY, HH:mm' : '%d %B %Y, %H:%M';
+			$dateFormat = !config('settings.app.php_specific_date_format') ? 'DD MMMM YYYY, HH:mm' : '%d %B %Y, %H:%M';
 		}
 		
 		if (str_contains($dateFormat, '%')) {
 			$dateFormat = self::strftimeToDateFormat($dateFormat);
+		}
+		
+		if (!is_string($dateFormat)) {
+			$dateFormat = !config('settings.app.php_specific_date_format')
+				? (($dateType == 'datetime') ? 'YYYY-MM-DD HH:mm' : 'YYYY-MM-DD')
+				: (($dateType == 'datetime') ? '%Y-%m-%d %H:%M' : '%Y-%m-%d');
 		}
 		
 		return $dateFormat;
@@ -225,9 +259,9 @@ class Date
 	 * Equivalent to `date_format_to( $format, 'date' )`
 	 *
 	 * @param string $strfFormat A `strftime()` date/time format
-	 * @return string
+	 * @return bool|string
 	 */
-	private static function strftimeToDateFormat(string $strfFormat)
+	private static function strftimeToDateFormat(string $strfFormat): bool|string
 	{
 		return self::dateFormatTo($strfFormat, 'date');
 	}
@@ -236,9 +270,9 @@ class Date
 	 * Equivalent to `convert_datetime_format_to( $format, 'strf' )`
 	 *
 	 * @param string $dateFormat A `date()` date/time format
-	 * @return string
+	 * @return bool|string
 	 */
-	private static function dateToStrftimeFormat(string $dateFormat)
+	private static function dateToStrftimeFormat(string $dateFormat): bool|string
 	{
 		return self::dateFormatTo($dateFormat, 'strf');
 	}
@@ -258,7 +292,7 @@ class Date
 	 *
 	 * @example Convert `%A, %B %e, %Y, %l:%M %P` to `l, F j, Y, g:i a`, and vice versa for "Saturday, March 10, 2001, 5:16 pm"
 	 */
-	private static function dateFormatTo(string $format, string $syntax)
+	private static function dateFormatTo(string $format, string $syntax): bool|string
 	{
 		// http://php.net/manual/en/function.strftime.php
 		$strfSyntax = [
@@ -311,7 +345,9 @@ class Date
 			$from
 		);
 		
-		return preg_replace($pattern, $to, $format);
+		$format = preg_replace($pattern, $to, $format);
+		
+		return getAsString($format);
 	}
 	
 	/**

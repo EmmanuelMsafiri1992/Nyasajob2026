@@ -1,5 +1,5 @@
 @php
-	$sectionOptions = $getFeaturedPostsCompaniesOp ?? [];
+	$sectionOptions = $getCompaniesOp ?? [];
 	$sectionData ??= [];
 	$featuredCompanies = (array)data_get($sectionData, 'featuredCompanies');
 	$companies = (array)data_get($featuredCompanies, 'companies');
@@ -19,7 +19,7 @@
 								<span class="title-3">{!! data_get($featuredCompanies, 'title') !!}</span>
 								<a class="sell-your-item" href="{{ data_get($featuredCompanies, 'link') }}">
 									{{ t('View more') }}
-									<i class="fas fa-bars"></i>
+									<i class="fa-solid fa-bars"></i>
 								</a>
 							</h2>
 						</div>
@@ -28,7 +28,7 @@
 					@foreach($companies as $key => $iCompany)
 						<div class="col-lg-2 col-md-3 col-sm-3 col-4 f-category">
 							<a href="{{ \App\Helpers\UrlGen::company(null, data_get($iCompany, 'id')) }}">
-								<img src="{{ data_get($iCompany, 'logo_url.full') }}" class="img-fluid" alt="{{ data_get($iCompany, 'name') }}">
+								<img src="{{ data_get($iCompany, 'logo_url.medium') }}" class="img-fluid" alt="{{ data_get($iCompany, 'name') }}">
 								<h6> {{ t('Jobs at') }}
 									<span class="company-name">{{ data_get($iCompany, 'name') }}</span>
 									<span class="jobs-count text-muted">({{ data_get($iCompany, 'posts_count') ?? 0 }})</span>

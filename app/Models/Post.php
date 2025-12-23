@@ -1,31 +1,57 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Date;
 use App\Helpers\Files\Storage\StorageDisk;
-use App\Helpers\Number;
+use App\Helpers\Num;
 use App\Helpers\RemoveFromString;
-use App\Helpers\UrlGen;
-use App\Models\Post\LatestOrPremium;
 use App\Models\Post\SimilarByCategory;
 use App\Models\Post\SimilarByLocation;
 use App\Models\Scopes\LocalizedScope;
+use App\Models\Scopes\StrictActiveScope;
+use App\Models\Scopes\ValidPeriodScope;
 use App\Models\Scopes\VerifiedScope;
 use App\Models\Scopes\ReviewedScope;
-use App\Models\Traits\CountryTrait;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\Common\HasCountryCodeColumn;
+use App\Models\Traits\PostTrait;
 use App\Observers\PostObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 use Spatie\Feed\Feedable;
-use Spatie\Feed\FeedItem;
 
+#[ObservedBy([PostObserver::class])]
+#[ScopedBy([VerifiedScope::class, ReviewedScope::class, LocalizedScope::class])]
 class Post extends BaseModel implements Feedable
 {
-	use Crud, CountryTrait, Notifiable, HasFactory, LatestOrPremium, SimilarByCategory, SimilarByLocation;
+	use Crud, AppendsTrait, HasCountryCodeColumn, Notifiable, HasFactory;
+	use PostTrait;
+	use SimilarByCategory, SimilarByLocation;
 	
 	/**
 	 * The table associated with the model.
@@ -40,17 +66,26 @@ class Post extends BaseModel implements Feedable
 	 * @var string
 	 */
 	protected $primaryKey = 'id';
+	
+	/**
+	 * @var array<int, string>
+	 */
 	protected $appends = [
+		'reference',
 		'slug',
 		'url',
+		'excerpt',
 		'phone_intl',
 		'created_at_formatted',
 		'logo_url',
 		'logo_url_small',
-		'logo_url_big',
+		'logo_url_medium',
+		'logo_url_large',
 		'user_photo_url',
 		'country_flag_url',
 		'salary_formatted',
+		'visits_formatted',
+		'distance_info',
 	];
 	
 	/**
@@ -63,18 +98,19 @@ class Post extends BaseModel implements Feedable
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'country_code',
 		'user_id',
+		'payment_id',
 		'company_id',
 		'company_name',
 		'logo',
@@ -87,6 +123,7 @@ class Post extends BaseModel implements Feedable
 		'salary_min',
 		'salary_max',
 		'salary_type_id',
+		'currency_code',
 		'negotiable',
 		'start_date',
 		'application_url',
@@ -101,7 +138,8 @@ class Post extends BaseModel implements Feedable
 		'lat',
 		'lon',
 		'address',
-		'ip_addr',
+		'create_from_ip',
+		'latest_update_ip',
 		'visits',
 		'tmp_token',
 		'email_token',
@@ -121,46 +159,27 @@ class Post extends BaseModel implements Feedable
 		'updated_at',
 	];
 	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'updated_at', 'deleted_at'];
-	
-	/**
-	 * The attributes that should be cast to native types.
-	 *
-	 * @var array
-	 */
-	protected $casts = [
-		'email_verified_at' => 'datetime',
-		'phone_verified_at' => 'datetime',
-		'reviewed_at'       => 'datetime',
-		'archived_at'       => 'datetime',
-	];
-	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
+	/**
+	 * Get the attributes that should be cast.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function casts(): array
 	{
-		parent::boot();
-		
-		Post::observe(PostObserver::class);
-		
-		static::addGlobalScope(new VerifiedScope());
-		static::addGlobalScope(new ReviewedScope());
-		static::addGlobalScope(new LocalizedScope());
+		return [
+			'email_verified_at' => 'datetime',
+			'phone_verified_at' => 'datetime',
+			'created_at'        => 'datetime',
+			'updated_at'        => 'datetime',
+			'deleted_at'        => 'datetime',
+			'reviewed_at'       => 'datetime',
+			'archived_at'       => 'datetime',
+		];
 	}
 	
 	public function routeNotificationForMail()
@@ -182,186 +201,6 @@ class Post extends BaseModel implements Feedable
 		return setPhoneSign($phone, 'twilio');
 	}
 	
-	/**
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
-	 */
-	public static function getFeedItems()
-	{
-		$postsPerPage = (int)config('settings.list.items_per_page', 50);
-		
-		$posts = Post::reviewed()->unarchived();
-		
-		if (request()->filled('country') || config('plugins.domainmapping.installed')) {
-			$countryCode = config('country.code');
-			if (!config('plugins.domainmapping.installed')) {
-				if (request()->filled('country')) {
-					$countryCode = request()->get('country');
-				}
-			}
-			$posts = $posts->where('country_code', $countryCode);
-		}
-		
-		return $posts->take($postsPerPage)->orderByDesc('id')->get();
-	}
-	
-	public function toFeedItem(): FeedItem
-	{
-		$title = $this->title;
-		$title .= (isset($this->city) && !empty($this->city)) ? ' - ' . $this->city->name : '';
-		$title .= (isset($this->country) && !empty($this->country)) ? ', ' . $this->country->name : '';
-		// $summary = str_limit(str_strip(strip_tags($this->description)), 5000);
-		$summary = transformDescription($this->description);
-		$link = UrlGen::postUri($this, true);
-		
-		return FeedItem::create()
-			->id($link)
-			->title($title)
-			->summary($summary)
-			->category($this?->category?->name ?? '')
-			->updated($this->updated_at)
-			->link($link)
-			->authorName($this->contact_name);
-	}
-	
-	public static function getLogo($value)
-	{
-		// Use Nyasajob logo as default for jobs without logos
-		if (empty($value)) {
-			return 'app/logo/logo-667170dd67a03.png';
-		}
-
-		$disk = StorageDisk::getDisk();
-
-		// OLD PATH
-		$oldBase = 'pictures/';
-		$newBase = 'files/';
-		if (str_contains($value, $oldBase)) {
-			$value = $newBase . last(explode($oldBase, $value));
-		}
-
-		// NEW PATH
-		if (str_ends_with($value, '/')) {
-			return $value;
-		}
-
-		if (!$disk->exists($value)) {
-			// Use Nyasajob logo if file doesn't exist
-			$value = 'app/logo/logo-667170dd67a03.png';
-		}
-
-		return $value;
-	}
-	
-	public function getTitleHtml(): string
-	{
-		$out = '';
-		
-		// $post = self::find($this->id);
-		$out .= getPostUrl($this);
-		if (isset($this->archived_at) && !empty($this->archived_at)) {
-			$out .= '<br>';
-			$out .= '<span class="badge bg-secondary">';
-			$out .= trans('admin.Archived');
-			$out .= '</span>';
-		}
-		
-		return $out;
-	}
-	
-	public function getLogoHtml(): string
-	{
-		$style = ' style="width:auto; max-height:90px;"';
-		
-		// Get logo
-		$out = '<img src="' . imgUrl($this->logo, 'small') . '" data-bs-toggle="tooltip" title="' . $this->title . '"' . $style . '>';
-		
-		// Add link to the Ad
-		$url = dmUrl($this->country_code, UrlGen::postPath($this));
-		
-		return '<a href="' . $url . '" target="_blank">' . $out . '</a>';
-	}
-	
-	public function getPictureHtml(): string
-	{
-		// Get ad URL
-		$url = url(UrlGen::postUri($this));
-		
-		$style = ' style="width:auto; max-height:90px;"';
-		// Get first picture
-		$out = '';
-		if ($this->pictures->count() > 0) {
-			foreach ($this->pictures as $picture) {
-				$url = dmUrl($this->country_code, UrlGen::postPath($this));
-				$out .= '<img src="' . imgUrl($picture->filename, 'small') . '" data-bs-toggle="tooltip" title="' . $this->title . '"' . $style . ' class="img-rounded">';
-				break;
-			}
-		} else {
-			// Default picture
-			$out .= '<img src="' . imgUrl(config('larapen.core.picture.default'), 'small') . '" data-bs-toggle="tooltip" title="' . $this->title . '"' . $style . ' class="img-rounded">';
-		}
-		
-		// Add link to the Ad
-		return '<a href="' . $url . '" target="_blank">' . $out . '</a>';
-	}
-	
-	public function getCompanyNameHtml(): string
-	{
-		$out = '';
-		
-		// Company Name
-		$out .= $this->company_name;
-		
-		// User Name
-		$out .= '<br>';
-		$out .= '<small>';
-		$out .= trans('admin.By_') . ' ';
-		if (isset($this->user) && !empty($this->user)) {
-			$url = admin_url('users/' . $this->user->getKey() . '/edit');
-			$tooltip = ' data-bs-toggle="tooltip" title="' . $this->user->name . '"';
-			
-			$out .= '<a href="' . $url . '"' . $tooltip . '>';
-			$out .= $this->contact_name;
-			$out .= '</a>';
-		} else {
-			$out .= $this->contact_name;
-		}
-		$out .= '</small>';
-		
-		return $out;
-	}
-	
-	public function getCityHtml()
-	{
-		$out = $this->getCountryHtml();
-		$out .= ' - ';
-		if (isset($this->city) && !empty($this->city)) {
-			$out .= '<a href="' . UrlGen::city($this->city) . '" target="_blank">' . $this->city->name . '</a>';
-		} else {
-			$out .= $this->city_id;
-		}
-		
-		return $out;
-	}
-	
-	public function getReviewedHtml(): string
-	{
-		return ajaxCheckboxDisplay($this->{$this->primaryKey}, $this->getTable(), 'reviewed_at', $this->reviewed_at);
-	}
-	
-	public function getFeaturedHtml()
-	{
-		$out = '-';
-		if (config('plugins.offlinepayment.installed')) {
-			$opTool = '\extras\plugins\offlinepayment\app\Helpers\OpTools';
-			if (class_exists($opTool)) {
-				$out = $opTool::featuredCheckboxDisplay($this->{$this->primaryKey}, $this->getTable(), 'featured', $this->featured);
-			}
-		}
-		
-		return $out;
-	}
-	
 	/*
 	|--------------------------------------------------------------------------
 	| QUERIES
@@ -373,82 +212,107 @@ class Post extends BaseModel implements Feedable
 	| RELATIONS
 	|--------------------------------------------------------------------------
 	*/
-	public function postType()
+	public function postType(): BelongsTo
 	{
 		return $this->belongsTo(PostType::class, 'post_type_id');
 	}
 	
-	public function category()
+	public function category(): BelongsTo
 	{
 		return $this->belongsTo(Category::class, 'category_id');
 	}
 	
-	public function city()
+	public function city(): BelongsTo
 	{
 		return $this->belongsTo(City::class, 'city_id');
 	}
 	
-	public function latestPayment()
+	public function currency(): BelongsTo
 	{
-		return $this->hasOne(Payment::class, 'post_id')->orderByDesc('id');
+		return $this->belongsTo(Currency::class, 'currency_code', 'code');
 	}
 	
-	public function payments()
+	/*
+	 * The first valid payment (Covers the validity period).
+	 * Its activation needs to be checked programmably (if needed).
+	 * NOTE: By sorting the ID by ASC, allows the system to use the first valid payment as the current one.
+	 */
+	public function possiblePayment(): MorphOne
 	{
-		return $this->hasMany(Payment::class, 'post_id');
+		return $this->morphOne(Payment::class, 'payable')->withoutGlobalScope(StrictActiveScope::class)->orderBy('id');
 	}
 	
-	public function pictures()
+	/*
+	 * The first valid & active payment (Covers the validity period & is active)
+	 * NOTE: By sorting the ID by ASC, allows the system to use the first valid payment as the current one.
+	 */
+	public function payment(): MorphOne
+	{
+		return $this->morphOne(Payment::class, 'payable')->orderBy('id');
+	}
+	
+	/*
+	 * The first valid & active payment that is manually created
+	 * NOTE: Used in the ListingsPurge command in cron job
+	 */
+	public function paymentNotManuallyCreated(): MorphOne
+	{
+		return $this->morphOne(Payment::class, 'payable')->notManuallyCreated()->orderBy('id');
+	}
+	
+	/*
+	 * The ending later valid (or on hold) active payment (Covers the validity period & is active)
+	 * This is useful to calculate the starting period to allow payable to have multiple valid & active payments
+	 */
+	public function paymentEndingLater(): MorphOne
+	{
+		return $this->morphOne(Payment::class, 'payable')
+			->withoutGlobalScope(ValidPeriodScope::class)
+			->where(function ($q) {
+				$q->where(fn ($q) => $q->valid())->orWhere(fn ($q) => $q->onHold());
+			})
+			->orderByDesc('period_end');
+	}
+	
+	/*
+	 * Get all the listing payments
+	 */
+	public function payments(): MorphMany
+	{
+		return $this->morphMany(Payment::class, 'payable');
+	}
+	
+	public function pictures(): HasMany
 	{
 		return $this->hasMany(Picture::class, 'post_id')->orderBy('position')->orderByDesc('id');
 	}
 	
-	public function savedByLoggedUser()
+	public function savedByLoggedUser(): HasMany
 	{
-		$userId = (auth()->check()) ? auth()->user()->id : '-1';
+		$guard = isFromApi() ? 'sanctum' : null;
+		$userId = auth($guard)->user()?->getAuthIdentifier() ?? '-1';
 		
 		return $this->hasMany(SavedPost::class, 'post_id')->where('user_id', $userId);
 	}
 	
-	public function user()
+	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class, 'user_id');
 	}
 	
-	public function company()
+	public function company(): BelongsTo
 	{
 		return $this->belongsTo(Company::class, 'company_id');
 	}
 	
-	public function salaryType()
+	public function salaryType(): BelongsTo
 	{
 		return $this->belongsTo(SalaryType::class, 'salary_type_id');
 	}
-
-	public function reactions()
+	
+	public function subscription(): BelongsTo
 	{
-		return $this->hasMany(PostReaction::class, 'post_id');
-	}
-
-	public function reactionsCount()
-	{
-		return $this->reactions()->selectRaw('post_id, reaction_type, count(*) as count')
-			->groupBy('post_id', 'reaction_type');
-	}
-
-	public function userReaction()
-	{
-		$userId = auth()->check() ? auth()->user()->id : null;
-		$ipAddress = request()->ip();
-
-		return $this->hasOne(PostReaction::class, 'post_id')
-			->where(function ($query) use ($userId, $ipAddress) {
-				if ($userId) {
-					$query->where('user_id', $userId);
-				} else {
-					$query->where('ip_address', $ipAddress);
-				}
-			});
+		return $this->belongsTo(Payment::class, 'payment_id');
 	}
 	
 	/*
@@ -456,61 +320,61 @@ class Post extends BaseModel implements Feedable
 	| SCOPES
 	|--------------------------------------------------------------------------
 	*/
-	public function scopeVerified($builder)
+	public function scopeVerified(Builder $builder): Builder
 	{
-		$builder->where(function ($query) {
+		$builder->where(function (Builder $query) {
 			$query->whereNotNull('email_verified_at')->whereNotNull('phone_verified_at');
 		});
 		
-		if (config('settings.single.listings_review_activation')) {
+		if (config('settings.listing_form.listings_review_activation')) {
 			$builder->whereNotNull('reviewed_at');
 		}
 		
 		return $builder;
 	}
 	
-	public function scopeUnverified($builder)
+	public function scopeUnverified(Builder $builder): Builder
 	{
-		$builder->where(function ($query) {
+		$builder->where(function (Builder $query) {
 			$query->whereNull('email_verified_at')->orWhereNull('phone_verified_at');
 		});
 		
-		if (config('settings.single.listings_review_activation')) {
+		if (config('settings.listing_form.listings_review_activation')) {
 			$builder->orWhereNull('reviewed_at');
 		}
 		
 		return $builder;
 	}
 	
-	public function scopeArchived($builder)
+	public function scopeArchived(Builder $builder): Builder
 	{
 		return $builder->whereNotNull('archived_at');
 	}
 	
-	public function scopeUnarchived($builder)
+	public function scopeUnarchived(Builder $builder): Builder
 	{
 		return $builder->whereNull('archived_at');
 	}
 	
-	public function scopeReviewed($builder)
+	public function scopeReviewed(Builder $builder): Builder
 	{
-		if (config('settings.single.listings_review_activation')) {
+		if (config('settings.listing_form.listings_review_activation')) {
 			return $builder->whereNotNull('reviewed_at');
 		} else {
 			return $builder;
 		}
 	}
 	
-	public function scopeUnreviewed($builder)
+	public function scopeUnreviewed(Builder $builder): Builder
 	{
-		if (config('settings.single.listings_review_activation')) {
+		if (config('settings.listing_form.listings_review_activation')) {
 			return $builder->whereNull('reviewed_at');
 		} else {
 			return $builder;
 		}
 	}
 	
-	public function scopeWithCountryFix($builder)
+	public function scopeWithCountryFix(Builder $builder): Builder
 	{
 		// Check the Domain Mapping plugin
 		if (config('plugins.domainmapping.installed')) {
@@ -519,12 +383,50 @@ class Post extends BaseModel implements Feedable
 			return $builder;
 		}
 	}
+
+	public function scopeValid(Builder $builder): Builder
+	{
+		// Check if there are valid payments for this post
+		return $builder->whereHas('payments', function ($query) {
+			$query->valid()->where('active', 1);
+		});
+	}
 	
 	/*
 	|--------------------------------------------------------------------------
 	| ACCESSORS | MUTATORS
 	|--------------------------------------------------------------------------
 	*/
+	protected function reference(): Attribute
+	{
+		return Attribute::make(
+			get: function ($value) {
+				$value = $this->id ?? null;
+				if (empty($value)) {
+					return $value;
+				}
+				
+				return hashId($value, false, false);
+			},
+		);
+	}
+	
+	protected function visitsFormatted(): Attribute
+	{
+		return Attribute::make(
+			get: function ($value) {
+				$number = (int)($this->visits ?? 0);
+				$shortNumber = Num::short($number);
+				
+				$value = $shortNumber;
+				$value .= ' ';
+				$value .= trans_choice('global.count_views', getPlural($number), [], config('app.locale'));
+				
+				return $value;
+			},
+		);
+	}
+	
 	protected function createdAt(): Attribute
 	{
 		return Attribute::make(
@@ -568,37 +470,21 @@ class Post extends BaseModel implements Feedable
 	protected function createdAtFormatted(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				$createdAt = $this->attributes['created_at'] ?? null;
-				if (empty($createdAt)) {
-					return null;
-				}
-				
-				$value = new Carbon($createdAt);
-				$value->timezone(Date::getAppTimeZone());
-				
-				return Date::formatFormNow($value);
-			},
-		);
-	}
-	
-	/*
-	protected function archivedAt(): Attribute
-	{
-		return Attribute::make(
-			get: function ($value) {
+			get: function () {
+				$value = $this->created_at ?? ($this->attributes['created_at'] ?? null);
 				if (empty($value)) {
 					return null;
 				}
 				
-				$value = new Carbon($value);
-				$value->timezone(Date::getAppTimeZone());
+				if (!$value instanceof Carbon) {
+					$value = new Carbon($value);
+					$value->timezone(Date::getAppTimeZone());
+				}
 				
-				return $value;
+				return Date::customFromNow($value);
 			},
 		);
 	}
-	*/
 	
 	protected function deletionMailSentAt(): Attribute
 	{
@@ -619,22 +505,19 @@ class Post extends BaseModel implements Feedable
 	protected function userPhotoUrl(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
+			get: function () {
 				// Default Photo
-				$defaultPhotoUrl = imgUrl(config('larapen.core.avatar.default'));
+				$defaultPhotoUrl = imgUrl(config('larapen.media.avatar'));
 				
 				// If the relation is not loaded through the Eloquent 'with()' method,
-				// then don't make additional query. So the default value is returned.
+				// then don't make additional query (to prevent performance issues).
 				if (!$this->relationLoaded('user')) {
 					return $defaultPhotoUrl;
 				}
 				
-				// Photo from User's account
-				$userPhotoUrl = $this->user?->photo_url ?? null;
+				$photoUrl = $this->user?->photo_url ?? null;
 				
-				return (!empty($userPhotoUrl) && $userPhotoUrl != $defaultPhotoUrl)
-					? $userPhotoUrl
-					: $defaultPhotoUrl;
+				return !empty($photoUrl) ? $photoUrl : $defaultPhotoUrl;
 			},
 		);
 	}
@@ -647,20 +530,17 @@ class Post extends BaseModel implements Feedable
 					return $value;
 				}
 				
-				if (isAdminPanel()) {
-					if (
-						isDemoDomain()
-						&& request()->segment(2) != 'password'
-					) {
-						if (auth()->check()) {
-							if (auth()->user()->getAuthIdentifier() != 1) {
-								if (isset($this->phone_token)) {
-									if ($this->phone_token == 'demoFaker') {
-										return $value;
-									}
-								}
-								$value = hidePartOfEmail($value);
+				if (isAdminPanel() && isDemoDomain()) {
+					$isPostOrPutMethod = (in_array(strtolower(request()->method()), ['post', 'put']));
+					$isNotFromAuthForm = (!in_array(request()->segment(2), ['password', 'login']));
+					if (auth()->check()) {
+						if (isset($this->phone_token)) {
+							if ($this->phone_token == 'demoFaker') {
+								return $value;
 							}
+						}
+						if (!$isPostOrPutMethod && $isNotFromAuthForm) {
+							$value = emailPrefixMask($value);
 						}
 					}
 				}
@@ -704,8 +584,8 @@ class Post extends BaseModel implements Feedable
 	protected function phoneIntl(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				$value = (isset($this->phone_national) && !empty($this->phone_national))
+			get: function () {
+				$value = !empty($this->phone_national)
 					? $this->phone_national
 					: $this->phone;
 				
@@ -750,7 +630,7 @@ class Post extends BaseModel implements Feedable
 			get: function ($value) {
 				$value = (is_null($value) && isset($this->title)) ? $this->title : $value;
 				
-				$value = stripNonUtf($value);
+				$value = stripNonUtf8Chars($value);
 				$value = slugify($value);
 				
 				// To prevent 404 error when the slug starts by a banned slug/prefix,
@@ -769,12 +649,12 @@ class Post extends BaseModel implements Feedable
 	}
 	
 	/*
-	 * For API calls, to allow listings sharing
+	 * For API calls, to allow listing sharing
 	 */
 	protected function url(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
+			get: function () {
 				if (isset($this->id) && isset($this->title)) {
 					$path = str_replace(
 						['{slug}', '{hashableId}', '{id}'],
@@ -825,9 +705,21 @@ class Post extends BaseModel implements Feedable
 					}
 				}
 				
-				$apiValue = (isFromTheAppsWebEnvironment()) ? transformDescription($value) : str_strip(strip_tags($value));
+				$apiValue = (doesRequestIsFromWebApp()) ? transformDescription($value) : strStrip(strip_tags($value));
 				
 				return isFromApi() ? $apiValue : $value;
+			},
+		);
+	}
+	
+	protected function excerpt(): Attribute
+	{
+		return Attribute::make(
+			get: function () {
+				$description = $this->description ?? '';
+				$description = strStrip(strip_tags($description));
+				
+				return str($description)->limit(100);
 			},
 		);
 	}
@@ -841,7 +733,7 @@ class Post extends BaseModel implements Feedable
 					$value = implode(',', $value);
 				}
 				
-				return (!empty($value)) ? mb_strtolower($value) : $value;
+				return !empty($value) ? mb_strtolower($value) : $value;
 			},
 		);
 	}
@@ -849,15 +741,8 @@ class Post extends BaseModel implements Feedable
 	protected function countryFlagUrl(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				$flagUrl = null;
-				
-				$flagPath = 'images/flags/16/' . strtolower($this->country_code) . '.png';
-				if (file_exists(public_path($flagPath))) {
-					$flagUrl = url($flagPath);
-				}
-				
-				return $flagUrl;
+			get: function () {
+				return getCountryFlagUrl($this->country_code);
 			},
 		);
 	}
@@ -891,8 +776,8 @@ class Post extends BaseModel implements Feedable
 					}
 				}
 				
-				$transformedValue = nl2br(createAutoLink(strCleaner($value)));
-				$apiValue = (isFromTheAppsWebEnvironment()) ? $transformedValue : str_strip(strip_tags($value));
+				$transformedValue = nl2br(urlsToLinks(mbStrCleaner($value)));
+				$apiValue = (doesRequestIsFromWebApp()) ? $transformedValue : strStrip(strip_tags($value));
 				
 				return isFromApi() ? $apiValue : $value;
 			},
@@ -915,7 +800,7 @@ class Post extends BaseModel implements Feedable
 				// NEW PATH
 				$disk = StorageDisk::getDisk();
 				if (empty($value) || !$disk->exists($value)) {
-					$value = config('larapen.core.picture.default');
+					$value = config('larapen.media.picture');
 				}
 				
 				return $value;
@@ -927,8 +812,8 @@ class Post extends BaseModel implements Feedable
 	protected function logoUrl(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return imgUrl(self::getLogo($this->logo), 'medium');
+			get: function () {
+				return imgUrl(self::getLogo($this->logo), 'picture-md');
 			},
 		);
 	}
@@ -936,17 +821,26 @@ class Post extends BaseModel implements Feedable
 	protected function logoUrlSmall(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return imgUrl(self::getLogo($this->logo), 'small');
+			get: function () {
+				return imgUrl(self::getLogo($this->logo), 'picture-sm');
 			},
 		);
 	}
 	
-	protected function logoUrlBig(): Attribute
+	protected function logoUrlMedium(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				return imgUrl(self::getLogo($this->logo), 'big');
+			get: function () {
+				return imgUrl(self::getLogo($this->logo), 'picture-md');
+			},
+		);
+	}
+	
+	protected function logoUrlLarge(): Attribute
+	{
+		return Attribute::make(
+			get: function () {
+				return imgUrl(self::getLogo($this->logo), 'picture-lg');
 			},
 		);
 	}
@@ -954,22 +848,51 @@ class Post extends BaseModel implements Feedable
 	protected function salaryFormatted(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
+			get: function () {
 				$salaryMin = $this->salary_min ?? 0;
 				$salaryMax = $this->salary_max ?? 0;
 				
+				// Relation with Currency
+				$currency = [];
+				if ($this->relationLoaded('currency')) {
+					if (!empty($this->currency)) {
+						$currency = $this->currency->toArray();
+					}
+				}
+				
 				if ($salaryMin > 0 || $salaryMax > 0) {
-					$valueMin = ($salaryMin > 0) ? Number::money($salaryMin) : '';
-					$valueMax = ($salaryMax > 0) ? Number::money($salaryMax) : '';
+					$valueMin = ($salaryMin > 0) ? Num::money($salaryMin, $currency) : '';
+					$valueMax = ($salaryMax > 0) ? Num::money($salaryMax, $currency) : '';
 					
 					$value = ($salaryMax > 0)
 						? (($salaryMin > 0) ? $valueMin . ' - ' . $valueMax : $valueMax)
 						: $valueMin;
 				} else {
-					$value = Number::money('--');
+					$value = Num::money('--', $currency);
 				}
 				
 				return $value;
+			},
+		);
+	}
+	
+	protected function distanceInfo(): Attribute
+	{
+		return Attribute::make(
+			get: function () {
+				if (!$this->relationLoaded('city')) {
+					return null;
+				}
+				
+				if (!isset($this->distance)) {
+					return null;
+				}
+				
+				if (!is_numeric($this->distance)) {
+					return null;
+				}
+				
+				return round($this->distance, 2) . getDistanceUnit();
 			},
 		);
 	}
@@ -982,7 +905,7 @@ class Post extends BaseModel implements Feedable
 	private function setLogo($value)
 	{
 		// Don't make an upload for Post->logo for logged users
-		if (!str_contains(Route::currentRouteAction(), 'Admin\PostController')) {
+		if (!str_contains(currentRouteAction(), 'Admin\PostController')) {
 			if (auth()->check()) {
 				return $value;
 			}
@@ -997,30 +920,30 @@ class Post extends BaseModel implements Feedable
 		}
 		
 		// Retrieve current value without upload a new file
-		if (str_starts_with($value, config('larapen.core.logo'))) {
+		if (str_starts_with($value, config('larapen.media.logo'))) {
 			return null;
 		}
 		
 		// Extract the value's country code
-		$tmp = [];
-		preg_match('#files/([A-Za-z]{2})/[\d]+#i', $value, $tmp);
-		$valueCountryCode = (isset($tmp[1]) && !empty($tmp[1])) ? $tmp[1] : null;
+		$matches = [];
+		preg_match('#files/([A-Za-z]{2})/\d+#i', $value, $matches);
+		$valueCountryCode = (!empty($matches[1])) ? $matches[1] : null;
 		
 		// Extract the value's ID
-		$tmp = [];
-		preg_match('#files/[A-Za-z]{2}/([\d]+)#i', $value, $tmp);
-		$valueId = (isset($tmp[1]) && !empty($tmp[1])) ? $tmp[1] : null;
+		$matches = [];
+		preg_match('#files/[A-Za-z]{2}/(\d+)#i', $value, $matches);
+		$valueId = (!empty($matches[1])) ? $matches[1] : null;
 		
 		// Extract the value's filename
-		$tmp = [];
-		preg_match('#files/[A-Za-z]{2}/[\d]+/(.+)#i', $value, $tmp);
-		$valueFilename = (isset($tmp[1]) && !empty($tmp[1])) ? $tmp[1] : null;
+		$matches = [];
+		preg_match('#files/[A-Za-z]{2}/\d+/(.+)#i', $value, $matches);
+		$valueFilename = (!empty($matches[1])) ? $matches[1] : null;
 		
 		// Destination Path
-		if (empty($this->attributes['id']) || empty($this->attributes['country_code'])) {
+		if (empty($this->id) || empty($this->country_code)) {
 			return null;
 		}
-		$destPath = 'files/' . strtolower($this->attributes['country_code']) . '/' . $this->attributes['id'];
+		$destPath = 'files/' . strtolower($this->country_code) . '/' . $this->id;
 		
 		if (!empty($valueCountryCode) && !empty($valueId) && !empty($valueFilename)) {
 			// Value's Path

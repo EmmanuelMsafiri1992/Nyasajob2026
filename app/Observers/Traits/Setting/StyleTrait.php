@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers\Traits\Setting;
 
 use App\Helpers\Files\Storage\StorageDisk;
@@ -40,14 +55,14 @@ trait StyleTrait
 	 * @param $original
 	 * @param $disk
 	 */
-	private function removeOldBodyBackgroundImage($setting, $original, $disk)
+	private function removeOldBodyBackgroundImage($setting, $original, $disk): void
 	{
 		if (array_key_exists('body_background_image', $setting->value)) {
 			if (
 				is_array($original['value'])
-				&& isset($original['value']['body_background_image'])
 				&& !empty($original['value']['body_background_image'])
 				&& $setting->value['body_background_image'] != $original['value']['body_background_image']
+				&& !str_contains($original['value']['body_background_image'], config('larapen.media.picture'))
 				&& $disk->exists($original['value']['body_background_image'])
 			) {
 				$disk->delete($original['value']['body_background_image']);
@@ -71,22 +86,22 @@ trait StyleTrait
 		$value = $setting->value;
 		
 		// Logo Max. Dimensions
-		$logoMaxWidth = config('larapen.core.logoSize.max.width', 430);
-		$logoMaxHeight = config('larapen.core.logoSize.max.height', 80);
+		$logoMaxWidth = config('larapen.media.resize.namedOptions.logo-max.width', 430);
+		$logoMaxHeight = config('larapen.media.resize.namedOptions.logo-max.height', 80);
 		if (!empty(config('settings.style.header_height'))) {
-			$logoMaxHeight = strToDigit(config('settings.style.header_height'));
+			$logoMaxHeight = forceToInt(config('settings.style.header_height'));
 			if (empty($logoMaxHeight)) {
 				$logoMaxHeight = 80;
 			}
 		}
 		
 		// Logo Default Dimensions
-		$logoDefaultWidth = config('larapen.core.logoSize.default.width', 216);
-		$logoDefaultHeight = config('larapen.core.logoSize.default.height', 40);
+		$logoDefaultWidth = config('larapen.media.resize.namedOptions.logo.width', 216);
+		$logoDefaultHeight = config('larapen.media.resize.namedOptions.logo.height', 40);
 		
 		// Logo Dimensions
-		$logoWidth = strToDigit($value['logo_width'] ?? $logoDefaultWidth);
-		$logoHeight = strToDigit($value['logo_height'] ?? $logoDefaultHeight);
+		$logoWidth = forceToInt($value['logo_width'] ?? $logoDefaultWidth);
+		$logoHeight = forceToInt($value['logo_height'] ?? $logoDefaultHeight);
 		if (empty($logoWidth)) {
 			$logoWidth = $logoDefaultWidth;
 		}
@@ -111,7 +126,7 @@ trait StyleTrait
 	/**
 	 * @param $setting
 	 */
-	private function updateCategoriesPicturesPaths($setting)
+	private function updateCategoriesPicturesPaths($setting): void
 	{
 		// If the Default Front Skin is changed, then update its assets paths (like categories pictures, etc.)
 		if (isset($setting->value['skin']) && !empty($setting->value['skin'])) {

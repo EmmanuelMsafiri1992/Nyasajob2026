@@ -1,24 +1,53 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Date;
 use App\Helpers\Files\Storage\StorageDisk;
 use App\Models\Scopes\LocalizedScope;
-use App\Models\Traits\CountryTrait;
+use App\Models\Scopes\StrictActiveScope;
+use App\Models\Scopes\ValidPeriodScope;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\Common\HasCountryCodeColumn;
+use App\Models\Traits\UserTrait;
 use App\Notifications\ResetPasswordNotification;
 use App\Observers\UserObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+#[ObservedBy([UserObserver::class])]
+#[ScopedBy([LocalizedScope::class])]
 class User extends BaseUser
 {
-	use Crud, HasRoles, CountryTrait, HasApiTokens, Notifiable, HasFactory;
+	use Crud, AppendsTrait, HasRoles, HasCountryCodeColumn, HasApiTokens, Notifiable, HasFactory;
+	use UserTrait;
 	
 	/**
 	 * The table associated with the model.
@@ -30,9 +59,8 @@ class User extends BaseUser
 	/**
 	 * The primary key for the model.
 	 *
-	 * @var string
+	 * @var array<int, string>
 	 */
-	// protected $primaryKey = 'id';
 	protected $appends = [
 		'phone_intl',
 		'created_at_formatted',
@@ -41,6 +69,7 @@ class User extends BaseUser
 		'original_last_activity',
 		'p_is_online',
 		'country_flag_url',
+		'remaining_posts',
 	];
 	
 	/**
@@ -53,14 +82,14 @@ class User extends BaseUser
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'country_code',
@@ -83,7 +112,6 @@ class User extends BaseUser
 		'disable_comments',
 		'create_from_ip',
 		'latest_update_ip',
-		'ip_addr', // Keep for backward compatibility
 		'provider',
 		'provider_id',
 		'email_token',
@@ -103,28 +131,9 @@ class User extends BaseUser
 	/**
 	 * The attributes that should be hidden for arrays
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $hidden = ['password', 'remember_token'];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'updated_at', 'last_login_at', 'deleted_at'];
-	
-	/**
-	 * The attributes that should be cast to native types.
-	 *
-	 * @var array
-	 */
-	protected $casts = [
-		'email_verified_at' => 'datetime',
-		'phone_verified_at' => 'datetime',
-		'dark_mode' => 'boolean',
-		'featured' => 'boolean',
-	];
 	
 	/**
 	 * User constructor.
@@ -133,11 +142,7 @@ class User extends BaseUser
 	 */
 	public function __construct(array $attributes = [])
 	{
-		if (
-			isAdminPanel()
-			|| str(Route::currentRouteAction())->contains('InstallController')
-			|| str(Route::currentRouteAction())->contains('UpgradeController')
-		) {
+		if (isFromInstallOrUpgradeProcess() || isAdminPanel()) {
 			$this->fillable[] = 'is_admin';
 		}
 		
@@ -149,13 +154,21 @@ class User extends BaseUser
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
+	/**
+	 * Get the attributes that should be cast.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function casts(): array
 	{
-		parent::boot();
-		
-		User::observe(UserObserver::class);
-		
-		static::addGlobalScope(new LocalizedScope());
+		return [
+			'email_verified_at' => 'datetime',
+			'phone_verified_at' => 'datetime',
+			'created_at'        => 'datetime',
+			'updated_at'        => 'datetime',
+			'last_login_at'     => 'datetime',
+			'deleted_at'        => 'datetime',
+		];
 	}
 	
 	public function routeNotificationForMail()
@@ -205,204 +218,17 @@ class User extends BaseUser
 		}
 	}
 	
-	/**
-	 * Get the user's preferred locale.
-	 *
-	 * @return string
-	 */
-	public function preferredLocale()
-	{
-		return $this->language_code;
-	}
-	
-	public function canImpersonate(): bool
-	{
-		// Cannot impersonate from Demo website,
-		// Non admin users cannot impersonate
-		if (isDemoDomain() || !$this->can(Permission::getStaffPermissions())) {
-			return false;
-		}
-		
-		return true;
-	}
-	
-	public function canBeImpersonated(): bool
-	{
-		// Cannot be impersonated from Demo website,
-		// Admin users cannot be impersonated,
-		// Users with the 'can_be_impersonated' attribute != 1 cannot be impersonated
-		if (isDemoDomain() || $this->can(Permission::getStaffPermissions()) || $this->can_be_impersonated != 1) {
-			return false;
-		}
-		
-		return true;
-	}
-	
-	public function getNameHtml()
-	{
-		$out = '';
-		
-		$userTypeId = $this->user_type_id;
-		$userTypeName = (!empty($this->userType)) ? $this->userType->name : null;
-		
-		$noUserType = t('no_user_type_selected');
-		$userTypeIcon = '<i class="bi bi-question-square" data-bs-toggle="tooltip" title="' . $noUserType . '"></i>';
-		if ($userTypeId == 1) {
-			$userTypeIcon = '<i class="bi bi-building" data-bs-toggle="tooltip" title="' . $userTypeName . '"></i>';
-		}
-		if ($userTypeId == 2) {
-			$userTypeIcon = '<i class="bi bi-person-workspace" data-bs-toggle="tooltip" title="' . $userTypeName . '"></i>';
-		}
-		
-		$out .= $userTypeIcon . ' ';
-		$out .= $this->name;
-		
-		return $out;
-	}
-	
-	public function getEmailHtml()
-	{
-		$out = '';
-		
-		$email = (isset($this->email) && !empty($this->email)) ? $this->email : null;
-		if (!empty($email)) {
-			$out .= $email;
-		} else {
-			$out .= '-';
-		}
-		$out = '<span class="float-start">' . $out . '</span>';
-		
-		$authField = (isset($this->auth_field) && !empty($this->auth_field)) ? $this->auth_field : getAuthField();
-		if ($authField == 'email') {
-			$infoIcon = t('notifications_channel') . ' (' . trans('settings.mail') . ')';
-			$out .= '<span class="float-end d-inline-block">';
-			$out .= ' <i class="bi bi-bell" data-bs-toggle="tooltip" title="' . $infoIcon . '"></i>';
-			$out .= '</div>';
-		}
-		
-		return $out;
-	}
-	
-	public function getPhoneHtml()
-	{
-		$out = '';
-		
-		$countryCode = $this->country_code ?? null;
-		$countryName = $countryCode;
-		if (!empty($this->country)) {
-			$countryCode = $this->country->code ?? $this->country_code;
-			$countryName = $this->country->name ?? $countryCode;
-		}
-		
-		$phoneCountry = $this->phone_country ?? $countryCode;
-		$phone = (isset($this->phone) && !empty($this->phone)) ? $this->phone : null;
-		
-		$iconPath = 'images/flags/16/' . strtolower($phoneCountry) . '.png';
-		if (file_exists(public_path($iconPath))) {
-			if (!empty($phone)) {
-				$out .= '<img src="' . url($iconPath) . getPictureVersion() . '" data-bs-toggle="tooltip" title="' . $countryName . '">';
-				$out .= '&nbsp;';
-				$out .= $phone;
-			} else {
-				$out .= '-';
-			}
-		} else {
-			$out .= $phone ?? '-';
-		}
-		$out = '<span class="float-start">' . $out . '</span>';
-		
-		$authField = (isset($this->auth_field) && !empty($this->auth_field)) ? $this->auth_field : getAuthField();
-		if ($authField == 'phone') {
-			$infoIcon = t('notifications_channel') . ' (' . trans('settings.sms') . ')';
-			$out .= '<span class="float-end d-inline-block">';
-			$out .= ' <i class="bi bi-bell" data-bs-toggle="tooltip" title="' . $infoIcon . '"></i>';
-			$out .= '</div>';
-		}
-		
-		return $out;
-	}
-	
-	public function impersonateBtn($xPanel = false): string
-	{
-		$out = '';
-		
-		// Get all the User's attributes
-		$user = self::findOrFail($this->getKey());
-		
-		// Get impersonate URL
-		$impersonateUrl = dmUrl($this->country_code, 'impersonate/take/' . $this->getKey(), false, false);
-		
-		// If the Domain Mapping plugin is installed,
-		// Then, the impersonate feature need to be disabled
-		if (config('plugins.domainmapping.installed')) {
-			return $out;
-		}
-		
-		// Generate the impersonate link
-		if ($user->getKey() == auth()->user()->getAuthIdentifier()) {
-			$tooltip = '" data-bs-toggle="tooltip" title="' . t('Cannot impersonate yourself') . '"';
-			$out .= '<a class="btn btn-xs btn-warning" ' . $tooltip . '><i class="fa fa-lock"></i></a>';
-		} else if ($user->can(Permission::getStaffPermissions())) {
-			$tooltip = '" data-bs-toggle="tooltip" title="' . t('Cannot impersonate admin users') . '"';
-			$out .= '<a class="btn btn-xs btn-warning" ' . $tooltip . '><i class="fa fa-lock"></i></a>';
-		} else if (!isVerifiedUser($user)) {
-			$tooltip = '" data-bs-toggle="tooltip" title="' . t('Cannot impersonate unactivated users') . '"';
-			$out .= '<a class="btn btn-xs btn-warning" ' . $tooltip . '><i class="fa fa-lock"></i></a>';
-		} else {
-			$tooltip = '" data-bs-toggle="tooltip" title="' . t('Impersonate this user') . '"';
-			$out .= '<a class="btn btn-xs btn-light" href="' . $impersonateUrl . '" ' . $tooltip . '><i class="fas fa-sign-in-alt"></i></a>';
-		}
-		
-		return $out;
-	}
-	
-	public function deleteBtn($xPanel = false): string
-	{
-		$out = '';
-		
-		if (auth()->check()) {
-			if ($this->id == auth()->user()->id) {
-				return $out;
-			}
-			if (isDemoDomain() && $this->id == 1) {
-				return $out;
-			}
-		}
-		
-		$url = admin_url('users/' . $this->id);
-		
-		$out .= '<a href="' . $url . '" class="btn btn-xs btn-danger" data-button-type="delete">';
-		$out .= '<i class="fa fa-trash"></i> ';
-		$out .= trans('admin.delete');
-		$out .= '</a>';
-		
-		return $out;
-	}
-	
-	public function isOnline(): bool
-	{
-		$isOnline = ($this->last_activity > Carbon::now(Date::getAppTimeZone())->subMinutes(5));
-		
-		// Allow only logged users to get the other users status
-		return auth()->check() ? $isOnline : false;
-	}
-	
 	/*
 	|--------------------------------------------------------------------------
 	| RELATIONS
 	|--------------------------------------------------------------------------
 	*/
-	public function posts()
+	public function posts(): HasMany
 	{
 		return $this->hasMany(Post::class, 'user_id')->orderByDesc('created_at');
 	}
 	
-	public function gender()
-	{
-		return $this->belongsTo(Gender::class, 'gender_id');
-	}
-	
-	public function receivedThreads()
+	public function receivedThreads(): HasManyThrough
 	{
 		return $this->hasManyThrough(
 			Thread::class,
@@ -414,7 +240,7 @@ class User extends BaseUser
 		);
 	}
 	
-	public function threads()
+	public function threads(): HasManyThrough
 	{
 		return $this->hasManyThrough(
 			Thread::class,
@@ -426,111 +252,93 @@ class User extends BaseUser
 		);
 	}
 	
-	public function savedPosts()
+	public function savedPosts(): BelongsToMany
 	{
 		return $this->belongsToMany(Post::class, 'saved_posts', 'user_id', 'post_id');
 	}
 	
-	public function savedSearch()
+	public function savedSearch(): HasMany
 	{
 		return $this->hasMany(SavedSearch::class, 'user_id');
 	}
 	
-	public function userType()
+	/*
+	 * The first valid payment (Covers the validity period).
+	 * Its activation will be checked programmably.
+	 * NOTE: By sorting the ID by ASC, allows the system to use the first valid payment as the current one.
+	 */
+	public function possiblePayment(): MorphOne
 	{
-		return $this->belongsTo(UserType::class, 'user_type_id');
+		return $this->morphOne(Payment::class, 'payable')->withoutGlobalScope(StrictActiveScope::class)->orderBy('id');
 	}
 	
-	public function companies()
+	/*
+	 * The latest valid & active subscription (Covers the validity period & is active)
+	 * NOTE: By sorting the ID by ASC, allows the system to use the first valid payment as the current one.
+	 */
+	public function payment(): MorphOne
+	{
+		return $this->morphOne(Payment::class, 'payable')->orderBy('id');
+	}
+	
+	/*
+	 * The latest valid & active subscription that is manually created
+	 * NOTE: Used in the UsersPurge command in cron job
+	 */
+	public function subscriptionNotManuallyCreated(): MorphOne
+	{
+		return $this->morphOne(Payment::class, 'payable')->notManuallyCreated()->orderBy('id');
+	}
+	
+	/*
+	 * The ending later valid (or on hold) active payment (Covers the validity period & is active)
+	 * This is useful to calculate the starting period to allow payable to have multiple valid & active payments
+	 */
+	public function paymentEndingLater(): MorphOne
+	{
+		return $this->morphOne(Payment::class, 'payable')
+			->withoutGlobalScope(ValidPeriodScope::class)
+			->where(function ($q) {
+				$q->where(fn ($q) => $q->valid())->orWhere(fn ($q) => $q->onHold());
+			})
+			->orderByDesc('period_end');
+	}
+	
+	/*
+	 * Get all the user subscriptions (payments)
+	 */
+	public function subscriptions(): MorphMany
+	{
+		return $this->morphMany(Payment::class, 'payable');
+	}
+	
+	public function companies(): HasMany
 	{
 		return $this->hasMany(Company::class, 'user_id');
 	}
 	
-	public function resumes()
+	public function resumes(): HasMany
 	{
 		return $this->hasMany(Resume::class, 'user_id');
 	}
-
-	public function jobPreference()
-	{
-		return $this->hasOne(UserJobPreference::class, 'user_id');
-	}
-
-	public function jobMatches()
-	{
-		return $this->hasMany(JobMatch::class, 'user_id');
-	}
-
-	public function subscriptions()
-	{
-		return $this->hasMany(UserSubscription::class, 'user_id');
-	}
-
-	public function activeSubscription()
-	{
-		return $this->hasOne(UserSubscription::class, 'user_id')
-			->where('status', 'active')
-			->where('ends_at', '>', now())
-			->latest();
-	}
-
-	/**
-	 * Check if user has an active subscription
-	 */
-	public function hasActiveSubscription()
-	{
-		return $this->activeSubscription()->exists();
-	}
-
-	/**
-	 * Check if user has access to a feature
-	 */
-	public function hasFeature($feature)
-	{
-		$subscription = $this->activeSubscription;
-		return $subscription && $subscription->hasFeature($feature);
-	}
-
-	/**
-	 * LMS (Learning Management System) relationships
-	 */
-	public function courseEnrollments()
-	{
-		return $this->hasMany(CourseEnrollment::class, 'user_id');
-	}
-
-	public function courseCertificates()
-	{
-		return $this->hasMany(CourseCertificate::class, 'user_id');
-	}
-
-	public function lessonProgress()
-	{
-		return $this->hasMany(LessonProgress::class, 'user_id');
-	}
-
-	public function instructedCourses()
-	{
-		return $this->hasMany(Course::class, 'instructor_id');
-	}
-
+	
 	/*
 	|--------------------------------------------------------------------------
 	| SCOPES
 	|--------------------------------------------------------------------------
 	*/
-	public function scopeVerified($builder)
+	public function scopeVerified(Builder $builder): Builder
 	{
-		$builder->where(function ($query) {
+		$builder->where(function (Builder $query) {
 			$query->whereNotNull('email_verified_at')->whereNotNull('phone_verified_at');
 		});
 		
 		return $builder;
 	}
 	
-	public function scopeUnverified($builder)
+	public function scopeUnverified(Builder $builder): Builder
 	{
-		$builder->where(function ($query) {
+		$builder->where(function (Builder $query) {
 			$query->whereNull('email_verified_at')->orWhereNull('phone_verified_at');
 		});
 		
@@ -623,16 +431,18 @@ class User extends BaseUser
 	protected function createdAtFormatted(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				$createdAt = $this->attributes['created_at'] ?? null;
-				if (empty($createdAt)) {
+			get: function () {
+				$value = $this->created_at ?? ($this->attributes['created_at'] ?? null);
+				if (empty($value)) {
 					return null;
 				}
 				
-				$value = new Carbon($createdAt);
-				$value->timezone(Date::getAppTimeZone());
+				if (!$value instanceof Carbon) {
+					$value = new Carbon($value);
+					$value->timezone(Date::getAppTimeZone());
+				}
 				
-				return Date::formatFormNow($value);
+				return Date::customFromNow($value);
 			},
 		);
 	}
@@ -640,16 +450,16 @@ class User extends BaseUser
 	protected function photoUrl(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
+			get: function () {
 				// Default Photo
-				$defaultPhotoUrl = imgUrl(config('larapen.core.avatar.default'));
+				$defaultPhotoUrl = imgUrl(config('larapen.media.avatar'));
 				
 				// Photo from User's account
 				$userPhotoUrl = null;
-				if (isset($this->photo) && !empty($this->photo)) {
+				if (!empty($this->photo)) {
 					$disk = StorageDisk::getDisk();
 					if ($disk->exists($this->photo)) {
-						$userPhotoUrl = imgUrl($this->photo, 'user');
+						$userPhotoUrl = imgUrl($this->photo, 'avatar');
 					}
 				}
 				
@@ -662,20 +472,17 @@ class User extends BaseUser
 	{
 		return Attribute::make(
 			get: function ($value) {
-				if (isAdminPanel()) {
-					if (
-						isDemoDomain()
-						&& request()->segment(2) != 'password'
-					) {
-						if (auth()->check()) {
-							if (auth()->user()->getAuthIdentifier() != 1) {
-								if (isset($this->phone_token)) {
-									if ($this->phone_token == 'demoFaker') {
-										return $value;
-									}
-								}
-								$value = hidePartOfEmail($value);
+				if (isAdminPanel() && isDemoDomain()) {
+					$isPostOrPutMethod = (in_array(strtolower(request()->method()), ['post', 'put']));
+					$isNotFromAuthForm = (!in_array(request()->segment(2), ['password', 'login']));
+					if (auth()->check()) {
+						if (isset($this->phone_token)) {
+							if ($this->phone_token == 'demoFaker') {
+								return $value;
 							}
+						}
+						if (!$isPostOrPutMethod && $isNotFromAuthForm) {
+							$value = emailPrefixMask($value);
 						}
 					}
 				}
@@ -720,9 +527,7 @@ class User extends BaseUser
 	{
 		return Attribute::make(
 			get: function ($value) {
-				$value = (isset($this->phone_national) && !empty($this->phone_national))
-					? $this->phone_national
-					: $this->phone;
+				$value = (!empty($this->phone_national)) ? $this->phone_national : $this->phone;
 				
 				if ($this->phone_country == config('country.code')) {
 					return phoneNational($value, $this->phone_country);
@@ -736,7 +541,7 @@ class User extends BaseUser
 	protected function name(): Attribute
 	{
 		return Attribute::make(
-			get: fn($value) => mb_ucwords($value),
+			get: fn ($value) => mb_ucwords($value),
 		);
 	}
 	
@@ -753,7 +558,7 @@ class User extends BaseUser
 				}
 				
 				// Retrieve current value without upload a new file
-				if (str_starts_with($value, config('larapen.core.picture.default'))) {
+				if (str_starts_with($value, config('larapen.media.picture'))) {
 					return null;
 				}
 				
@@ -782,6 +587,7 @@ class User extends BaseUser
 				
 				// Allow only logged users to get the other users status
 				$guard = isFromApi() ? 'sanctum' : null;
+				
 				return auth($guard)->check() ? $isOnline : false;
 			},
 		);
@@ -790,15 +596,39 @@ class User extends BaseUser
 	protected function countryFlagUrl(): Attribute
 	{
 		return Attribute::make(
+			get: function () {
+				return getCountryFlagUrl($this->country_code);
+			},
+		);
+	}
+	
+	/*
+	 * Remaining Posts for the User (Without to apply the current subscription)
+	 * - Need to use User::with(['posts' => fn ($q) => $q->withoutGlobalScopes($postScopes)->unarchived()]),
+	 *   to retrieve it like this: $user->remaining_posts
+	 * - The Post Remaining for the User current subscription can be got by using:
+	 *   User::with('payment', fn ($q) => $q->with(['posts' => fn ($q) => $q->withoutGlobalScopes($postScopes)->unarchived()]))
+	 *   and retrieve it like this: $user->payment->remaining_posts
+	 */
+	protected function remainingPosts(): Attribute
+	{
+		return Attribute::make(
 			get: function ($value) {
-				$flagUrl = null;
-				
-				$flagPath = 'images/flags/16/' . strtolower($this->country_code) . '.png';
-				if (file_exists(public_path($flagPath))) {
-					$flagUrl = url($flagPath);
+				// If the relation is not loaded through the Eloquent 'with()' method,
+				// then don't make an additional query (to prevent performance issues).
+				if (!$this->relationLoaded('posts')) {
+					return null;
 				}
 				
-				return $flagUrl;
+				$postsLimit = (int)config('settings.listing_form.listings_limit');
+				try {
+					$countPosts = $this->posts->count();
+				} catch (\Throwable $e) {
+					$countPosts = 0;
+				}
+				$remainingPosts = ($postsLimit >= $countPosts) ? $postsLimit - $countPosts : 0;
+				
+				return (int)$remainingPosts;
 			},
 		);
 	}

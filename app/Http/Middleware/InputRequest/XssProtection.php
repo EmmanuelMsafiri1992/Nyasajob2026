@@ -1,9 +1,23 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware\InputRequest;
 
 use App\Models\Permission;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
 trait XssProtection
@@ -19,10 +33,7 @@ trait XssProtection
 	protected function applyXssProtection(Request $request): Request
 	{
 		// Exception for Install & Upgrade Routes
-		if (
-			str_contains(Route::currentRouteAction(), 'InstallController')
-			|| str_contains(Route::currentRouteAction(), 'UpgradeController')
-		) {
+		if (isFromInstallOrUpgradeProcess()) {
 			return $request;
 		}
 		
@@ -47,7 +58,7 @@ trait XssProtection
 				return $request;
 			}
 			
-			if (auth()->check() && auth()->user()->can(Permission::getStaffPermissions())) {
+			if (doesUserHavePermission(auth()->user(), Permission::getStaffPermissions())) {
 				return $request;
 			}
 		}
@@ -62,8 +73,8 @@ trait XssProtection
 				$value = strip_tags($value);
 			}
 			
-			if (!(isUtf8mb4Enabled() && config('settings.single.allow_emojis'))) {
-				$value = stripNonUtf($value);
+			if (!(isUtf8mb4Enabled() && config('settings.listing_form.allow_emojis'))) {
+				$value = stripNonUtf8Chars($value);
 			}
 		});
 		
@@ -81,7 +92,8 @@ trait XssProtection
 	{
 		// parent_id
 		if ($request->filled('parent_id')) {
-			$parentId = (!empty($request->input('parent_id'))) ? $request->input('parent_id') : null;
+			$parentId = $request->input('parent_id');
+			$parentId = !empty($parentId) ? $parentId : null;
 			$request->request->set('parent_id', $parentId);
 		}
 		

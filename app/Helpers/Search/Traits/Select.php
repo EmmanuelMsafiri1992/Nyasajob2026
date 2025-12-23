@@ -1,11 +1,24 @@
 <?php
-namespace App\Helpers\Search\Traits;
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
-use Illuminate\Support\Facades\DB;
+namespace App\Helpers\Search\Traits;
 
 trait Select
 {
-	protected function setSelect()
+	protected function setSelect(): void
 	{
 		if (!(isset($this->posts) && isset($this->postsTable))) {
 			return;
@@ -33,14 +46,14 @@ trait Select
 			'phone_verified_at',
 			'reviewed_at',
 		];
-		if (isFromApi() && !isFromTheAppsWebEnvironment()) {
+		if (isFromApi() && !doesRequestIsFromWebApp()) {
 			$select[] = $this->postsTable . '.description';
 			$select[] = 'contact_name';
 			$select[] = $this->postsTable . '.auth_field';
 			$select[] = $this->postsTable . '.phone';
 			$select[] = $this->postsTable . '.email';
 		}
-		if (config('settings.list.show_listings_tags')) {
+		if (config('settings.listings_list.show_listings_tags')) {
 			$select[] = 'tags';
 		}
 		
@@ -60,7 +73,7 @@ trait Select
 		
 		// If the MySQL strict mode is activated, ...
 		// Append all the non-calculated fields available in the 'SELECT' in 'GROUP BY' to prevent error related to 'only_full_group_by'
-		if (env('DB_MODE_STRICT')) {
+		if (self::$dbModeStrict) {
 			$this->groupBy = $this->select;
 		}
 	}

@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Search;
 
 use App\Helpers\Search\Traits\Filters;
@@ -7,20 +22,24 @@ use App\Helpers\Search\Traits\Having;
 use App\Helpers\Search\Traits\OrderBy;
 use App\Helpers\Search\Traits\Relations;
 use App\Helpers\Search\Traits\Select;
-use App\Http\Controllers\Api\Base\ApiResponseTrait;
+use App\Http\Resources\CompanyResource;
 use App\Http\Resources\EntityCollection;
+use App\Models\Company;
 use App\Models\Post;
 
 class PostQueries
 {
 	use Select, Relations, Filters, GroupBy, Having, OrderBy;
-	use ApiResponseTrait;
 	
-	protected static $cacheExpiration = 300; // 5mn (60s * 5)
+	private static bool $dbModeStrict = false;
+	protected static int $cacheExpiration = 300; // 5mn (60s * 5)
 	
 	public $country;
 	public $lang;
-	public $perPage = 12;
+	
+	// Default Inputs (op, perPage, cacheExpiration & orderBy)
+	// These inputs need to have a default value
+	protected array $input = [];
 	
 	// Pre-Search Objects
 	private array $preSearch;
@@ -35,10 +54,10 @@ class PostQueries
 	protected $orderBy = [];
 	
 	protected $posts;
-	protected $postsTable;
+	protected string $postsTable;
 	
 	// 'queryStringKey' => ['name' => 'column', 'order' => 'direction']
-	public $orderByParametersFields = [];
+	public array $orderByParametersFields = [];
 	
 	private array $webGlobalQueries = ['countryCode', 'languageCode'];
 	private array $webQueriesPerController = [
@@ -54,34 +73,22 @@ class PostQueries
 	/**
 	 * PostQueries constructor.
 	 *
+	 * @param array $input
 	 * @param array $preSearch
 	 */
-	public function __construct(array $preSearch = [])
+	public function __construct(array $input = [], array $preSearch = [])
 	{
-		// Pre-Search
-		if (isset($preSearch['cat']) && !empty($preSearch['cat'])) {
-			$this->cat = $preSearch['cat'];
-		}
-		if (isset($preSearch['city']) && !empty($preSearch['city'])) {
-			$this->city = $preSearch['city'];
-		}
-		if (isset($preSearch['admin']) && !empty($preSearch['admin'])) {
-			$this->admin = $preSearch['admin'];
-		}
+		self::$dbModeStrict = config('database.connections.' . config('database.default') . '.strict');
 		
-		// Entries per page
-		$perPage = config('settings.list.items_per_page');
-		if (is_numeric($perPage) && $perPage > 1 && $perPage <= 50) {
-			$this->perPage = $perPage;
-		}
-		if (isset($preSearch['perPage']) && !empty($preSearch['perPage']) && is_numeric($preSearch['perPage'])) {
-			$this->perPage = $preSearch['perPage'];
-		}
+		// Input
+		$this->input = $this->bindValidValuesForInput($input);
+		
+		// Pre-Search (category, city or admin. division)
+		$this->cat = !empty($preSearch['cat']) ? $preSearch['cat'] : null;
+		$this->city = !empty($preSearch['city']) ? $preSearch['city'] : null;
+		$this->admin = !empty($preSearch['admin']) ? $preSearch['admin'] : null;
 		
 		// Save preSearch
-		if (array_key_exists('perPage', $preSearch)) {
-			unset($preSearch['perPage']);
-		}
 		$this->preSearch = $preSearch;
 		
 		// Init. Builder
@@ -112,14 +119,15 @@ class PostQueries
 		$this->applyOrderBy();
 		
 		// Get Results
-		$posts = $this->posts->paginate((int)$this->perPage);
+		$perPage = data_get($this->input, 'perPage');
+		$posts = $this->posts->paginate((int)$perPage);
 		
 		// Remove Distance from Request
 		$this->removeDistanceFromRequest();
 		
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
-		if (isFromTheAppsWebEnvironment()) {
+		if (doesRequestIsFromWebApp()) {
 			if (request()->hasHeader('X-WEB-REQUEST-URL')) {
 				$posts->setPath(request()->header('X-WEB-REQUEST-URL'));
 			}
@@ -137,10 +145,8 @@ class PostQueries
 		}
 		
 		// Append request queries in the pagination links
-		$query = !empty($queriesToRemove)
-			? request()->except($queriesToRemove)
-			: request()->query();
-		$query = collect($query)->map(fn($item) => is_null($item) ? '' : $item)->toArray();
+		$query = !empty($queriesToRemove) ? request()->except($queriesToRemove) : request()->query();
+		$query = collect($query)->map(fn ($item) => (is_null($item) ? '' : $item))->toArray();
 		$posts->appends($query);
 		
 		// Get Count Results
@@ -153,7 +159,7 @@ class PostQueries
 		
 		// Add 'user' object in preSearch (If available)
 		$this->preSearch['user'] = null;
-		$searchBasedOnUser = (request()->filled('userId') || request()->filled('username'));
+		$searchBasedOnUser = request()->anyFilled(['userId', 'username']);
 		if ($searchBasedOnUser) {
 			$this->preSearch['user'] = data_get($postsResult, 'data.0.user');
 		}
@@ -163,6 +169,25 @@ class PostQueries
 		$searchBasedOnCompany = (request()->filled('companyId'));
 		if ($searchBasedOnCompany) {
 			$this->preSearch['company'] = data_get($postsResult, 'data.0.company');
+			if (empty($this->preSearch['company'])) {
+				$companyId = request()->input('companyId');
+				
+				// Get the Company
+				$cacheId = 'company.' . $companyId;
+				$company = cache()->remember($cacheId, self::$cacheExpiration, function () use ($companyId) {
+					return Company::find($companyId);
+				});
+				
+				if (empty($company)) {
+					$message = t('company_not_found');
+				}
+				
+				$this->preSearch['company'] = new CompanyResource($company);
+			}
+		}
+		
+		if (request()->filled('tag')) {
+			$this->preSearch['tag'] = request()->input('tag');
 		}
 		
 		$this->preSearch['distance'] = [
@@ -172,19 +197,14 @@ class PostQueries
 		];
 		
 		// Results Data
-		$data = [
+		return [
 			'message'   => $message,
 			'count'     => $count,
 			'posts'     => $postsResult,
 			'distance'  => self::$distance,
 			'preSearch' => $this->preSearch,
+			'tags'      => $this->getPostsTags($posts),
 		];
-		
-		if (config('settings.list.show_listings_tags')) {
-			$data['tags'] = $this->getPostsTags($posts);
-		}
-		
-		return $data;
 	}
 	
 	/**
@@ -193,18 +213,52 @@ class PostQueries
 	 * @param $posts
 	 * @return array|string|null
 	 */
-	private function getPostsTags($posts)
+	private function getPostsTags($posts): array|string|null
 	{
-		$tags = [];
+		if (!config('settings.listings_list.show_listings_tags')) {
+			return null;
+		}
+		
 		if ($posts->count() > 0) {
+			$tags = [];
 			foreach ($posts as $post) {
 				if (!empty($post->tags)) {
 					$tags = array_merge($tags, $post->tags);
 				}
 			}
-			$tags = tagCleaner($tags);
+			
+			return tagCleaner($tags);
 		}
 		
-		return $tags;
+		return null;
+	}
+	
+	/**
+	 * Bind valid values for the input's elements
+	 *
+	 * @param array $array
+	 * @return array
+	 */
+	private function bindValidValuesForInput(array $array = []): array
+	{
+		// cacheExpiration
+		$cacheExpiration = data_get($array, 'cacheExpiration');
+		$cacheExpirationIsValid = !empty($cacheExpiration) && is_numeric($cacheExpiration);
+		if (!$cacheExpirationIsValid) {
+			$array['cacheExpiration'] = self::$cacheExpiration;
+		}
+		
+		// op
+		$array['op'] = data_get($array, 'op', 'default');
+		
+		// perPage
+		$array['perPage'] = getNumberOfItemsPerPage('posts', data_get($array, 'perPage'));
+		
+		// orderBy
+		// Avoid to set an arbitrary orderBy value (set value to null instead)
+		// $orderBy = data_get($array, 'orderBy');
+		// $array['orderBy'] = !empty($orderBy) ? $orderBy : null;
+		
+		return $array;
 	}
 }

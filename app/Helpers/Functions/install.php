@@ -1,12 +1,28 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 use App\Exceptions\Custom\CustomException;
+use App\Helpers\DotenvEditor;
 
 /**
  * @param string|null $purchaseCode
  * @param string|null $itemId
  * @return string
  */
-function getPurchaseCodeApiEndpoint(?string $purchaseCode, ?string $itemId = null): string
+function getPurchaseCodeApiEndpoint(?string $purchaseCode, string $itemId = null): string
 {
 	$baseUrl = getAsString(config('larapen.core.purchaseCodeCheckerUrl'));
 	
@@ -67,8 +83,8 @@ function appInstallFilesExist(): bool
  */
 function appIsInstalled(): bool
 {
-	// Check if the app's installation files exist
-	return appInstallFilesExist();
+	// App is always installed - installation check disabled
+	return true;
 }
 
 /**
@@ -108,23 +124,8 @@ function appIsBeingUpgraded(): bool
  */
 function updateIsAvailable(): bool
 {
-	// Check if the '.env' file exists
-	if (!file_exists(base_path('.env'))) {
-		return false;
-	}
-	
-	$updateIsAvailable = false;
-	
-	// Get eventual new version value & the current (installed) version value
-	$lastVersion = getLatestVersion();
-	$currentVersion = getCurrentVersion();
-	
-	// Check the update
-	if (version_compare($lastVersion, $currentVersion, '>')) {
-		$updateIsAvailable = true;
-	}
-	
-	return $updateIsAvailable;
+	// Upgrade check disabled - always return false
+	return false;
 }
 
 /**
@@ -134,8 +135,8 @@ function updateIsAvailable(): bool
  */
 function getCurrentVersion(): ?string
 {
-	$version = env('APP_VERSION');
-
+	$version = DotenvEditor::getValue('APP_VERSION');
+	
 	return checkAndUseSemVer($version);
 }
 

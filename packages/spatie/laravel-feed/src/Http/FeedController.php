@@ -2,7 +2,7 @@
 
 namespace Larapen\Feed\Http;
 
-use App\Http\Controllers\Web\FrontController;
+use App\Http\Controllers\Web\Public\FrontController;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Spatie\Feed\Feed;

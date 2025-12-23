@@ -1,9 +1,23 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Models\Permission;
 use App\Models\Role;
-use Prologue\Alerts\Facades\Alert;
 
 class PermissionObserver
 {
@@ -19,13 +33,14 @@ class PermissionObserver
 		if (Permission::checkDefaultPermissions()) {
 			// Don't delete Super Admin default permissions
 			$superAdminPermissions = Permission::getSuperAdminPermissions();
-			$superAdminPermissions = collect($superAdminPermissions)->map(function ($item, $key) {
-				return strtolower($item);
-			})->toArray();
+			$superAdminPermissions = collect($superAdminPermissions)
+				->map(fn ($item, $key) => strtolower($item))
+				->toArray();
+			
 			if (in_array(strtolower($permission->name), $superAdminPermissions)) {
-				Alert::warning(trans('admin.You cannot delete a Super Admin default permission'))->flash();
+				notification(trans('admin.You cannot delete a Super Admin default permission'), 'warning');
 				
-				// Since Laravel detach all pivot entries before starting deletion,
+				// Since Laravel detaches all pivot entries before starting deletion,
 				// Re-assign the permission to the Super Admin role.
 				$permission->assignRole(Role::getSuperAdminRole());
 				
@@ -34,11 +49,12 @@ class PermissionObserver
 			
 			// Don't delete Staff default permissions
 			$adminPermissions = Permission::getStaffPermissions();
-			$adminPermissions = collect($adminPermissions)->map(function ($item, $key) {
-				return strtolower($item);
-			})->toArray();
+			$adminPermissions = collect($adminPermissions)
+				->map(fn ($item, $key) => strtolower($item))
+				->toArray();
+			
 			if (in_array(strtolower($permission->name), $adminPermissions)) {
-				Alert::warning(trans('admin.You cannot delete a staff default permission'))->flash();
+				notification(trans('admin.You cannot delete a staff default permission'), 'warning');
 				
 				// Optional
 				$permission->assignRole(Role::getSuperAdminRole());
@@ -76,8 +92,9 @@ class PermissionObserver
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $permission
+	 * @return void
 	 */
-	private function clearCache($permission)
+	private function clearCache($permission): void
 	{
 		try {
 			cache()->flush();

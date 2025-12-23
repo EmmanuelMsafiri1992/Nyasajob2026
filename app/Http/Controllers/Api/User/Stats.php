@@ -1,17 +1,33 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\User;
 
 use App\Models\Company;
-use App\Models\JobMatch;
 use App\Models\Payment;
 use App\Models\Post;
 use App\Models\Resume;
 use App\Models\SavedPost;
 use App\Models\SavedSearch;
 use App\Models\Scopes\ReviewedScope;
+use App\Models\Scopes\StrictActiveScope;
+use App\Models\Scopes\ValidPeriodScope;
 use App\Models\Scopes\VerifiedScope;
 use App\Models\Thread;
-use App\Models\UserJobPreference;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 trait Stats
@@ -24,10 +40,12 @@ trait Stats
 	{
 		$posts = [];
 		$threads = [];
+		$transactions = [];
 		
 		// posts (published)
-		$posts['published'] = Post::whereHas('country')
-			->currentCountry()
+		$posts['published'] = Post::query()
+			->withoutAppends()
+			->inCountry()->has('country')
 			->where('user_id', $id)
 			->verified()
 			->unarchived()
@@ -35,16 +53,18 @@ trait Stats
 			->count();
 		
 		// posts (pendingApproval)
-		$posts['pendingApproval'] = Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
-			->whereHas('country')
-			->currentCountry()
+		$posts['pendingApproval'] = Post::query()
+			->withoutAppends()
+			->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
+			->inCountry()->has('country')
 			->where('user_id', $id)
 			->unverified()
 			->count();
 		
 		// posts (archived)
-		$posts['archived'] = Post::whereHas('country')
-			->currentCountry()
+		$posts['archived'] = Post::query()
+			->withoutAppends()
+			->inCountry()->has('country')
 			->where('user_id', $id)
 			->archived()
 			->count();
@@ -59,65 +79,66 @@ trait Stats
 		$posts['visits'] = $postsVisits->totalVisits ?? 0;
 		
 		// posts (favourite)
-		$posts['favourite'] = SavedPost::whereHas('post', function ($query) {
-			$query->whereHas('country')
-				->currentCountry();
-		})->where('user_id', $id)
+		$posts['favourite'] = SavedPost::query()
+			->whereHas('post', fn ($query) => $query->inCountry()->has('country'))
+			->where('user_id', $id)
 			->count();
 		
 		// savedSearch
-		$savedSearch = SavedSearch::whereHas('country')
-			->currentCountry()
+		$savedSearch = SavedSearch::query()
+			->inCountry()->has('country')
 			->where('user_id', $id)
 			->count();
 		
 		// threads (all)
-		$threads['all'] = Thread::whereHas('post', function ($query) {
-			$query->whereHas('country')
-				->currentCountry()
-				->unarchived();
-		})->forUser($id)->count();
+		$threads['all'] = Thread::query()
+			->withoutAppends()
+			->whereHas('post', fn ($query) => $query->inCountry()->has('country')->unarchived())
+			->forUser($id)
+			->count();
 		
 		// threads (withNewMessage)
-		$threads['withNewMessage'] = Thread::whereHas('post', function ($query) {
-			$query->whereHas('country')
-				->currentCountry()
-				->unarchived();
-		})->forUserWithNewMessages($id)->count();
+		$threads['withNewMessage'] = Thread::query()
+			->withoutAppends()
+			->whereHas('post', fn ($query) => $query->inCountry()->has('country')->unarchived())
+			->forUserWithNewMessages($id)
+			->count();
 		
-		// transactions (payments)
-		$transactions = Payment::whereHas('post', function ($query) use ($id) {
-			$query->whereHas('country')
-				->currentCountry()
-				->whereHas('user', function ($query) use ($id) {
-					$query->where('user_id', $id);
-				});
-		})->whereHas('package', function ($query) {
-			$query->whereHas('currency');
-		})->count();
+		// transactions (promotion)
+		$promotion = Payment::query()
+			->withoutAppends()
+			->withoutGlobalScopes([ValidPeriodScope::class, StrictActiveScope::class])
+			->whereHasMorph('payable', Post::class, function ($query) use ($id) {
+				$query->inCountry()
+					->has('country')
+					->whereHas('user', fn ($query) => $query->where('user_id', $id));
+			})->whereHas('package', fn ($query) => $query->has('currency'))
+			->count();
+		$transactions['promotion'] = ($promotion > 0) ? $promotion : -1; // Set -1 to hide it in the sidebar menu
+		
+		// transactions (subscription)
+		$subscription = Payment::query()
+			->withoutAppends()
+			->withoutGlobalScopes([ValidPeriodScope::class, StrictActiveScope::class])
+			->whereHasMorph('payable', User::class, fn ($query) => $query->where('id', $id))
+			->whereHas('package', fn ($query) => $query->has('currency'))
+			->count();
+		$transactions['subscription'] = ($subscription > 0) ? $subscription : -1; // Set -1 to hide it in the sidebar menu
 		
 		// companies
-		$companies = Company::where('user_id', $id)->count();
+		$companies = Company::query()->withoutAppends()->where('user_id', $id)->count();
 		
 		// resumes
-		$resumes = Resume::where('user_id', $id)->count();
-
-		// jobPreferences
-		$jobPreferences = UserJobPreference::where('user_id', $id)->count();
-
-		// jobMatches
-		$jobMatches = JobMatch::where('user_id', $id)->count();
-
+		$resumes = Resume::query()->withoutAppends()->where('user_id', $id)->count();
+		
 		// stats
 		$stats = [
-			'posts'          => $posts,
-			'savedSearch'    => $savedSearch,
-			'threads'        => $threads,
-			'transactions'   => $transactions,
-			'companies'      => $companies,
-			'resumes'        => $resumes,
-			'jobPreferences' => $jobPreferences,
-			'jobMatches'     => $jobMatches,
+			'posts'        => $posts,
+			'savedSearch'  => $savedSearch,
+			'threads'      => $threads,
+			'transactions' => $transactions,
+			'companies'    => $companies,
+			'resumes'      => $resumes,
 		];
 		
 		$data = [
@@ -126,6 +147,6 @@ trait Stats
 			'result'  => $stats,
 		];
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 }

@@ -2,14 +2,14 @@
 <?php $filterSlug = str($filter->name)->slug(); ?>
 <li filter-name="{{ $filter->name }}"
 	filter-type="{{ $filter->type }}"
-	class="nav-item dropdown {{ request()->get($filter->name)?'active':'' }}">
+	class="nav-item dropdown {{ request()->query($filter->name)?'active':'' }}">
 	<a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
 		{{ $filter->label }} <span class="caret"></span>
 	</a>
 	<div class="dropdown-menu p-0">
 		<div class="backpack-filter mb-0">
 			<div class="input-group date">
-				<span class="input-group-text"><i class="fa fa-calendar"></i></span>
+				<span class="input-group-text"><i class="fa-regular fa-calendar"></i></span>
 				<input class="form-control float-end"
 					   id="daterangepicker-{{ $filterSlug }}"
 					   type="text"
@@ -27,7 +27,7 @@
 						@endif
 				>
 				<span class="input-group-text daterangepicker-{{ $filterSlug }}-clear-button">
-					<a href=""><i class="fa fa-times"></i></a>
+					<a href=""><i class="fa-solid fa-xmark"></i></a>
 				</span>
 			</div>
 		</div>
@@ -42,7 +42,7 @@
 
 @push('crud_list_styles')
 	{{-- include select2 css--}}
-	<link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css"/>
+	<link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/bootstrap-daterangepicker/2.1.25/daterangepicker.css') }}"/>
 	<style>
 		.input-group.date {
 			width: 320px;
@@ -63,8 +63,8 @@
 {{-- push things in the after_scripts section --}}
 
 @push('crud_list_scripts')
-	<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-	<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+	<script type="text/javascript" src="{{ asset('assets/plugins/momentjs/2.30.1/moment.min.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-daterangepicker/2.1.25/daterangepicker.js') }}"></script>
 	<script>
 		
 		function applyDateRangeFilter(start, end) {
@@ -97,7 +97,7 @@
 			}
 		}
 		
-		jQuery(document).ready(function ($) {
+		onDocumentReady((event) => {
 			var dateRangeInput = $('#daterangepicker-{{ $filterSlug }}').daterangepicker({
 					timePicker: false,
 					ranges: {

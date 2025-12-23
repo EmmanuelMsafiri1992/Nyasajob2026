@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Helpers\Files\Storage\StorageDisk;
@@ -10,6 +25,7 @@ use App\Models\Post;
 use App\Models\SavedPost;
 use App\Models\Scopes\ActiveScope;
 use App\Models\Scopes\StrictActiveScope;
+use App\Models\Scopes\ValidPeriodScope;
 use App\Models\Thread;
 use App\Models\User;
 use App\Notifications\PostActivated;
@@ -30,67 +46,13 @@ class PostObserver
 		// Send Admin Notification Email
 		if (config('settings.mail.admin_notification') == '1') {
 			try {
-				// Get only info@nyasajob.com for admin notifications
-				$admins = User::permission(Permission::getStaffPermissions())
-					->where('email', 'info@nyasajob.com')
-					->get();
+				// Get all admin users
+				$admins = User::permission(Permission::getStaffPermissions())->get();
 				if ($admins->count() > 0) {
 					Notification::send($admins, new PostNotification($post));
 				}
 			} catch (\Throwable $e) {
 			}
-		}
-
-		// Job Matching & Auto-Application System
-		try {
-			if (!empty($post->country_code)) {
-				// 1. Find and create job matches for users with preferences
-				$matchingService = new \App\Services\JobMatchingService();
-				$matchesCreated = $matchingService->findMatchesForJob($post);
-
-				// 2. Process matches for auto-application based on urgency
-				if ($matchesCreated > 0) {
-					$autoApplyService = new \App\Services\AutoApplicationService();
-
-					// Get all matches for this job
-					$matches = \App\Models\JobMatch::where('post_id', $post->id)
-						->with('user.jobPreference')
-						->get();
-
-					foreach ($matches as $match) {
-						// Process each match (will auto-apply if meets urgency threshold)
-						$autoApplyService->processMatch($match);
-					}
-
-					\Log::info('Job matching complete', [
-						'post_id' => $post->id,
-						'matches_created' => $matchesCreated,
-						'matches_processed' => $matches->count()
-					]);
-				}
-
-				// 3. TEMPORARILY DISABLED - Was sending too many emails (500 per job!)
-				// TODO: Replace with daily digest system
-				// $jobSeekersWithoutPreferences = User::where('country_code', $post->country_code)
-				// 	->where('job_notification_enabled', true)
-				// 	->where('is_admin', 0)
-				// 	->whereNotNull('email')
-				// 	->whereNotNull('email_verified_at')
-				// 	->whereDoesntHave('jobPreference') // Only users without preferences
-				// 	->take(500)
-				// 	->get();
-				//
-				// if ($jobSeekersWithoutPreferences->count() > 0) {
-				// 	Notification::send($jobSeekersWithoutPreferences, new \App\Notifications\JobPostedNotification($post));
-				// }
-			}
-		} catch (\Throwable $e) {
-			// Log error but don't fail post creation
-			\Log::error('Failed to process job matching: ' . $e->getMessage(), [
-				'post_id' => $post->id ?? null,
-				'error' => $e->getMessage(),
-				'trace' => $e->getTraceAsString()
-			]);
 		}
 	}
 	
@@ -127,7 +89,7 @@ class PostObserver
 				$filename = str_replace('uploads/', '', $post->logo);
 				if (
 					!empty($filename)
-					&& !str_contains($filename, config('larapen.core.picture.default'))
+					&& !str_contains($filename, config('larapen.media.picture'))
 					&& $disk->exists($filename)
 				) {
 					$disk->delete($filename);
@@ -144,7 +106,10 @@ class PostObserver
 		}
 		
 		// Delete the Payment(s) of this Post
-		$payments = Payment::withoutGlobalScope(StrictActiveScope::class)->where('post_id', $post->id)->get();
+		$payments = Payment::query()
+			->withoutGlobalScopes([ValidPeriodScope::class, StrictActiveScope::class])
+			->whereMorphedTo('payable', $post)
+			->get();
 		if ($payments->count() > 0) {
 			foreach ($payments as $payment) {
 				$payment->delete();
@@ -234,7 +199,7 @@ class PostObserver
 			$postHasJustBeenReviewed = ($postIsReviewed && $postWasNotReviewed);
 			
 			if ($postIsVerified) {
-				if (config('settings.single.listings_review_activation') == '1') {
+				if (config('settings.listing_form.listings_review_activation') == '1') {
 					if ($postHasJustBeenReviewed) {
 						$post->notify(new PostReviewed($post));
 					} else {
@@ -261,35 +226,41 @@ class PostObserver
 	 */
 	public function deleted(Post $post)
 	{
-		//...
+		// Removing Entries from the Cache
+		$this->clearCache($post);
 	}
 	
 	/**
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $post
+	 * @return void
 	 */
-	private function clearCache($post)
+	private function clearCache($post): void
 	{
 		try {
+			cache()->forget('post.' . $post->id . '.auto.find.country');
+			
 			cache()->forget($post->country_code . '.count.posts');
 			
 			cache()->forget($post->country_code . '.sitemaps.posts.xml');
+			cache()->forget($post->country_code . '.postModel.getFeedItems');
+			cache()->forget('postModel.getFeedItems');
 			
-			cache()->forget($post->country_code . '.home.getPosts.sponsored');
+			cache()->forget($post->country_code . '.home.getPosts.premium');
 			cache()->forget($post->country_code . '.home.getPosts.latest');
-			cache()->forget($post->country_code . '.home.getFeaturedPostsCompanies');
+			cache()->forget($post->country_code . '.home.getCompanies');
 			
 			cache()->forget('post.withoutGlobalScopes.with.lazyLoading.' . $post->id);
 			cache()->forget('post.with.lazyLoading.' . $post->id);
 			
 			// Need to be caught (Independently)
-			$languages = Language::withoutGlobalScopes([ActiveScope::class])->get(['abbr']);
+			$languages = Language::query()->withoutGlobalScopes([ActiveScope::class])->get(['code']);
 			if ($languages->count() > 0) {
 				foreach ($languages as $language) {
-					cache()->forget('post.withoutGlobalScopes.with.lazyLoading.' . $post->id . '.' . $language->abbr);
-					cache()->forget('post.with.lazyLoading.' . $post->id . '.' . $language->abbr);
-					cache()->forget($post->country_code . '.count.posts.per.cat.' . $language->abbr);
+					cache()->forget('post.withoutGlobalScopes.with.lazyLoading.' . $post->id . '.' . $language->code);
+					cache()->forget('post.with.lazyLoading.' . $post->id . '.' . $language->code);
+					cache()->forget($post->country_code . '.count.posts.per.cat.' . $language->code);
 				}
 			}
 			

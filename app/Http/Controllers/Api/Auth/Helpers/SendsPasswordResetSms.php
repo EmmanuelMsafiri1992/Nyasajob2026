@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Auth\Helpers;
 
 use App\Models\PasswordReset;
@@ -27,7 +42,7 @@ trait SendsPasswordResetSms
 		if (empty($user)) {
 			$msg = t('The entered value is not registered with us');
 			
-			return $this->respondError($msg);
+			return apiResponse()->error($msg);
 		}
 		
 		// Create the token in database
@@ -52,7 +67,7 @@ trait SendsPasswordResetSms
 			// Send the token by SMS
 			$passwordReset->notify(new ResetPasswordNotification($user, $token, 'phone'));
 		} catch (\Throwable $e) {
-			return $this->respondError($e->getMessage());
+			return apiResponse()->error($e->getMessage());
 		}
 		
 		$message = t('code_sent_by_sms');
@@ -67,6 +82,6 @@ trait SendsPasswordResetSms
 			],
 		];
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 }

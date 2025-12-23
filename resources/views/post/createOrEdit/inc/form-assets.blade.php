@@ -1,3 +1,27 @@
+@php
+	$postInput ??= [];
+	$post ??= [];
+	$admin ??= [];
+	
+	$isMultiStepsForm = (config('settings.listing_form.publication_form_type') == '1');
+	$isSingleStepForm = (config('settings.listing_form.publication_form_type') == '2');
+	
+	$isSingleStepCreateForm = ($isSingleStepForm && request()->segment(1) == 'create');
+	$isSingleStepEditForm = ($isSingleStepForm && request()->segment(1) == 'edit');
+	
+	$postId = data_get($post, 'id') ?? '';
+	$postTypeId = data_get($post, 'post_type_id') ?? data_get($postInput, 'post_type_id', 0);
+	$countryCode = data_get($post, 'country_code') ?? data_get($postInput, 'country_code', config('country.code', 0));
+	
+	$adminType = config('country.admin_type', 0);
+	$selectedAdminCode = data_get($admin, 'code') ?? data_get($postInput, 'admin_code', 0);
+	$cityId = (int)(data_get($post, 'city_id') ?? data_get($postInput, 'city_id', 0));
+	
+	$postCreatedAt = data_get($post, 'created_at');
+	$postCreatedAt = (!empty($postCreatedAt) && isValidDate($postCreatedAt)) ? $postCreatedAt : date('Y-m-d');
+	
+	$fiTheme = config('larapen.core.fileinput.theme', 'bs5');
+@endphp
 @section('modal_location')
 	@includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.modal.location', 'layouts.inc.modal.location'])
 @endsection
@@ -9,77 +33,52 @@
 	@if (config('lang.direction') == 'rtl')
 		<link href="{{ url('assets/plugins/bootstrap-fileinput/css/fileinput-rtl.min.css') }}" rel="stylesheet">
 	@endif
+	@if (str_starts_with($fiTheme, 'explorer'))
+		<link href="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.min.css') }}" rel="stylesheet">
+	@endif
 	
 	{{-- Multi Steps Form --}}
-	@if (config('settings.single.publication_form_type') == '1')
-	<style>
-		.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
-			box-shadow: 0 0 5px 0 #666666;
-		}
-	</style>
+	@if ($isMultiStepsForm)
+		<style>
+			.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
+				box-shadow: 0 0 5px 0 #666666;
+			}
+		</style>
 	@endif
 	
 	{{-- Single Step Form --}}
-	@if (config('settings.single.publication_form_type') == '2')
-	<style>
-		.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
-			box-shadow: 0 0 5px 0 #666666;
-		}
-		.file-loading:before {
-			content: " {{ t('loading_wd') }}";
-		}
-		/* Preview Frame Size */
-		/*
-		.krajee-default.file-preview-frame .kv-file-content,
-		.krajee-default .file-caption-info,
-		.krajee-default .file-size-info {
-			width: 90px;
-		}
-		*/
-		.krajee-default.file-preview-frame .kv-file-content {
-			height: auto;
-		}
-		.krajee-default.file-preview-frame .file-thumbnail-footer {
-			height: 30px;
-		}
-	</style>
+	@if ($isSingleStepForm)
+		<style>
+			.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
+				box-shadow: 0 0 5px 0 #666666;
+			}
+			.file-loading:before {
+				content: " {{ t('loading_wd') }}";
+			}
+			/* Preview Frame Size */
+			.krajee-default.file-preview-frame .kv-file-content {
+				height: auto;
+			}
+			.krajee-default.file-preview-frame .file-thumbnail-footer {
+				height: 30px;
+			}
+		</style>
 	@endif
 	
-	<link href="{{ url('assets/plugins/bootstrap-daterangepicker/daterangepicker.css') }}" rel="stylesheet">
+	<link href="{{ url('assets/plugins/bootstrap-daterangepicker/3.1/daterangepicker.css') }}" rel="stylesheet">
 @endpush
 
 @push('after_scripts_stack')
 	@include('layouts.inc.tools.wysiwyg.js')
-	
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.13.1/jquery.validate.min.js"></script>
-	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.payment/1.2.3/jquery.payment.min.js"></script>
-	@if (file_exists(public_path() . '/assets/plugins/forms/validation/localization/messages_'.config('app.locale').'.min.js'))
-		<script src="{{ url('assets/plugins/forms/validation/localization/messages_'.config('app.locale').'.min.js') }}" type="text/javascript"></script>
-	@endif
+	@include('common.js.payment-scripts')
 	
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/plugins/sortable.min.js') }}" type="text/javascript"></script>
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/fileinput.min.js') }}" type="text/javascript"></script>
-	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/fas/theme.js') }}" type="text/javascript"></script>
+	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.js') }}" type="text/javascript"></script>
 	<script src="{{ url('common/js/fileinput/locales/' . config('app.locale') . '.js') }}" type="text/javascript"></script>
 	
-	<script src="{{ url('assets/plugins/momentjs/moment.min.js') }}" type="text/javascript"></script>
-	<script src="{{ url('assets/plugins/bootstrap-daterangepicker/daterangepicker.js') }}" type="text/javascript"></script>
-	
-	@php
-		$postInput ??= [];
-		$post ??= [];
-		$admin ??= [];
-		
-		$postId = data_get($post, 'id') ?? '';
-		$postTypeId = data_get($post, 'post_type_id') ?? data_get($postInput, 'post_type_id', 0);
-		$countryCode = data_get($post, 'country_code') ?? data_get($postInput, 'country_code', config('country.code', 0));
-		$adminType = config('country.admin_type', 0);
-		$selectedAdminCode = data_get($admin, 'code') ?? data_get($postInput, 'admin_code', 0);
-		$cityId = (int)(data_get($post, 'city_id') ?? data_get($postInput, 'city_id', 0));
-		
-		$postCreatedAt = data_get($post, 'created_at');
-		$postCreatedAt = (!empty($postCreatedAt) && isValidDate($postCreatedAt)) ? $postCreatedAt : date('Y-m-d');
-	@endphp
+	<script src="{{ url('assets/plugins/momentjs/2.30.1/moment.min.js') }}" type="text/javascript"></script>
+	<script src="{{ url('assets/plugins/bootstrap-daterangepicker/3.1/daterangepicker.js') }}" type="text/javascript"></script>
 	
 	<script>
 		/* Translation */
@@ -101,7 +100,6 @@
 		
 		/* Company */
 		var postCompanyId = '{{ old('company_id', ($postCompanyId ?? 0)) }}';
-		getCompany(postCompanyId);
 		
 		/* Locations */
 		var countryCode = '{{ old('country_code', $countryCode) }}';
@@ -116,26 +114,31 @@
 		@endif
 	</script>
 	<script>
-		$(document).ready(function() {
+		onDocumentReady((event) => {
 			/* Company */
-			$('#companyId').bind('click, change', function() {
-				postCompanyId = $(this).val();
-				getCompany(postCompanyId);
-			});
+			getCompany(postCompanyId);
+			const companyIdEl = document.getElementById('companyId');
+			if (companyIdEl) {
+				$(companyIdEl).on('click', (e) => getCompany(e.target.value));
+				$(companyIdEl).on('change', (e) => getCompany(e.target.value));
+			}
 			
 			/* Company logo's button */
-			$('#companyFormLink').bind('click', function(e) {
-				let companyLink = $(this).attr('href');
-				if (companyLink.indexOf('/new/') !== -1) {
-					e.preventDefault();
-					getCompany(0);
-					
-					return false;
-				}
-			});
+			const companyFormLinkEl = document.getElementById('companyFormLink');
+			if (companyFormLinkEl) {
+				companyFormLinkEl.addEventListener('click', (e) => {
+					let companyLink = e.target.getAttribute('href');
+					if (companyLink.indexOf('/new/') !== -1) {
+						e.preventDefault();
+						getCompany(0);
+						
+						return false;
+					}
+				});
+			}
 			
 			{{-- select2: If error occured, apply Bootstrap's error class --}}
-			@if (config('settings.single.city_selection') == 'select')
+			@if (config('settings.listing_form.city_selection') == 'select')
 				@if ($errors->has('admin_code'))
 					$('select[name="admin_code"]').closest('div').addClass('is-invalid');
 				@endif
@@ -146,9 +149,9 @@
 			
 			{{-- Tagging with multi-value Select Boxes --}}
 			@php
-				$tagsLimit = (int)config('settings.single.tags_limit', 15);
-				$tagsMinLength = (int)config('settings.single.tags_min_length', 2);
-				$tagsMaxLength = (int)config('settings.single.tags_max_length', 30);
+				$tagsLimit = (int)config('settings.listing_form.tags_limit', 15);
+				$tagsMinLength = (int)config('settings.listing_form.tags_min_length', 2);
+				$tagsMaxLength = (int)config('settings.listing_form.tags_max_length', 30);
 			@endphp
 			let selectTagging = $('.tags-selecter').select2({
 				language: langLayout.select2,
@@ -198,9 +201,7 @@
 			@if ($errors->has('tags.*'))
 				$('select[name^="tags"]').next('.select2.select2-container').addClass('is-invalid');
 			@endif
-		});
-		
-		$(function() {
+			
 			/*
 			 * start_date field
 			 * https://www.daterangepicker.com/#options
@@ -208,7 +209,7 @@
 			let postCreatedAt = '{{ $postCreatedAt }}';
 			let referenceDate = moment(postCreatedAt);
 			
-			let dateEl = $('#postForm .cf-date');
+			let dateEl = $('#payableForm .cf-date');
 			dateEl.daterangepicker({
 				autoUpdateInput: false,
 				autoApply: true,
@@ -269,7 +270,7 @@
 	</script>
 	
 	<script src="{{ url('assets/js/app/d.modal.category.js') . vTime() }}"></script>
-	@if (config('settings.single.city_selection') == 'select')
+	@if (config('settings.listing_form.city_selection') == 'select')
 		<script src="{{ url('assets/js/app/d.select.location.js') . vTime() }}"></script>
 	@else
 		<script src="{{ url('assets/js/app/browse.locations.js') . vTime() }}"></script>

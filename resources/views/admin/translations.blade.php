@@ -5,7 +5,7 @@
 		<div class="col-md-5 col-12 align-self-center">
 			<h3 class="mb-0">
 				<a href="{{ admin_url('languages') }}" class="btn btn-primary shadow">
-					<i class="fa fa-arrow-left"></i>&nbsp;{{ mb_ucfirst(trans('admin.languages')) }}
+					<i class="fa-solid fa-arrow-left"></i>&nbsp;{{ mb_ucfirst(trans('admin.languages')) }}
 				</a>&nbsp;
 				{{ trans('admin.translate') }} <span class="text-lowercase">{{ trans('admin.site_texts') }}</span>
 			</h3>
@@ -28,7 +28,7 @@
 				<div class="card-header">
 					<h3 class="mb-0">{{ ucfirst(trans('admin.language')) }}:
 						@foreach ($languages as $lang)
-							@if ($currentLang == $lang->abbr)
+							@if ($currentLang == $lang->code)
 								{{{ $lang->name }}}
 							@endif
 						@endforeach
@@ -36,7 +36,7 @@
 							&nbsp; {{ trans('admin.switch_to') }}: &nbsp;
 							<select name="language_switch" id="language_switch">
 							@foreach ($languages as $lang)
-								<option value="{{ admin_url("languages/texts/{$lang->abbr}") }}" {{ $currentLang == $lang->abbr ? 'selected' : ''}}>
+								<option value="{{ admin_url('languages/texts/' . $lang->code) }}" {{ $currentLang == $lang->code ? 'selected' : ''}}>
 									{{ $lang->name }}
 								</option>
 							@endforeach
@@ -68,7 +68,7 @@
 									<a class="nav-link" href="{{ $file['url'] }}">
 										{{ $file['name'] }}
 										@if ($file['active'])
-										<span class="sr-only">(current)</span>
+											<span class="sr-only">(current)</span>
 										@endif
 									</a>
 								</li>
@@ -81,18 +81,14 @@
 						<div class="col-12 lang-inputs">
 							<div class="card">
 							@if (!empty($fileArray))
-								{!! Form::open([
-									'url'           => admin_url("languages/texts/{$currentLang}/{$currentFile}"),
-									'method'        => 'post',
-									'id'            => 'lang-form',
-									'class'         => 'form-horizontal',
-									'data-required' => trans('admin.fields_required')
-								]) !!}
-								{!! Form::button('<i class="fa fa-save"></i> ' . trans('admin.save'), [
-									'type' => 'submit',
-									'class' => 'btn btn-primary shadow submit float-end hidden-xs hidden-sm',
-									'style' => "margin-top: 10px;"
-								]) !!}
+								{{ html()->form('POST', admin_url('languages/texts/' . $currentLang . '/' . $currentFile))
+										->id('lang-form')
+										->class('form-horizontal')
+										->data('required', trans('admin.fields_required'))
+										->open() }}
+								{{ html()->button('<i class="fa-regular fa-floppy-disk"></i> ' . trans('admin.save'), 'submit')
+										->class('btn btn-primary shadow submit float-end hidden-xs hidden-sm')
+										->style('margin-top: 10px;') }}
 								<div class="card-body">
 									<div class="row hidden-sm hidden-xs">
 										<div class="col-sm-2 text-end">
@@ -116,12 +112,10 @@
 									{!! $langFile->displayInputs($fileArray) !!}
 								</div>
 								<div class="card-footer text-center">
-									{!! Form::button('<i class="fa fa-save"></i> ' . trans('admin.save'), [
-										'type'  => 'submit',
-										'class' => 'btn btn-primary shadow submit'
-									]) !!}
+									{{ html()->button('<i class="fa-regular fa-floppy-disk"></i> ' . trans('admin.save'), 'submit')
+										->class('btn btn-primary shadow submit') }}
 								</div>
-								{!! Form::close() !!}
+								{{ html()->form()->close() }}
 							@else
 								<div class="card-body">
 									<em>{{ trans('admin.empty_file') }}</em>
@@ -140,8 +134,8 @@
 
 @section('after_scripts')
 	<script>
-		jQuery(document).ready(function($) {
-			$("#language_switch").change(function() {
+		onDocumentReady((event) => {
+			$('#language_switch').change(function() {
 				window.location.href = $(this).val();
 			})
 		});

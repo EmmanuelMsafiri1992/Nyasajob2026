@@ -48,30 +48,6 @@
 							<i data-feather="home" class="feather-icon"></i> <span class="hide-menu">{{ trans('admin.dashboard') }}</span>
 						</a>
 					</li>
-
-					{{-- Courses Menu --}}
-					@if (userHasSuperAdminPermissions())
-						<li class="sidebar-item">
-							<a href="#" class="sidebar-link has-arrow waves-effect waves-dark">
-								<i data-feather="book-open"></i> <span class="hide-menu">Courses</span>
-							</a>
-							<ul aria-expanded="false" class="collapse first-level">
-								<li class="sidebar-item">
-									<a href="{{ admin_url('courses') }}" class="sidebar-link">
-										<i class="mdi mdi-adjust"></i>
-										<span class="hide-menu">All Courses</span>
-									</a>
-								</li>
-								<li class="sidebar-item">
-									<a href="{{ admin_url('courses/create') }}" class="sidebar-link">
-										<i class="mdi mdi-adjust"></i>
-										<span class="hide-menu">Add New Course</span>
-									</a>
-								</li>
-							</ul>
-						</li>
-					@endif
-
 					@if (
 						auth()->user()->can('post-list')
 						|| auth()->user()->can('category-list')
@@ -111,7 +87,7 @@
 								@endif
 								@if (auth()->user()->can('post-type-list') || userHasSuperAdminPermissions())
 									<li class="sidebar-item">
-										<a href="{{ admin_url('p_types') }}" class="sidebar-link">
+										<a href="{{ admin_url('post_types') }}" class="sidebar-link">
 											<i class="mdi mdi-adjust"></i>
 											<span class="hide-menu">{{ trans('admin.ad types') }}</span>
 										</a>
@@ -133,7 +109,6 @@
 						auth()->user()->can('user-list')
 						|| auth()->user()->can('role-list')
 						|| auth()->user()->can('permission-list')
-						|| auth()->user()->can('gender-list')
 						|| userHasSuperAdminPermissions()
 					)
 						<li  class="sidebar-item">
@@ -165,55 +140,31 @@
 										</a>
 									</li>
 								@endif
-								@if (auth()->user()->can('gender-list') || userHasSuperAdminPermissions())
-									<li class="sidebar-item">
-										<a href="{{ admin_url('genders') }}" class="sidebar-link">
-											<i class="mdi mdi-adjust"></i>
-											<span class="hide-menu">{{ trans('admin.titles') }}</span>
-										</a>
-									</li>
-								@endif
 							</ul>
 						</li>
 					@endif
 					
 					@if (auth()->user()->can('payment-list') || userHasSuperAdminPermissions())
 						<li class="sidebar-item">
-							<a href="{{ admin_url('payments') }}" class="sidebar-link">
-								<i data-feather="dollar-sign" class="feather-icon"></i> <span class="hide-menu">{{ trans('admin.payments') }}</span>
-							</a>
-						</li>
-					@endif
-
-					{{-- Product Advertising --}}
-					@if (auth()->user()->can('package-list') || userHasSuperAdminPermissions())
-						<li class="sidebar-item">
 							<a href="#" class="sidebar-link has-arrow waves-effect waves-dark">
-								<i data-feather="shopping-bag" class="feather-icon"></i> <span class="hide-menu">Product Advertising</span>
+								<i data-feather="dollar-sign" class="feather-icon"></i> <span class="hide-menu">{{ trans('admin.payments') }}</span>
 							</a>
 							<ul aria-expanded="false" class="collapse first-level">
 								<li class="sidebar-item">
-									<a href="{{ admin_url('ad_packages') }}" class="sidebar-link">
+									<a href="{{ admin_url('payments/promotion') }}" class="sidebar-link">
 										<i class="mdi mdi-adjust"></i>
-										<span class="hide-menu">Ad Packages</span>
+										<span class="hide-menu">{{ trans('admin.promotions') }}</span>
 									</a>
 								</li>
 								<li class="sidebar-item">
-									<a href="{{ admin_url('ad_subscriptions') }}" class="sidebar-link">
+									<a href="{{ admin_url('payments/subscription') }}" class="sidebar-link">
 										<i class="mdi mdi-adjust"></i>
-										<span class="hide-menu">Ad Subscriptions</span>
-									</a>
-								</li>
-								<li class="sidebar-item">
-									<a href="{{ admin_url('product_advertisements') }}" class="sidebar-link">
-										<i class="mdi mdi-adjust"></i>
-										<span class="hide-menu">Advertisements</span>
+										<span class="hide-menu">{{ trans('admin.subscriptions') }}</span>
 									</a>
 								</li>
 							</ul>
 						</li>
 					@endif
-
 					@if (auth()->user()->can('page-list') || userHasSuperAdminPermissions())
 						<li class="sidebar-item">
 							<a href="{{ admin_url('pages') }}" class="sidebar-link">

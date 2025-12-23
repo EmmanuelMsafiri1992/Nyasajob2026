@@ -12,7 +12,7 @@
 			
 			<div class="modal-header px-3">
 				<h4 class="modal-title" id="categoriesModalLabel">
-					<i class="far fa-map"></i> {{ t('select_a_category') }}
+					<i class="fa-regular fa-map"></i> {{ t('select_a_category') }}
 				</h4>
 				
 				<button type="button" class="close" data-bs-dismiss="modal">

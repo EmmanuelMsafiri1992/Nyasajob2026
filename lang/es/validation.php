@@ -77,9 +77,9 @@ return [
     'url' => 'El formato :attribute es inválido.',
     'required_package_id' => 'You have to select a premium ad option to continue.',
     'required_payment_method_id' => 'You have to select a payment method to continue.',
-	'blacklist_unique' => 'The :attribute field value is already banned for :type.',
+    'blacklist_unique' => 'The :attribute field value is already banned for :type.',
     'blacklist_email_rule' => 'Esta dirección de correo electrónico está en la lista negra.',
-	'blacklist_phone_rule' => 'This phone number is blacklisted.',
+    'blacklist_phone_rule' => 'This phone number is blacklisted.',
     'blacklist_domain_rule' => 'The domain of your email address is blacklisted.',
     'blacklist_ip_rule' => 'The :attribute must be a valid IP address.',
     'blacklist_word_rule' => 'The :attribute contains a banned words or phrases.',
@@ -92,12 +92,6 @@ return [
     'username_is_valid_rule' => 'The :attribute field must be an alphanumeric string.',
     'username_is_allowed_rule' => 'The :attribute is not allowed.',
     'custom' => [
-        'database_connection' => [
-            'required' => 'No se puede conectar al servidor MySQL',
-        ],
-        'database_not_empty' => [
-            'required' => 'La base de datos no está vacía. Vacíe la base de datos o especifique <a href="./database">otra base de datos</a>.',
-        ],
         'promo_code_not_valid' => [
             'required' => 'El código promocional no es válido',
         ],
@@ -122,20 +116,23 @@ return [
         'php_bin_path_invalid' => [
             'required' => 'Ejecutable PHP no válido. Por favor revise de nuevo.',
         ],
-        'can_not_empty_database' => [
-            'required' => 'No puede eliminar determinadas tablas. Por favor, limpie su base de datos y vuelva a intentarlo.',
-        ],
-        'can_not_create_database_tables' => [
-            'required' => 'Cannot create certain tables. Please make sure you have full privileges on the database and try again.',
-        ],
-        'can_not_import_database_data' => [
-            'required' => 'Cannot import all the app required data. Please try again.',
-        ],
         'recaptcha_invalid' => [
             'required' => 'Comprobación reCAPTCHA no válida.',
         ],
         'payment_method_not_valid' => [
             'required' => 'Algo salió mal con la configuración del método de pago. Por favor revise de nuevo.',
+        ],
+        'listings_limit' => [
+            'gte' => 'The package\'s :attribute must be greater than or equal to :value which represents the website\'s global :attribute value set in the "Admin panel → Settings → General → Listing Form → Listings Limit per User".',
+        ],
+        'expiration_time' => [
+            'gte' => 'The package\'s :attribute must be greater than or equal to :value which represents the website\'s global :attribute value set in the "Admin panel → Settings → General → Cron → Activated Listings Expiration".',
+        ],
+        'pictures_limit' => [
+            'gte' => 'The package\'s :attribute must be greater than or equal to :value which represents the website\'s global :attribute value set in the "Admin panel → Settings → General → Listing Form → Pictures Limit per Listing".',
+        ],
+        'attribute-name' => [
+            'rule-name' => 'custom-message',
         ],
     ],
     'attributes' => [
@@ -238,6 +235,8 @@ return [
     'sluggable_rule' => 'The :attribute field contains invalid characters only.',
     'uniqueness_of_post_rule' => 'Ya ha publicado este anuncio. No se puede duplicar.',
     'uniqueness_of_unverified_post_rule' => 'Ya ha publicado este anuncio. Verifique su dirección de correo electrónico o SMS para seguir las instrucciones de validación.',
+    'purchase_code_rule' => 'The :attribute field is not valid.',
+    'no_spaces_rule' => 'The :attribute must not contain any spaces.',
     'accepted_if' => 'The :attribute must be accepted when :other is :value.',
     'current_password' => 'La contraseña es incorrecta.',
     'declined' => 'The :attribute must be declined.',
@@ -271,11 +270,11 @@ return [
     'mac_address' => 'The :attribute must be a valid MAC address.',
     'multiple_of' => 'The :attribute must be a multiple of :value.',
     'password' => [
-		'letters' => 'El :attribute debe contener al menos una letra.',
-		'mixed' => 'El :attribute debe contener al menos una letra mayúscula y una minúscula.',
-		'numbers' => 'El :attribute debe contener al menos un número.',
-		'symbols' => 'El :attribute debe contener al menos un símbolo.',
-		'uncompromised' => 'El :attribute dado ha aparecido en una fuga de datos. Elija un :attribute diferente.',
+        'letters' => 'El :attribute debe contener al menos una letra.',
+        'mixed' => 'El :attribute debe contener al menos una letra mayúscula y una minúscula.',
+        'numbers' => 'El :attribute debe contener al menos un número.',
+        'symbols' => 'El :attribute debe contener al menos un símbolo.',
+        'uncompromised' => 'El :attribute dado ha aparecido en una fuga de datos. Elija un :attribute diferente.',
     ],
     'prohibited' => 'The :attribute field is prohibited.',
     'prohibited_if' => 'The :attribute field is prohibited when :other is :value.',
@@ -283,4 +282,31 @@ return [
     'prohibits' => 'The :attribute field prohibits :other from being present.',
     'required_array_keys' => 'The :attribute field must contain entries for: :values.',
     'uuid' => 'The :attribute must be a valid UUID.',
+    'ascii' => 'The :attribute field must only contain single-byte alphanumeric characters and symbols.',
+    'can' => 'The :attribute field contains an unauthorized value.',
+    'decimal' => 'The :attribute field must have :decimal decimal places.',
+    'doesnt_end_with' => 'The :attribute field must not end with one of the following: :values.',
+    'doesnt_start_with' => 'The :attribute field must not start with one of the following: :values.',
+    'lowercase' => 'The :attribute field must be lowercase.',
+    'max_digits' => 'The :attribute field must not have more than :max digits.',
+    'min_digits' => 'The :attribute field must have at least :min digits.',
+    'missing' => 'The :attribute field must be missing.',
+    'missing_if' => 'The :attribute field must be missing when :other is :value.',
+    'missing_unless' => 'The :attribute field must be missing unless :other is :value.',
+    'missing_with' => 'The :attribute field must be missing when :values is present.',
+    'missing_with_all' => 'The :attribute field must be missing when :values are present.',
+    'required_if_accepted' => 'The :attribute field is required when :other is accepted.',
+    'uppercase' => 'The :attribute field must be uppercase.',
+    'ulid' => 'The :attribute field must be a valid ULID.',
+    'present_if' => 'The :attribute field must be present when :other is :value.',
+    'present_unless' => 'The :attribute field must be present unless :other is :value.',
+    'present_with' => 'The :attribute field must be present when :values is present.',
+    'present_with_all' => 'The :attribute field must be present when :values are present.',
+    'contains' => 'The :attribute field is missing a required value.',
+    'extensions' => 'The :attribute field must have one of the following extensions: :values.',
+    'hex_color' => 'The :attribute field must be a valid hexadecimal color.',
+    'list' => 'The :attribute field must be a list.',
+    'required_if_declined' => 'The :attribute field is required when :other is declined.',
+    'alphabetic_plus_rule' => 'The :attribute field may only contain letters and the following additional characters: :additionalChars',
+    'alphabetic_only_rule' => 'The :attribute field may only contain letters.',
 ];

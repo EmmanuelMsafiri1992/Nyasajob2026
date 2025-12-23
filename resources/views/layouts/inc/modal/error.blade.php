@@ -5,7 +5,7 @@
 			
 			<div class="modal-header px-3">
 				<h4 class="modal-title" id="errorModalTitle">
-					Title
+					{{ t('error_found') }}
 				</h4>
 				
 				<button type="button" class="close" data-bs-dismiss="modal">
@@ -17,7 +17,7 @@
 			<div class="modal-body">
 				<div class="row">
 					<div id="errorModalBody" class="col-12">
-						Content...
+						...
 					</div>
 				</div>
 			</div>

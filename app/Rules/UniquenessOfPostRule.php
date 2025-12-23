@@ -1,17 +1,33 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Rules;
 
 use App\Models\Post;
 use App\Models\Scopes\ReviewedScope;
 use App\Models\Scopes\VerifiedScope;
-use Illuminate\Contracts\Validation\Rule;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class UniquenessOfPostRule implements Rule
+class UniquenessOfPostRule implements ValidationRule
 {
-	public $unverifiedPost = false;
-	public $email = null;
-	public $phone = null;
-	public $phoneCountry = null;
+	public bool $unverifiedPost = false;
+	public ?string $email = null;
+	public ?string $phone = null;
+	public ?string $phoneCountry = null;
 	
 	public function __construct()
 	{
@@ -31,29 +47,43 @@ class UniquenessOfPostRule implements Rule
 	}
 	
 	/**
+	 * Run the validation rule.
+	 */
+	public function validate(string $attribute, mixed $value, Closure $fail): void
+	{
+		if (!$this->passes($attribute, $value)) {
+			if ($this->unverifiedPost) {
+				$message = trans('validation.uniqueness_of_unverified_post_rule');
+			} else {
+				$message = trans('validation.uniqueness_of_post_rule');
+			}
+			
+			$fail($message);
+		}
+	}
+	
+	/**
 	 * Determine if the validation rule passes.
 	 * Check the uniqueness of the Post
 	 *
-	 * @param  string  $attribute
-	 * @param  mixed  $value
+	 * @param string $attribute
+	 * @param mixed $value
 	 * @return bool
 	 */
-	public function passes($attribute, $value)
+	public function passes(string $attribute, mixed $value): bool
 	{
+		$value = getAsString($value);
 		$value = trim($value);
 		
-		$user = null;
 		$guard = isFromApi() ? 'sanctum' : null;
-		if (auth($guard)->check()) {
-			$user = auth($guard)->user();
-		}
+		$authUser = auth($guard)->user();
 		
-		$posts = Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class]);
+		$posts = Post::query()->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class]);
 		
-		if (!empty($user)) {
+		if (!empty($authUser)) {
 			
-			$posts->where(function ($query) use ($user) {
-				$query->where('user_id', $user->id)->orWhere('email', $user->email);
+			$posts->where(function ($query) use ($authUser) {
+				$query->where('user_id', $authUser->id)->orWhere('email', $authUser->email);
 			});
 			
 		} else {
@@ -72,14 +102,15 @@ class UniquenessOfPostRule implements Rule
 		}
 		
 		// Passes, If a logged user isn't found and If email and phone are not filled
-		if (empty($user) && empty($this->email) && empty($this->phone)) {
+		if (empty($authUser) && empty($this->email) && empty($this->phone)) {
 			return true;
 		}
 		
 		// Exclude current Post ID during update
-		if (in_array(request()->method(), ['PUT', 'PATCH', 'UPDATE'])) {
+		$isUpdateRequest = (in_array(request()->method(), ['PUT', 'PATCH', 'UPDATE']));
+		if ($isUpdateRequest) {
 			$parameters = request()->route()->parameters();
-			if (isset($parameters['id']) && !empty($parameters['id'])) {
+			if (!empty($parameters['id'])) {
 				$posts->where('id', '!=', $parameters['id']);
 			} else {
 				return true;
@@ -95,13 +126,13 @@ class UniquenessOfPostRule implements Rule
 			
 			if (!isVerifiedPost($post)) {
 				// Conditions to Verify User's Email or Phone
-				if (!empty($user)) {
+				if (!empty($authUser)) {
 					$emailVerificationRequired = config('settings.mail.email_verification') == 1
 						&& request()->filled('email')
-						&& request()->input('email') != $user->email;
+						&& request()->input('email') != $authUser->email;
 					$phoneVerificationRequired = config('settings.sms.phone_verification') == 1
 						&& request()->filled('phone')
-						&& request()->input('phone') != $user->phone;
+						&& request()->input('phone') != $authUser->phone;
 				} else {
 					$emailVerificationRequired = config('settings.mail.email_verification') == 1 && request()->filled('email');
 					$phoneVerificationRequired = config('settings.sms.phone_verification') == 1 && request()->filled('phone');
@@ -120,19 +151,5 @@ class UniquenessOfPostRule implements Rule
 		}
 		
 		return true;
-	}
-	
-	/**
-	 * Get the validation error message.
-	 *
-	 * @return string
-	 */
-	public function message()
-	{
-		if ($this->unverifiedPost) {
-			return trans('validation.uniqueness_of_unverified_post_rule');
-		} else {
-			return trans('validation.uniqueness_of_post_rule');
-		}
 	}
 }

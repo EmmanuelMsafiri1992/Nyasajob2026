@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html dir="ltr" lang="{{ config('app.locale') }}">
+<html lang="{{ getLangTag(config('app.locale')) }}" dir="ltr">
 <head>
-    <meta charset="utf-8">
+    <meta charset="{{ config('larapen.core.charset', 'utf-8') }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     {{-- Tell the browser to be responsive to screen width --}}
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,9 +22,11 @@
     
     @yield('before_styles')
     
-    <link href="{{ url(mix('css/admin.css')) }}" rel="stylesheet">
+    <link href="{{ url(mix('dist/admin/styles.css')) }}" rel="stylesheet">
 
     @yield('after_styles')
+    
+    @include('common.js.document')
     
     {{-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries --}}
     {{-- WARNING: Respond.js doesn't work if you view the page via file:// --}}
@@ -40,17 +42,20 @@
 <body>
 <div class="main-wrapper">
     
-    <?php
-    $wrapperStyle = '';
-    $logoUrl = '';
-    try {
-        if (is_link(public_path('storage'))) {
-            $bgImgUrl = config('settings.style.login_bg_image_url');
-            $wrapperStyle = 'background:url(' . $bgImgUrl . ') no-repeat center center; background-size: cover;';
-            $logoUrl = config('settings.app.logo_dark_url');
-        }
-    } catch (\Throwable $e) {}
-    ?>
+    @php
+        $logoFactoryUrl = config('larapen.media.logo-factory');
+        $logoUrl = '';
+        $wrapperStyle = '';
+        try {
+            if (is_link(public_path('storage'))) {
+				$logoUrl = config('settings.app.logo_dark_url', $logoFactoryUrl);
+                $bgImgUrl = config('settings.style.login_bg_image_url');
+                $wrapperStyle = 'background:url(' . $bgImgUrl . ') no-repeat center center; background-size: cover;';
+            }
+        } catch (\Throwable $e) {}
+        $logoUrl = empty($logoUrl) ? $logoFactoryUrl : $logoUrl;
+		$logoCssSize = 'max-width:200px; max-height:45px; width:auto; height:auto;';
+    @endphp
     
     {{-- Login box.scss --}}
     <div class="auth-wrapper d-flex no-block justify-content-center align-items-center" style="{!! $wrapperStyle !!}">
@@ -58,7 +63,7 @@
     
             <div class="logo text-center mb-5">
                 <a href="{{ url('/') }}">
-                    <img src="{{ $logoUrl }}" alt="logo" class="img-fluid" style="width:250px; height:auto;">
+                    <img src="{{ $logoUrl }}" alt="logo" class="img-fluid" style="{!! $logoCssSize !!}">
                 </a>
                 <hr class="border-0 bg-secondary">
             </div>
@@ -81,14 +86,13 @@
 </script>
 
 <script src="{{ admin_url('common/js/intl-tel-input/countries.js') . getPictureVersion() }}"></script>
-<script src="{{ url(mix('js/admin.js')) }}"></script>
+<script src="{{ url(mix('dist/admin/scripts.js')) }}"></script>
 
 {{-- This page plugin js --}}
 <script>
     preventPageLoadingInIframe();
-    
-    $(document).ready(function()
-    {
+
+    onDocumentReady((event) => {
         $('[data-bs-toggle="tooltip"]').tooltip();
         $('.preloader').fadeOut();
         

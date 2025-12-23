@@ -1,61 +1,91 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers;
 
+use App\Exceptions\Custom\CustomException;
+use App\Helpers\DBTool\IndexTrait;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 
 class DBTool
 {
+	use IndexTrait;
+	
 	/**
 	 * Get PDO Connexion
 	 *
-	 * @param array|null $database
+	 * @param array|null $config
 	 * @return \PDO
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	public static function getPDOConnexion(?array $database = []): \PDO
+	public static function getPdoConnection(?array $config = []): \PDO
 	{
 		// Retrieve Database Parameters from the /.env file,
 		// If they are not set during the function call.
-		if (empty($database)) {
-			$database = DBTool::getDatabaseConnectionInfo();
+		if (empty($config)) {
+			$config = self::getDatabaseConnectionInfo();
 		}
 		
-		// Database Parameters
-		$driver = $database['driver'] ?? 'mysql';
-		$host = $database['host'] ?? '';
-		$port = $database['port'] ?? '';
-		$username = $database['username'] ?? '';
-		$password = $database['password'] ?? '';
-		$database = $database['database'] ?? '';
-		$charset = $database['charset'] ?? 'utf8mb4';
-		$socket = $database['socket'] ?? '';
-		$options = $database['options'] ?? [
+		// Retrieve database & its server parameters
+		$host = $config['host'] ?? '';
+		$port = $config['port'] ?? '';
+		$database = $config['database'] ?? '';
+		$username = $config['username'] ?? '';
+		$password = $config['password'] ?? '';
+		$socket = $config['socket'] ?? '';
+		
+		try {
+			// Database connexion's configuration
+			$driver = $config['driver'] ?? 'mysql';
+			$charset = $config['charset'] ?? 'utf8mb4';
+			$options = $config['options'] ?? [
 				\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_OBJ,
 				\PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
 				\PDO::ATTR_EMULATE_PREPARES   => true,
 				\PDO::ATTR_CURSOR             => \PDO::CURSOR_FWDONLY,
 			];
-		
-		try {
-			// Get Connexion's Host Info
-			$hostInfo = (!empty($socket))
-				? 'unix_socket=' . $database['socket']
+			
+			// Get the connexion's host info
+			$hostInfo = !empty($socket)
+				? 'unix_socket=' . $socket
 				: 'host=' . $host . ';port=' . $port;
 			
-			// Get the Connexion's DSN
+			// Get the connexion's DSN
 			$dsn = $driver . ':' . $hostInfo . ';dbname=' . $database . ';charset=' . $charset;
 			
-			// Connect to the Database Server
+			// Connect to the database server
 			return new \PDO($dsn, $username, $password, $options);
 			
 		} catch (\PDOException $e) {
-			$error = "<pre><strong>ERROR:</strong> Can't connect to the database server. " . $e->getMessage() . "</pre>";
+			$errorMessage = trans('messages.database_pdo_connection_failed');
+			$exceptionMessage = $e->getMessage();
 		} catch (\Throwable $e) {
-			$error = "<pre><strong>ERROR:</strong> The database connection failed. " . $e->getMessage() . "</pre>";
+			$errorMessage = trans('messages.database_connection_failed');
+			$exceptionMessage = $e->getMessage();
 		}
 		
-		die($error);
+		$errorMessage ??= '';
+		if (!empty($exceptionMessage)) {
+			$exceptionMessageFormat = ' ERROR: <span class="fw-bold">%s</span>';
+			$errorMessage .= sprintf($exceptionMessageFormat, $exceptionMessage);
+		}
+		
+		throw new CustomException($errorMessage);
 	}
 	
 	/**
@@ -67,7 +97,7 @@ class DBTool
 	{
 		$database = [];
 		
-		$config = DBTool::getLaravelDatabaseConfig();
+		$config = self::getLaravelDatabaseConfig();
 		$defaultDatabase = $config['connections'][$config['default']];
 		
 		// Database Parameters
@@ -98,29 +128,27 @@ class DBTool
 	}
 	
 	/**
-	 * Get full table name by adding the DB prefix
-	 *
-	 * @param string $name
-	 * @return string
-	 */
-	public static function rawTable(string $name): string
-	{
-		$config = DBTool::getLaravelDatabaseConfig();
-		$defaultDatabase = $config['connections'][$config['default']];
-		$databasePrefix = $defaultDatabase['prefix'];
-		
-		return $databasePrefix . $name;
-	}
-	
-	/**
 	 * Close PDO Connexion
 	 *
 	 * @param $pdo
 	 * @return void
 	 */
-	public static function closePDOConnexion(&$pdo): void
+	public static function closePdoConnection(&$pdo): void
 	{
 		$pdo = null;
+	}
+	
+	/**
+	 * @return string
+	 */
+	public static function getRawTablePrefix(): string
+	{
+		$config = self::getLaravelDatabaseConfig();
+		$defaultConnection = $config['default'] ?? '';
+		$defaultDatabase = $config['connections'][$defaultConnection] ?? [];
+		$prefix = $defaultDatabase['prefix'] ?? '';
+		
+		return getAsString($prefix);
 	}
 	
 	/**
@@ -135,12 +163,23 @@ class DBTool
 	}
 	
 	/**
+	 * Get full table name by adding the DB prefix
+	 *
+	 * @param string $name
+	 * @return string
+	 */
+	public static function getRawTable(string $name): string
+	{
+		return self::getRawTablePrefix() . $name;
+	}
+	
+	/**
 	 * Quote a value with apostrophe to inject to an SQL statement
 	 *
 	 * @param $value
-	 * @return mixed
+	 * @return false|string
 	 */
-	public static function quote($value)
+	public static function quote($value): false|string
 	{
 		return DB::getPdo()->quote($value);
 	}
@@ -153,7 +192,7 @@ class DBTool
 	 * @param string|null $tablesPrefix
 	 * @return bool
 	 */
-	public static function tableExists(\PDO $pdo, string $table, string $tablesPrefix = null): bool
+	public static function rawTableExists(\PDO $pdo, string $table, string $tablesPrefix = null): bool
 	{
 		// Try a select statement against the table
 		// Run it in try/catch in case PDO is in ERRMODE_EXCEPTION.
@@ -179,6 +218,7 @@ class DBTool
 	 * @param string $database
 	 * @param string|null $tablesPrefix
 	 * @return array
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
 	public static function getRawDatabaseTables(\PDO $pdo, string $database, string $tablesPrefix = null): array
 	{
@@ -198,8 +238,7 @@ class DBTool
 				$tables = array_merge($tables, explode(',', $obj->table_names));
 			}
 		} catch (\Throwable $e) {
-			print_r($e->getMessage());
-			exit();
+			throw new CustomException($e->getMessage());
 		}
 		
 		return $tables;
@@ -209,15 +248,25 @@ class DBTool
 	 * Get the app database's tables (Using Laravel)
 	 *
 	 * @param string|null $tablesPrefix
+	 * @param bool $withPrefix
 	 * @return array
-	 * @throws \Doctrine\DBAL\Exception
 	 */
-	public static function getDatabaseTables(string $tablesPrefix = null): array
+	public static function getDatabaseTables(string $tablesPrefix = null, bool $withPrefix = true): array
 	{
-		$tables = Schema::getConnection()->getDoctrineSchemaManager()->listTableNames();
-		$tables = collect($tables)->filter(function ($table, $key) use ($tablesPrefix) {
-			return (!empty($tablesPrefix)) ? str_starts_with($table, $tablesPrefix) : $table;
-		});
+		$tables = collect(Schema::getTableListing());
+		
+		// If a table prefix is provided,
+		// Get only tables starting with the given prefix table
+		if (!empty($tablesPrefix)) {
+			$tables = $tables->filter(fn ($table) => str_starts_with($table, $tablesPrefix));
+		}
+		
+		// If the tables name without prefix is requested,
+		// Remove the prefix from the name of the tables found
+		if (!$withPrefix) {
+			$tablesPrefix = empty($tablesPrefix) ? DB::getTablePrefix() : $tablesPrefix;
+			$tables = $tables->map(fn ($item) => str($item)->replaceFirst($tablesPrefix, '')->toString());
+		}
 		
 		return $tables->toArray();
 	}
@@ -270,25 +319,22 @@ class DBTool
 	{
 		$version = self::getMySqlFullVersion($pdo);
 		
-		$tmp = [];
-		preg_match('/^[\d.]+/', $version, $tmp);
-		if (isset($tmp[0])) {
-			$version = $tmp[0];
-		}
+		$matches = [];
+		preg_match('/^[\d.]+/', $version, $matches);
 		
-		return $version;
+		return !empty($matches[0]) ? $matches[0] : $version;
 	}
 	
 	/**
 	 * Check if the entered value is the MySQL minimal version
 	 *
-	 * @param $min
+	 * @param string $min
 	 * @return bool
 	 */
-	public static function isMySqlMinVersion($min): bool
+	public static function isMySqlMinVersion(string $min): bool
 	{
 		// Get the MySQL version
-		$version = DBTool::getMySqlVersion();
+		$version = self::getMySqlVersion();
 		
 		return (version_compare($version, $min) >= 0);
 	}
@@ -301,16 +347,9 @@ class DBTool
 	 */
 	public static function isMariaDB(\PDO $pdo = null): bool
 	{
-		$isMariaDB = false;
-		
 		$version = self::getMySqlFullVersion($pdo);
 		
-		// Check if DB is MariaDB
-		if (preg_match('/(MariaDB)+/i', $version)) {
-			$isMariaDB = true;
-		}
-		
-		return $isMariaDB;
+		return str_contains($version, 'MariaDB');
 	}
 	
 	/**
@@ -320,158 +359,76 @@ class DBTool
 	 * @param string $sqlFile
 	 * @param string|null $tablePrefix
 	 * @param string|null $InFilePath
-	 * @return bool
+	 * @return void
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	public static function importSqlFile(\PDO $pdo, string $sqlFile, string $tablePrefix = null, string $InFilePath = null): bool
+	public static function importSqlFile(\PDO $pdo, string $sqlFile, string $tablePrefix = null, string $InFilePath = null): void
 	{
-		try {
-			
-			// Enable LOAD LOCAL INFILE
-			$pdo->setAttribute(\PDO::MYSQL_ATTR_LOCAL_INFILE, true);
-			
-			$errorDetect = false;
-			
-			// Temporary variable, used to store current query
-			$tmpLine = '';
-			
-			// Read in entire file
-			$lines = file($sqlFile);
-			
-			// Loop through each line
-			foreach ($lines as $line) {
-				// Skip it if it's a comment
-				if (str_starts_with($line, '--') || trim($line) == '') {
-					continue;
-				}
-				
-				// Read & replace prefix
-				$line = str_replace(['<<prefix>>', '<<InFilePath>>'], [$tablePrefix, $InFilePath], $line);
-				$line = str_replace(['__PREFIX__', '__INFILE_PATH__'], [$tablePrefix, $InFilePath], $line);
-				
-				// Add this line to the current segment
-				$tmpLine .= $line;
-				
-				// If it has a semicolon at the end, it's the end of the query
-				if (str_ends_with(trim($line), ';')) {
-					try {
-						// Perform the Query
-						$pdo->exec($tmpLine);
-					} catch (\PDOException $e) {
-						echo "<br><pre>Error performing Query: '<strong>" . $tmpLine . "</strong>': " . $e->getMessage() . "</pre>\n";
-						$errorDetect = true;
-					}
-					
-					// Reset temp variable to empty
-					$tmpLine = '';
-				}
+		// Enable LOAD LOCAL INFILE
+		$pdo->setAttribute(\PDO::MYSQL_ATTR_LOCAL_INFILE, true);
+		
+		$errorDetect = false;
+		$errors = '';
+		
+		// Temporary variable, used to store current query
+		$tmpLine = '';
+		
+		// Read in entire file
+		$lines = file($sqlFile);
+		
+		// Loop through each line
+		foreach ($lines as $line) {
+			// Skip it if it's a comment
+			if (str_starts_with($line, '--') || trim($line) == '') {
+				continue;
 			}
 			
-			// Check if error is detected
-			if ($errorDetect) {
-				return false;
+			// Read & replace prefix
+			$line = str_replace(['<<prefix>>', '<<InFilePath>>'], [$tablePrefix, $InFilePath], $line);
+			$line = str_replace(['__PREFIX__', '__INFILE_PATH__'], [$tablePrefix, $InFilePath], $line);
+			
+			// Add this line to the current segment
+			$tmpLine .= $line;
+			
+			// If it has a semicolon at the end, it's the end of the query
+			if (str_ends_with(trim($line), ';')) {
+				try {
+					// Perform the Query
+					$pdo->exec($tmpLine);
+				} catch (\PDOException $e) {
+					$errors .= 'Error occurred in the file: ' . $sqlFile;
+					$errors .= ' with the query: "' . $tmpLine . '" - Info: ' . $e->getMessage() . "\n";
+					$errorDetect = true;
+				}
+				
+				// Reset temp variable to empty
+				$tmpLine = '';
 			}
-			
-		} catch (\Throwable $e) {
-			echo "<br><pre>Exception => " . $e->getMessage() . "</pre>\n";
-			
-			return false;
 		}
 		
-		return true;
+		// Check if error is detected
+		if ($errorDetect) {
+			throw new CustomException($errors);
+		}
 	}
 	
 	/**
-	 * Perform MySQL Database Backup
-	 *
-	 * @param \PDO $pdo
-	 * @param array|string $tables
-	 * @param string $filePath
-	 * @return bool
-	 */
-	public static function backupDatabaseTables(\PDO $pdo, array|string $tables = '*', string $filePath = '/'): bool
-	{
-		try {
-			
-			// Get all the tables
-			if ($tables == '*') {
-				$tables = [];
-				$query = $pdo->query('SHOW TABLES');
-				while ($row = $query->fetch_row()) {
-					$tables[] = $row[0];
-				}
-			} else {
-				$tables = is_array($tables) ? $tables : explode(',', $tables);
-			}
-			
-			if (empty($tables)) {
-				return false;
-			}
-			
-			$out = '';
-			
-			// Loop through the tables
-			foreach ($tables as $table) {
-				$query = $pdo->query('SELECT * FROM ' . $table);
-				$numColumns = $query->field_count;
-				
-				// Add DROP TABLE statement
-				$out .= 'DROP TABLE ' . $table . ';' . "\n\n";
-				
-				// Add CREATE TABLE statement
-				$query2 = $pdo->query('SHOW CREATE TABLE ' . $table);
-				$row2 = $query2->fetch_row();
-				$out .= $row2[1] . ';' . "\n\n";
-				
-				// Add INSERT INTO statements
-				for ($i = 0; $i < $numColumns; $i++) {
-					while ($row = $query->fetch_row()) {
-						$out .= "INSERT INTO $table VALUES(";
-						for ($j = 0; $j < $numColumns; $j++) {
-							$row[$j] = addslashes($row[$j]);
-							$row[$j] = preg_replace("/\n/us", "\\n", $row[$j]);
-							if (isset($row[$j])) {
-								$out .= '"' . $row[$j] . '"';
-							} else {
-								$out .= '""';
-							}
-							if ($j < ($numColumns - 1)) {
-								$out .= ',';
-							}
-						}
-						$out .= ');' . "\n";
-					}
-				}
-				$out .= "\n\n\n";
-			}
-			
-			// Save file
-			File::put($filePath, $out);
-			
-		} catch (\Throwable $e) {
-			echo "<br><pre>Exception => " . $e->getMessage() . "</pre>\n";
-			
-			return false;
-		}
-		
-		return true;
-	}
-	
-	/**
-	 * Get App's Models files
+	 * Get the app's model files
 	 *
 	 * @return array
 	 */
-	public static function getAppModelsFiles(): array
+	public static function getAppModelFiles(): array
 	{
 		$modelFiles = [];
 		try {
-			// Get all files available in the Models directory
-			$files = array_filter(glob(app_path('Models') . DIRECTORY_SEPARATOR . '*.php'), 'is_file');
+			// Get all files available in the "app/Models/" directory
+			$modelDirPath = app_path('Models') . DIRECTORY_SEPARATOR;
+			$files = array_filter(glob($modelDirPath . '*.php'), 'is_file');
 			
 			if (!empty($files)) {
 				foreach ($files as $filePath) {
-					$table = self::getModelTableName($filePath);
-					if (empty($table)) {
+					$isModelFile = self::isModelFile($filePath);
+					if (!$isModelFile) {
 						continue;
 					}
 					
@@ -485,29 +442,124 @@ class DBTool
 	}
 	
 	/**
+	 * Get the app's model classes
+	 *
+	 * @param bool $translatable
+	 * @return array
+	 */
+	public static function getAppModelClasses(bool $translatable = false): array
+	{
+		// Get model files paths
+		$files = self::getAppModelFiles();
+		$files = collect($files);
+		
+		// Get class full name from path
+		$pathToClass = function ($path) {
+			$namespace = '\App\Models\\';
+			$modelName = pathinfo(basename($path), PATHINFO_FILENAME);
+			
+			return $namespace . $modelName;
+		};
+		
+		// Convert file paths to fully qualified class names
+		// & Get valid model classes
+		$classes = $files->map($pathToClass)->filter(fn ($class) => self::isModelClass($class));
+		
+		// Check if the model is translatable
+		if ($translatable) {
+			// Check if model is translatable
+			$modelIsTranslatable = function ($modelClass) {
+				try {
+					$model = new $modelClass;
+					
+					return (method_exists($model, 'translationEnabledForModel') && $model->translationEnabledForModel());
+				} catch (\Throwable $e) {
+					return false;
+				}
+			};
+			
+			// Get translatable model classes
+			$classes = $classes->filter($modelIsTranslatable);
+		}
+		
+		return $classes->toArray();
+	}
+	
+	/**
+	 * Check if a class is a model class
+	 *
+	 * @param string $modelClass
+	 * @return bool
+	 */
+	public static function isModelClass(string $modelClass): bool
+	{
+		try {
+			$model = new $modelClass;
+			
+			return $model instanceof Model;
+		} catch (\Throwable $e) {
+			return false;
+		}
+	}
+	
+	/**
+	 * Check if a file is a model
+	 *
+	 * @param string $fileFullPath
+	 * @return bool
+	 */
+	public static function isModelFile(string $fileFullPath): bool
+	{
+		if (!file_exists($fileFullPath)) {
+			return false;
+		}
+		
+		if (!str_ends_with(strtolower($fileFullPath), '.php')) {
+			return false;
+		}
+		
+		// Check models that does not have a table propriety
+		$modelsWithoutTableName = ['Permission', 'Role'];
+		$modelName = pathinfo(basename($fileFullPath), PATHINFO_FILENAME);
+		if (in_array($modelName, $modelsWithoutTableName)) {
+			return true;
+		}
+		
+		// Check models that have a table propriety
+		$table = self::getModelTableName($fileFullPath);
+		
+		return !empty($table);
+	}
+	
+	/**
 	 * Get Model table name by parsing its file
 	 *
 	 * @param string $fileFullPath
 	 * @param string|null $tablesPrefix
-	 * @return mixed|string|null
+	 * @return string|null
 	 */
-	public static function getModelTableName(string $fileFullPath, string $tablesPrefix = null)
+	public static function getModelTableName(string $fileFullPath, string $tablesPrefix = null): ?string
 	{
 		if (!file_exists($fileFullPath)) {
 			return null;
 		}
 		
+		if (!str_ends_with(strtolower($fileFullPath), '.php')) {
+			return null;
+		}
+		
 		$content = file_get_contents($fileFullPath);
 		
-		$tmp = [];
-		preg_match('#\$table[^=]*=[^\']*\'([^\']+)\';#i', $content, $tmp);
-		$table = (isset($tmp[1]) && !empty($tmp[1])) ? $tmp[1] : null;
+		// Get the model table's name
+		$matches = [];
+		preg_match('#\$table[^=]*=[^\']*\'([^\']+)\';#i', $content, $matches);
+		$table = !empty($matches[1]) ? $matches[1] : null;
 		
 		if (!empty($tablesPrefix) && !empty($table)) {
 			$table = $tablesPrefix . $table;
 		}
 		
-		return $table;
+		return getAsStringOrNull($table);
 	}
 	
 	/**

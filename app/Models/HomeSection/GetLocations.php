@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\HomeSection;
 
 class GetLocations
@@ -70,16 +85,13 @@ class GetLocations
 				],
 			],
 			[
-				'name'                => 'background_color',
-				'label'               => trans('admin.Background Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'background_color',
+				'label'             => trans('admin.Background Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#c7c5c1',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
@@ -95,58 +107,46 @@ class GetLocations
 				],
 			],
 			[
-				'name'                => 'border_color',
-				'label'               => trans('admin.Border Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'border_color',
+				'label'             => trans('admin.Border Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#c7c5c1',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'                => 'text_color',
-				'label'               => trans('admin.Text Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'text_color',
+				'label'             => trans('admin.Text Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#c7c5c1',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'                => 'link_color',
-				'label'               => trans('admin.Links Color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'link_color',
+				'label'             => trans('admin.Links Color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#c7c5c1',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'                => 'link_color_hover',
-				'label'               => trans('admin.Links Color Hover'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'link_color_hover',
+				'label'             => trans('admin.Links Color Hover'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#c7c5c1',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
@@ -199,46 +199,37 @@ class GetLocations
 				'type'  => 'checkbox_switch',
 			],
 			[
-				'name'                => 'map_background_color',
-				'label'               => trans('admin.maps_background_color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'map_background_color',
+				'label'             => trans('admin.maps_background_color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => 'transparent',
 				],
-				'hint'                => trans('admin.Enter a RGB color code or the word transparent'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.Enter a RGB color code or the word transparent'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'                => 'map_border',
-				'label'               => trans('admin.maps_border'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'map_border',
+				'label'             => trans('admin.maps_border'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#c7c5c1',
 				],
-				'hint'                => trans('admin.<br>'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.<br>'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'                => 'map_hover_border',
-				'label'               => trans('admin.maps_hover_border'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'map_hover_border',
+				'label'             => trans('admin.maps_hover_border'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#c7c5c1',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
@@ -254,30 +245,24 @@ class GetLocations
 				],
 			],
 			[
-				'name'                => 'map_color',
-				'label'               => trans('admin.maps_color'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'map_color',
+				'label'             => trans('admin.maps_color'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#f2f0eb',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'                => 'map_hover',
-				'label'               => trans('admin.maps_hover'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'map_hover',
+				'label'             => trans('admin.maps_hover'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#4682B4',
 				],
-				'wrapperAttributes'   => [
+				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],

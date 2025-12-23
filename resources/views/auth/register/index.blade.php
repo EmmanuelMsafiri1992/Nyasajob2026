@@ -1,5 +1,22 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
+
+@php
+	$fiTheme = config('larapen.core.fileinput.theme', 'bs5');
+@endphp
 
 @section('content')
 	@includeFirst([config('larapen.core.customizedViewPath') . 'common.spacer', 'common.spacer'])
@@ -11,7 +28,7 @@
 					<div class="col-12">
 						<div class="alert alert-danger alert-dismissible">
 							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ t('Close') }}"></button>
-							<h5><strong>{{ t('oops_an_error_has_occurred') }}</strong></h5>
+							<h5><strong>{{ t('validation_errors_title') }}</strong></h5>
 							<ul class="list list-check">
 								@foreach ($errors->all() as $error)
 									<li>{{ $error }}</li>
@@ -30,35 +47,47 @@
 				<div class="col-md-8 page-content">
 					<div class="inner-box">
 						<h2 class="title-2">
-							<strong><i class="fas fa-user-plus"></i> {{ t('create_your_account_it_is_quick') }}</strong>
+							<strong><i class="fa-solid fa-user-plus"></i> {{ t('create_your_account_it_is_quick') }}</strong>
 						</h2>
 						
 						@includeFirst([config('larapen.core.customizedViewPath') . 'auth.login.inc.social', 'auth.login.inc.social'])
 						
 						@php
-							$mtAuth = !socialLoginIsEnabled() ? ' mt-5' : ' mt-4';
+							$mtAuth = !isSocialAuthEnabled() ? ' mt-5' : ' mt-4';
 						@endphp
 						<div class="row{{ $mtAuth }}">
 							<div class="col-12">
-								<form id="signupForm" class="form-horizontal" method="POST" action="{{ url()->current() }}" enctype="multipart/form-data">
+								<form id="signupForm"
+								      class="form-horizontal"
+								      method="POST"
+								      action="{{ url()->current() }}"
+								      enctype="multipart/form-data"
+								>
 									{!! csrf_field() !!}
+									@honeypot
 									<fieldset>
 										
 										{{-- user_type_id --}}
-										<?php $userTypeIdError = (isset($errors) && $errors->has('user_type_id')) ? ' is-invalid' : ''; ?>
+										@php
+											$userTypeIdError = (isset($errors) && $errors->has('user_type_id')) ? ' is-invalid' : '';
+											$userTypeId = old('user_type_id', request()->query('type'));
+										@endphp
 										<div class="row mb-3 required">
 											<label class="col-md-3 col-form-label">{{ t('you_are_a') }} <sup>*</sup></label>
 											<div class="col-md-9">
 												@foreach ($userTypes as $type)
+													@php
+														$iTypeId = data_get($type, 'id');
+													@endphp
 													<div class="form-check form-check-inline pt-2">
 														<input type="radio"
 															   name="user_type_id"
-															   id="userTypeId-{{ $type->id }}"
-															   class="form-check-input user-type{{ $userTypeIdError }}"
-															   value="{{ $type->id }}" @checked(old('user_type_id', request()->get('type')) == $type->id)
+															   id="userTypeId-{{ $iTypeId }}"
+															   class="form-check-input{{ $userTypeIdError }}"
+															   value="{{ $iTypeId }}" @checked($userTypeId == $iTypeId)
 														>
-														<label class="form-check-label" for="user_type_id-{{ $type->id }}">
-															{{ t('' . $type->name) }}
+														<label class="form-check-label" for="user_type_id-{{ $iTypeId }}">
+															{{ data_get($type, 'label') }}
 														</label>
 													</div>
 												@endforeach
@@ -66,11 +95,18 @@
 										</div>
 										
 										{{-- name --}}
-										<?php $nameError = (isset($errors) && $errors->has('name')) ? ' is-invalid' : ''; ?>
+										@php
+											$nameError = (isset($errors) && $errors->has('name')) ? ' is-invalid' : '';
+										@endphp
 										<div class="row mb-3 required">
 											<label class="col-md-3 col-form-label">{{ t('Name') }} <sup>*</sup></label>
 											<div class="col-md-9 col-lg-6">
-												<input name="name" placeholder="{{ t('Name') }}" class="form-control input-md{{ $nameError }}" type="text" value="{{ old('name') }}">
+												<input name="name"
+												       placeholder="{{ t('Name') }}"
+												       class="form-control input-md{{ $nameError }}"
+												       type="text"
+												       value="{{ old('name') }}"
+												>
 											</div>
 										</div>
 
@@ -85,7 +121,10 @@
 													{{ t('your_country') }} <sup>*</sup>
 												</label>
 												<div class="col-md-9 col-lg-6">
-													<select id="countryCode" name="country_code" class="form-control large-data-selecter{{ $countryCodeError }}">
+													<select id="countryCode"
+													        name="country_code"
+													        class="form-control large-data-selecter{{ $countryCodeError }}"
+													>
 														<option value="0" @selected(empty(old('country_code')))>
 															{{ t('Select') }}
 														</option>
@@ -141,18 +180,20 @@
 										{{-- email --}}
 										@php
 											$emailError = (isset($errors) && $errors->has('email')) ? ' is-invalid' : '';
+											$emailRequiredClass = (getAuthField() == 'email') ? ' required' : '';
 										@endphp
-										<div class="row mb-3 auth-field-item required{{ $forceToDisplay }}">
+										<div class="row mb-3 auth-field-item{{ $emailRequiredClass . $forceToDisplay }}">
 											<label class="col-md-3 col-form-label pt-0" for="email">{{ t('email') }}
 												@if (getAuthField() == 'email')
 													<sup>*</sup>
 												@endif
 											</label>
 											<div class="col-md-9 col-lg-6">
-												<div class="input-group">
-													<span class="input-group-text"><i class="far fa-envelope"></i></span>
+												<div class="input-group{{ $emailError }}">
+													<span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
 													<input id="email" name="email"
 														   type="email"
+														   data-valid-type="email"
 														   class="form-control{{ $emailError }}"
 														   placeholder="{{ t('email_address') }}"
 														   value="{{ old('email') }}"
@@ -165,8 +206,9 @@
 										@php
 											$phoneError = (isset($errors) && $errors->has('phone')) ? ' is-invalid' : '';
 											$phoneCountryValue = config('country.code');
+											$phoneRequiredClass = (getAuthField() == 'phone') ? ' required' : '';
 										@endphp
-										<div class="row mb-3 auth-field-item required{{ $forceToDisplay }}">
+										<div class="row mb-3 auth-field-item{{ $phoneRequiredClass . $forceToDisplay }}">
 											<label class="col-md-3 col-form-label pt-0" for="phone">{{ t('phone_number') }}
 												@if (getAuthField() == 'phone')
 													<sup>*</sup>
@@ -188,12 +230,14 @@
 											$usernameIsEnabled = !config('larapen.core.disable.username');
 										@endphp
 										@if ($usernameIsEnabled)
-											<?php $usernameError = (isset($errors) && $errors->has('username')) ? ' is-invalid' : ''; ?>
-											<div class="row mb-3 required">
+											@php
+												$usernameError = (isset($errors) && $errors->has('username')) ? ' is-invalid' : '';
+											@endphp
+											<div class="row mb-3">
 												<label class="col-md-3 col-form-label" for="username">{{ t('Username') }}</label>
 												<div class="col-md-9 col-lg-6">
-													<div class="input-group">
-														<span class="input-group-text"><i class="far fa-user"></i></span>
+													<div class="input-group{{ $usernameError }}">
+														<span class="input-group-text"><i class="fa-regular fa-user"></i></span>
 														<input id="username"
 															   name="username"
 															   type="text"
@@ -207,21 +251,23 @@
 										@endif
 										
 										{{-- password --}}
-										<?php $passwordError = (isset($errors) && $errors->has('password')) ? ' is-invalid' : ''; ?>
+										@php
+											$passwordError = (isset($errors) && $errors->has('password')) ? ' is-invalid' : '';
+										@endphp
 										<div class="row mb-3 required">
 											<label class="col-md-3 col-form-label" for="password">{{ t('password') }} <sup>*</sup></label>
-											<div class="col-md-9 col-lg-6">
-												<div class="input-group show-pwd-group mb-2">
+											<div class="col-md-9 col-lg-6 toggle-password-wrapper">
+												<div class="input-group{{ $passwordError }} mb-2">
 													<input id="password" name="password"
 														   type="password"
 														   class="form-control{{ $passwordError }}"
 														   placeholder="{{ t('password') }}"
 														   autocomplete="new-password"
 													>
-													<span class="icon-append show-pwd">
-														<button type="button" class="eyeOfPwd">
-															<i class="far fa-eye-slash"></i>
-														</button>
+													<span class="input-group-text">
+														<a class="toggle-password-link" href="#">
+															<i class="fa-regular fa-eye-slash"></i>
+														</a>
 													</span>
 												</div>
 												<input id="passwordConfirmation" name="password_confirmation"
@@ -239,29 +285,37 @@
 										@if (config('larapen.core.register.showCompanyFields'))
 											<div id="companyBloc">
 												<div class="content-subheading text-center">
-													<i class="far fa-building"></i>
+													<i class="fa-regular fa-building"></i>
 													<strong>{{ t('Company Information') }}</strong>
 												</div>
 												
-												@includeFirst([config('larapen.core.customizedViewPath') . 'account.company._form', 'account.company._form'], ['originForm' => 'user'])
+												@includeFirst([
+													config('larapen.core.customizedViewPath') . 'account.company._form',
+													'account.company._form'
+												], ['originForm' => 'user'])
 											</div>
 										@endif
 										
 										@if (config('larapen.core.register.showResumeFields'))
 											<div id="resumeBloc">
 												<div class="content-subheading text-center">
-													<i class="fas fa-paperclip fa"></i>
+													<i class="fa-solid fa-paperclip fa"></i>
 													<strong>{{ t('Resume') }}</strong>
 												</div>
 												
-												@includeFirst([config('larapen.core.customizedViewPath') . 'account.resume._form', 'account.resume._form'], ['originForm' => 'user'])
+												@includeFirst([
+													config('larapen.core.customizedViewPath') . 'account.resume._form',
+													'account.resume._form'
+												], ['originForm' => 'user'])
 											</div>
 										@endif
 										
 										@include('layouts.inc.tools.captcha', ['colLeft' => 'col-md-3', 'colRight' => 'col-md-7'])
 										
 										{{-- accept_terms --}}
-										<?php $acceptTermsError = (isset($errors) && $errors->has('accept_terms')) ? ' is-invalid' : ''; ?>
+										@php
+											$acceptTermsError = (isset($errors) && $errors->has('accept_terms')) ? ' is-invalid' : '';
+										@endphp
 										<div class="row mb-1 required">
 											<label class="col-md-3 col-form-label"></label>
 											<div class="col-md-9">
@@ -280,7 +334,9 @@
 										</div>
 										
 										{{-- accept_marketing_offers --}}
-										<?php $acceptMarketingOffersError = (isset($errors) && $errors->has('accept_marketing_offers')) ? ' is-invalid' : ''; ?>
+										@php
+											$acceptMarketingOffersError = (isset($errors) && $errors->has('accept_marketing_offers')) ? ' is-invalid' : '';
+										@endphp
 										<div class="row mb-3 required">
 											<label class="col-md-3 col-form-label"></label>
 											<div class="col-md-9">
@@ -302,7 +358,7 @@
 										<div class="row mb-3">
 											<label class="col-md-3 col-form-label"></label>
 											<div class="col-md-7">
-												<button id="signupBtn" class="btn btn-primary btn-lg"> {{ t('register') }} </button>
+												<button type="submit" id="signupBtn" class="btn btn-primary btn-lg"> {{ t('register') }} </button>
 											</div>
 										</div>
 										
@@ -318,19 +374,19 @@
 				<div class="col-md-4 reg-sidebar">
 					<div class="reg-sidebar-inner text-center">
 						<div class="promo-text-box">
-							<i class="far fa-image fa-4x icon-color-1"></i>
+							<i class="fa-regular fa-image fa-4x icon-color-1"></i>
 							<h3><strong>{{ t('create_new_job') }}</strong></h3>
 							<p>
 								{{ t('Do you have a post to be filled within your company', ['appName' => config('app.name')]) }}
 							</p>
 						</div>
 						<div class="promo-text-box">
-							<i class="fas fa-pen-square fa-4x icon-color-2"></i>
+							<i class="fa-solid fa-pen-square fa-4x icon-color-2"></i>
 							<h3><strong>{{ t('Create and Manage Jobs') }}</strong></h3>
 							<p>{{ t('become_a_best_company_text') }}</p>
 						</div>
 						<div class="promo-text-box">
-							<i class="fas fa-heart fa-4x icon-color-3"></i>
+							<i class="fa-solid fa-heart fa-4x icon-color-3"></i>
 							<h3><strong>{{ t('create_your_favorite_jobs_list') }}</strong></h3>
 							<p>{{ t('create_your_favorite_jobs_list_text') }}</p>
 						</div>
@@ -346,6 +402,9 @@
 	@if (config('lang.direction') == 'rtl')
 		<link href="{{ url('assets/plugins/bootstrap-fileinput/css/fileinput-rtl.min.css') }}" rel="stylesheet">
 	@endif
+	@if (str_starts_with($fiTheme, 'explorer'))
+		<link href="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.min.css') }}" rel="stylesheet">
+	@endif
 	<style>
 		.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
 			box-shadow: 0 0 5px 0 #666666;
@@ -356,28 +415,24 @@
 @section('after_scripts')
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/plugins/sortable.min.js') }}" type="text/javascript"></script>
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/fileinput.min.js') }}" type="text/javascript"></script>
-	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/fas/theme.js') }}" type="text/javascript"></script>
+	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.js') }}" type="text/javascript"></script>
 	<script src="{{ url('common/js/fileinput/locales/' . config('app.locale') . '.js') }}" type="text/javascript"></script>
 	
 	<script>
-		var userTypeId = '{{ old('user_type_id', request()->get('type')) }}';
-
-		$(document).ready(function ()
-		{
+		let userTypeId = '{{ $userTypeId ?? 0 }}';
+		
+		onDocumentReady((event) => {
 			{{-- Set user type --}}
 			setUserType(userTypeId);
-			$(document).on('change', '.user-type', function(e) {
-				userTypeId = $(this).val();
-				setUserType(userTypeId);
-			});
+			const userTypeEls = document.querySelectorAll('input[type=radio][name=user_type_id]');
+			if (userTypeEls.length > 0) {
+				userTypeEls.forEach((radio) => {
+					radio.addEventListener('change', (e) => setUserType(e.target.value));
+				});
+			}
 			
-			{{-- Submit Form --}}
-			$(document).on('click', '#signupBtn', function(e) {
-				e.preventDefault();
-				$("#signupForm").submit();
-				
-				return false;
-			});
+			{{-- Validate & Submit Form --}}
+			formValidate('#signupForm', formValidateOptions);
 		});
 	</script>
 @endsection

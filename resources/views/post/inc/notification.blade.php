@@ -1,10 +1,10 @@
-@if (isset($errors) and $errors->any())
+@if (isset($errors) && $errors->any())
     <div class="col-xl-12">
         <div class="alert alert-danger">
-            <h5><strong>{{ t('oops_an_error_has_occurred') }}</strong></h5>
+            <h5><strong>{{ t('validation_errors_title') }}</strong></h5>
             <ul class="list list-check">
                 @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
+                    <li>{!! $error !!}</li>
                 @endforeach
             </ul>
         </div>

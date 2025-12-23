@@ -1,4 +1,17 @@
-
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 /* Prevent errors, If these variables are missing. */
 if (typeof packageIsEnabled === 'undefined') {
@@ -8,12 +21,12 @@ if (typeof editLabel === 'undefined') {
 	var editLabel = 'Edit';
 }
 
-$(document).ready(function () {
+onDocumentReady((event) => {
 	
 	/* Select a category */
 	getCategories(siteUrl, languageCode);
 	$(document).on('click', '.cat-link, #selectCats .page-link', function (e) {
-		e.preventDefault(); /* prevents submit or reload */
+		e.preventDefault(); /* Prevents submission or reloading */
 		
 		getCategories(siteUrl, languageCode, this);
 	});
@@ -71,7 +84,7 @@ function getCategories(siteUrl, languageCode, jsThis = null) {
 			let catName = thisEl.text();
 			let parentId = thisEl.data('parent-id');
 			
-			let linkText = '<i class="far fa-edit"></i> ' + editLabel;
+			let linkText = '<i class="fa-regular fa-pen-to-square"></i> ' + editLabel;
 			let outputHtml = catName + '[ <a href="#browseCategories" data-bs-toggle="modal" class="cat-link" data-id="' + parentId + '" >' + linkText + '</a> ]';
 			
 			return appendSelectedCategory(catId, outputHtml);
@@ -96,7 +109,7 @@ function getCategories(siteUrl, languageCode, jsThis = null) {
 			let selectCatsEl = $('#selectCats');
 			selectCatsEl.empty().addClass('py-4').busyLoad('hide');
 			selectCatsEl.busyLoad('show', {
-				text: loadingWd,
+				text: langLayout.loading,
 				custom: createCustomSpinnerEl(),
 				background: '#fff',
 				containerItemClass: 'm-5',
@@ -129,7 +142,7 @@ function getCategories(siteUrl, languageCode, jsThis = null) {
 		}
 	});
 	ajax.fail(function(xhr) {
-		let message = getJqueryAjaxError(xhr);
+		let message = getErrorMessageFromXhr(xhr);
 		if (message !== null) {
 			jsAlert(message, 'error', false, true);
 			

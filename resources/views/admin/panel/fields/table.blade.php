@@ -22,7 +22,7 @@
     }
 
 ?>
-<div ng-app="backPackTableApp" ng-controller="tableController" @include('admin.panel.inc.field_wrapper_attributes') >
+<div ng-app="laravelTableApp" ng-controller="tableController" @include('admin.panel.inc.field_wrapper_attributes') >
 
     <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
     @include('admin.panel.fields.inc.translatable_icon')
@@ -41,8 +41,8 @@
                         {{ $prop }}
                     </th>
                     @endforeach
-                    <th class="text-center" ng-if="max == -1 || max > 1"> {{-- <i class="fa fa-sort"></i> --}} </th>
-                    <th class="text-center" ng-if="max == -1 || max > 1"> {{-- <i class="fa fa-trash"></i> --}} </th>
+                    <th class="text-center" ng-if="max == -1 || max > 1"> {{-- <i class="fa-solid fa-sort"></i> --}} </th>
+                    <th class="text-center" ng-if="max == -1 || max > 1"> {{-- <i class="fa-regular fa-trash-can"></i> --}} </th>
                 </tr>
             </thead>
 
@@ -56,10 +56,10 @@
                     </td>
                     @endforeach
                     <td ng-if="max == -1 || max > 1">
-                        <span class="btn btn-sm btn-secondary sort-handle"><span class="sr-only">sort item</span><i class="fa fa-sort" role="presentation" aria-hidden="true"></i></span>
+                        <span class="btn btn-sm btn-secondary sort-handle"><span class="sr-only">sort item</span><i class="fa-solid fa-sort" role="presentation" aria-hidden="true"></i></span>
                     </td>
                     <td ng-if="max == -1 || max > 1">
-                        <button ng-hide="min > -1 && $index < min" class="btn btn-sm btn-secondary" type="button" ng-click="removeItem(item);"><span class="sr-only">delete item</span><i class="fa fa-trash" role="presentation" aria-hidden="true"></i></button>
+                        <button ng-hide="min > -1 && $index < min" class="btn btn-sm btn-secondary" type="button" ng-click="removeItem(item);"><span class="sr-only">delete item</span><i class="fa-regular fa-trash-can" role="presentation" aria-hidden="true"></i></button>
                     </td>
                 </tr>
 
@@ -68,7 +68,7 @@
         </table>
 
         <div class="array-controls btn-group mb-10">
-            <button ng-if="max == -1 || items.length < max" class="btn btn-sm btn-secondary" type="button" ng-click="addItem()"><i class="fa fa-plus"></i> Add {{ $item_name }}</button>
+            <button ng-if="max == -1 || items.length < max" class="btn btn-sm btn-secondary" type="button" ng-click="addItem()"><i class="fa-solid fa-plus"></i> Add {{ $item_name }}</button>
         </div>
 
     </div>
@@ -93,12 +93,12 @@
     {{-- FIELD JS - will be loaded in the after_scripts section --}}
     @push('crud_fields_scripts')
         {{-- YOUR JS HERE --}}
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-sortable/0.14.3/sortable.min.js"></script>
+        <script type="text/javascript" src="{{ asset('assets/plugins/angular.js/1.5.8/angular.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('assets/plugins/jqueryui/1.12.1/jquery-ui.min.js') }}"></script>
+        <script type="text/javascript" src="{{ asset('assets/plugins/angular-ui-sortable/0.14.3/sortable.min.js') }}"></script>
         <script>
 
-            window.angularApp = window.angularApp || angular.module('backPackTableApp', ['ui.sortable'], function($interpolateProvider){
+            window.angularApp = window.angularApp || angular.module('laravelTableApp', ['ui.sortable'], function($interpolateProvider){
                 $interpolateProvider.startSymbol('<%');
                 $interpolateProvider.endSymbol('%>');
             });

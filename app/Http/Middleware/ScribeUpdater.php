@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -17,7 +32,10 @@ class ScribeUpdater
 	public function handle(Request $request, Closure $next)
 	{
 		if ($request->segment(1) == 'docs' && $request->segment(2) == 'api') {
-			$this->updateScribeViewFile();
+			$baseUrl = getAsStringOrNull(url('/'));
+			$appApiToken = getAsStringOrNull(config('larapen.core.api.token'));
+			
+			$this->updateScribeViewFile($baseUrl, $appApiToken);
 		}
 		
 		return $next($request);
@@ -26,10 +44,11 @@ class ScribeUpdater
 	/**
 	 * Update the Scribe (API docs) view file
 	 *
-	 * @param null $baseUrl
-	 * @param null $appApiToken
+	 * @param string|null $baseUrl
+	 * @param string|null $appApiToken
+	 * @return void
 	 */
-	private function updateScribeViewFile($baseUrl = null, $appApiToken = null)
+	private function updateScribeViewFile(?string $baseUrl = null, ?string $appApiToken = null): void
 	{
 		if (isDemoDomain()) {
 			return;
@@ -44,32 +63,54 @@ class ScribeUpdater
 			}
 			
 			if (!empty($buffer)) {
-				$this->updateScribeAppUrl($path, $buffer, $baseUrl);
+				/*
+				 * Update the Scribe's base URL JS variable value in the Scribe view file
+				 * Examples:
+				 * - In new version: var tryItOutBaseUrl = "website-url";
+				 * - In old version: var baseUrl = "website-url";
+				 */
+				$this->updateScribeAppUrl($path, $buffer, $baseUrl, 'tryItOutBaseUrl');
+				$this->updateScribeAppUrl($path, $buffer, $baseUrl, 'baseUrl');
+				
+				// Update the API Token value in the 'try it out' calls
+				// in the Scribe view file, to use the current website own API Token
 				$this->updateScribeAppApiToken($path, $buffer, $appApiToken);
 				
 				unset($buffer);
 			}
-		} catch (\Exception $e) {
+		} catch (\Throwable $e) {
 		}
 	}
 	
 	/**
-	 * @param $path
-	 * @param $buffer
-	 * @param null $baseUrl
+	 * Update the Scribe's base URL JS variable value
+	 *
+	 * @param string $path
+	 * @param string|null $buffer
+	 * @param string|null $baseUrl
+	 * @param string|null $scribeJsBaseUrlVarName
+	 * @return void
 	 */
-	private function updateScribeAppUrl($path, &$buffer, $baseUrl = null)
+	private function updateScribeAppUrl(
+		string  $path,
+		?string &$buffer,
+		?string $baseUrl = null,
+		?string $scribeJsBaseUrlVarName = null
+	): void
 	{
 		if (empty($buffer) || !is_string($buffer)) {
 			return;
 		}
-		
 		if (empty($baseUrl)) {
 			$baseUrl = url('/');
 		}
+		if (empty($scribeJsBaseUrlVarName)) {
+			$scribeJsBaseUrlVarName = 'tryItOutBaseUrl';
+		}
 		
 		try {
-			preg_match('|var\s+baseUrl\s+=\s+"([^"]+)"|i', $buffer, $tmp);
+			$pattern = '|var\s+' . $scribeJsBaseUrlVarName . '\s+=\s+"([^"]+)"|i';
+			preg_match($pattern, $buffer, $tmp);
 			
 			$docBaseUrl = null;
 			if (isset($tmp[1])) {
@@ -77,27 +118,29 @@ class ScribeUpdater
 			}
 			
 			if (!empty($docBaseUrl) && $docBaseUrl != $baseUrl) {
-				$pattern = '|var\s+baseUrl\s+=\s+"[^"]+"|i';
-				$replacement = 'var baseUrl = "' . $baseUrl . '"';
+				$pattern = '|var\s+' . $scribeJsBaseUrlVarName . '\s+=\s+"[^"]+"|i';
+				$replacement = 'var ' . $scribeJsBaseUrlVarName . ' = "' . $baseUrl . '"';
 				$buffer = preg_replace($pattern, $replacement, $buffer);
 				
 				File::replace($path, $buffer);
 			}
-		} catch (\Exception $e) {
+		} catch (\Throwable $e) {
 		}
 	}
 	
 	/**
-	 * @param $path
-	 * @param $buffer
-	 * @param null $appApiToken
+	 * Update the API Token value in the 'try it out' calls
+	 *
+	 * @param string $path
+	 * @param string|null $buffer
+	 * @param string|null $appApiToken
+	 * @return void
 	 */
-	private function updateScribeAppApiToken($path, &$buffer, $appApiToken = null)
+	private function updateScribeAppApiToken(string $path, ?string &$buffer, ?string $appApiToken = null): void
 	{
 		if (empty($buffer) || !is_string($buffer)) {
 			return;
 		}
-		
 		if (empty($appApiToken)) {
 			$appApiToken = config('larapen.core.api.token');
 		}
@@ -125,7 +168,7 @@ class ScribeUpdater
 					File::replace($path, $buffer);
 				}
 			}
-		} catch (\Exception $e) {
+		} catch (\Throwable $e) {
 		}
 	}
 }

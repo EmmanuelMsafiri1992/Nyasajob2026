@@ -1,11 +1,52 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 return [
 	
-    
-    'itemId' => '18776089',
+    /*
+     |-----------------------------------------------------------------------------------------------
+     | The item's info on CodeCanyon
+     |-----------------------------------------------------------------------------------------------
+     |
+     */
+    'item' => [
+	    'id'    => '18776089',
+	    'name'  => 'JobClass',
+	    'title' => 'Job Board Web Application',
+	    'slug'  => 'jobclass',
+	    'url'   => 'https://laraclassifier.com/jobclass/',
+    ],
 	
-	// Purchase code configuration removed
-
+	/*
+	 |-----------------------------------------------------------------------------------------------
+	 | Purchase code checker URL
+	 |-----------------------------------------------------------------------------------------------
+	 |
+	 */
+    'purchaseCodeCheckerUrl' => 'https://api.bedigit.com/envato.php?purchase_code=',
+    'purchaseCodeFindingUrl' => 'https://help.market.envato.com/hc/en-us/articles/202822600-Where-Is-My-Purchase-Code',
+	
+	/*
+     |-----------------------------------------------------------------------------------------------
+     | Purchase Code
+     |-----------------------------------------------------------------------------------------------
+     |
+     */
+	'purchaseCode' => env('PURCHASE_CODE', ''),
+	
     /*
      |-----------------------------------------------------------------------------------------------
      | Demo Website Info
@@ -19,7 +60,18 @@ return [
 			'jobclass.laraclassifier.com',
 		],
 	],
-
+	
+	/*
+     |-----------------------------------------------------------------------------------------------
+     | App's Charset
+     |-----------------------------------------------------------------------------------------------
+	 | It is very important to not change this value
+	 | because the UTF-8 charset is more universal and easier to use.
+	 | Unless you know what you're doing.
+	 |
+     */
+    'charset' => env('CHARSET', 'utf-8'),
+	
 	/*
      |-----------------------------------------------------------------------------------------------
      | Database Charset & Collation
@@ -38,145 +90,13 @@ return [
 		],
 	],
 	
-    /*
-     |-----------------------------------------------------------------------------------------------
-     | Default Logo
-     |-----------------------------------------------------------------------------------------------
-     |
-     */
-    'logo' => 'app/default/logo.png',
-	'logoSize' => [
-		'default' => [
-			'width'  => 216,
-			'height' => 40,
-		],
-		'max' => [
-			'width'  => 430,
-			'height' => 80,
-		],
-	],
-	
-    /*
-     |-----------------------------------------------------------------------------------------------
-     | Default Favicon
-     |-----------------------------------------------------------------------------------------------
-     |
-     */
-    'favicon' => 'app/default/ico/favicon.png',
-	
 	/*
      |-----------------------------------------------------------------------------------------------
-     | Default Skins
+     | Bootstrap-FileInput
      |-----------------------------------------------------------------------------------------------
      |
      */
-	'skins' => [
-		'default' => [
-			'name'  => 'Default',
-			'color' => null,
-		],
-		'blue' => [
-			'name'  => 'Blue (~French Blue)',
-			'color' => '#4682B4', // lcBlue (#4682B4) | frenchBlue (#0072B5)
-		],
-		'blueViolet' => [
-			'name'  => 'Blue Violet',
-			'color' => '#4D87E7',
-		],
-		'deepPurple' => [
-			'name'  => 'Deep Purple',
-			'color' => '#673AB7', // purple
-		],
-		'blueIzis' => [
-			'name'  => 'Blue Izis',
-			'color' => '#5B5EA6',
-		],
-		'green' => [
-			'name'  => 'Green (~Emerald)',
-			'color' => '#028e7b', // Emerald (green)
-		],
-		'red' => [
-			'name'  => 'Red (Grape Fruit)',
-			'color' => '#DA4453', // Grape Fruit (red)
-		],
-		'yellow' => [
-			'name'  => 'Yellow (~Sun Flower)',
-			'color' => '#FCBB42', // Sun Flower (yellow)
-		],
-		'riverside' => [
-			'name'  => 'Riverside',
-			'color' => '#4C6A92', // gray-violet (light)
-		],
-		'sargassoSea' => [
-			'name'  => 'Sargasso Sea',
-			'color' => '#485167', // gray-violet
-		],
-		'indigo' => [
-			'name'  => 'Indigo',
-			'color' => '#3F51B5', // purple-blue
-		],
-		'blueJeans' => [
-			'name'  => 'Blue Jeans',
-			'color' => '#4A89DC', // blue-jeans
-		],
-		'pink' => [
-			'name'  => 'Pink',
-			'color' => '#E91E63', // red-purple
-		],
-		'custom' => [
-			'name'  => 'Custom',
-			'color' => null,
-		],
-	],
-    
-    /*
-     |-----------------------------------------------------------------------------------------------
-     | Default user profile picture
-     |-----------------------------------------------------------------------------------------------
-     |
-     */
-	'avatar' => [
-		'default' => 'app/default/user.png',
-	],
-	
-	/*
-     |-----------------------------------------------------------------------------------------------
-     | Default ads picture & Default ads pictures sizes
-     |-----------------------------------------------------------------------------------------------
-     |
-     */
-	'picture' => [
-		'default'   => 'app/default/picture.jpg',
-		'versioned' => env('PICTURE_VERSIONED', false),
-		'version'   => env('PICTURE_VERSION', 1),
-		// Other types of picture (Not available in the 'Upload' options in the Admin Panel)
-		'otherTypes' => [
-			'favicon'   => [
-				'width'     => 32,
-				'height'    => 32,
-			],
-			'adminLogo' => [
-				'width'  => 300,
-				'height' => 40,
-			],
-			'user'  => [
-				'width'  => 800,
-				'height' => 800,
-			],
-			'company'  => [
-				'width'  => 800,
-				'height' => 800,
-			],
-			'bgHeader'  => [
-				'width'  => 2000,
-				'height' => 1000,
-			],
-			'bgBody'    => [
-				'width'  => 2500,
-				'height' => 2500,
-			],
-		],
-	],
+    'fileinput' => ['theme' => 'bs5'],
 	
 	/*
      |-----------------------------------------------------------------------------------------------
@@ -212,6 +132,36 @@ return [
         'urlBase' => 'images/maps/',
     ],
 	
+	/*
+     |-----------------------------------------------------------------------------------------------
+     | Icon set of the current version of the main icons fonts
+     |-----------------------------------------------------------------------------------------------
+	 |
+	 | - Bootstrap Icons
+	 | - Font Awesome Free
+	 |
+	 | Related to the "bootstrap-iconpicker" plugin features
+	 |
+     */
+    'defaultFontIconSet' => 'bootstrapfontawesome',
+    'fontIconSet' => [
+	    'bootstrap' => [
+		    'version' => '1.11.3',
+		    'key'     => 'bootstrapicons',
+		    'path'    => public_path('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-bootstrapicons-all.js'),
+	    ],
+	    'fontawesome' => [
+		    'version' => '6.5.2',
+		    'key'     => 'fontawesome6',
+		    'path'    => public_path('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-fontawesome6-all.js'),
+	    ],
+	    'bootstrapfontawesome' => [
+		    'version' => 'current',
+		    'key'     => 'bootstrapfontawesome',
+		    'path'    => public_path('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-bootstrapfontawesome-all.js'),
+	    ],
+    ],
+	
     /*
      |-----------------------------------------------------------------------------------------------
      | Optimize your URLs for SEO (for International website)
@@ -219,11 +169,11 @@ return [
      |
      | You have to set the variables below in the /.env file:
      |
-     | MULTI_COUNTRIES_URLS=true (to enable the multi-countries URLs optimization)
+     | MULTI_COUNTRY_URLS=true (to enable the multi-country URLs optimization)
      | HIDE_DEFAULT_LOCALE_IN_URL=false (to show the default language code in the URLs)
      |
      */
-	'multiCountriesUrls' => env('MULTI_COUNTRIES_URLS', false),
+	'multiCountryUrls' => env('MULTI_COUNTRY_URLS', false),
 	
 	/*
      |--------------------------------------------------------------------------
@@ -232,10 +182,10 @@ return [
      |
      */
 	'forceHttps' => env('FORCE_HTTPS', false),
-
+	
 	/*
      |-----------------------------------------------------------------------------------------------
-     | No Cache Headers - Redirect (Prevent Browser cache)
+     | Headers - No Cache during redirect (Prevent Browser cache)
      |-----------------------------------------------------------------------------------------------
      | 'Cache-Control' => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0', // IE.
 	 |
@@ -246,7 +196,7 @@ return [
 		'Expires'       => 'Sun, 02 Jan 1990 05:00:00 GMT', // Proxies. (Date in the past)
 		'Last-Modified' => gmdate('D, d M Y H:i:s') . ' GMT',
 	],
-
+	
 	/*
      |-----------------------------------------------------------------------------------------------
      | Performance (preventLazyLoading & httpRequestTimeout) & Debug Bar
@@ -260,7 +210,7 @@ return [
 	 | Fire action when HTTP request running duration is more than specified value
 	 |
 	 | debugBar:
-	 | In addition of this option, the Debug Bar will be enabled when APP_DEBUG is true
+	 | In addition to this option, the Debug Bar will be enabled when APP_DEBUG is true
 	 |
      */
 	'performance' => [
@@ -289,6 +239,9 @@ return [
 		'namespace' => '\\extras\plugins\\',
     ],
 	
+	// Available only when the Multi-Domain plugin is installed
+    'dmCountriesListAsHomepage' => env('DM_COUNTRIES_LIST_AS_HOMEPAGE'),
+	
 	'customizedViewPath' => 'views.',
 	
 	/*
@@ -311,21 +264,12 @@ return [
 	 | - The both auth fields (email and phone) cannot be displayed when both these fields need
 	 |   to be verified. So to make work this option, you have to disable the email verification
 	 |   or the phone verification option from the Admin panel.
-	 | - By setting the option bellow to 'false', and since it's not possible de disable email field
+	 | - By setting the option bellow to 'false', and since it's not possible to disable email field
 	 |   to be auth field, it will be always possible to fill the email field in the related forms.
 	 |   It's not the case for the phone field that can be disabled as auth field from the Admin panel.
      |
      */
 	'displayBothAuthFields' => env('DISPLAY_BOTH_AUTH_FIELDS', true),
-	
-    /*
-     |-----------------------------------------------------------------------------------------------
-     | Disallowing usernames that match reserved names
-     |-----------------------------------------------------------------------------------------------
-     | This list was take from the following repo: https://github.com/dsignr/disallowed-usernames/
-     | You can add your own disallowed usernames. Separate words with commas and no spaces.
-     */
-    'reservedUsernames' => 'json,rss,wellknown,xml,about,abuse,access,account,accounts,activate,ad,add,address,adm,admin,administration,administrator,ads,adult,advertising,affiliate,affiliates,ajax,analytics,android,anon,anonymous,api,app,apps,archive,atom,auth,authentication,avatar,backup,bad,banner,banners,best,beta,billing,bin,blackberry,blog,blogs,board,bot,bots,business,cache,calendar,campaign,career,careers,cart,cdn,cgi,chat,chef,client,clients,code,codes,commercial,compare,config,connect,contact,contact-us,contest,cookie,corporate,create,crossdomain,crossdomain.xml,css,customer,dash,dashboard,data,database,db,delete,demo,design,designer,dev,devel,developer,developers,development,dir,directory,dmca,doc,docs,documentation,domain,download,downloads,ecommerce,edit,editor,email,embed,enterprise,facebook,faq,favorite,favorites,favourite,favourites,feed,feedback,feeds,file,files,follow,font,fonts,forum,forums,free,ftp,gadget,gadgets,games,gift,good,google,group,groups,guest,help,helpcenter,home,homepage,host,hosting,hostname,html,http,httpd,https,image,images,imap,img,index,indice,info,information,intranet,invite,ipad,iphone,irc,java,javascript,job,jobs,js,json,knowledgebase,legal,license,list,lists,log,login,logout,logs,mail,manager,manifesto,marketing,master,me,media,message,messages,messenger,mine,mob,mobile,msg,must,mx,my,mysql,name,named,net,network,new,newest,news,newsletter,notes,oembed,old,oldest,online,operator,order,orders,page,pager,pages,panel,password,perl,photo,photos,php,pic,pics,plan,plans,plugin,plugins,pop,pop3,post,postfix,postmaster,posts,press,pricing,privacy,privacy-policy,profile,project,projects,promo,pub,public,python,random,recipe,recipes,register,registration,remove,request,reset,robots,robots.txt,rss,root,ruby,sale,sales,sample,samples,save,script,scripts,search,secure,security,send,service,services,setting,settings,setup,shop,shopping,signin,signup,site,sitemap,sitemap.xml,sites,smtp,sql,ssh,stage,staging,start,stat,static,stats,status,store,stores,subdomain,subscribe,support,surprise,svn,sys,sysop,system,tablet,tablets,talk,task,tasks,tech,telnet,terms,terms-of-use,test,test1,test2,test3,tests,theme,themes,tmp,todo,tools,top,trust,tv,twitter,twittr,unsubscribe,update,upload,url,usage,user,username,users,video,videos,visitor,web,weblog,webmail,webmaster,website,websites,welcome,wiki,win,ww,wws,www,www1,www2,www3,www4,www5,www6,www7,wwws,wwww,xml,xpg,xxx,yahoo,you,yourdomain,yourname,yoursite,yourusername,lang',
     
     /*
      |-----------------------------------------------------------------------------------------------
@@ -367,34 +311,14 @@ return [
 		'default' => 'YYYY-MM-DD HH:mm',
 		'php'     => 'Y-m-d H:i',
 	],
-
+	
 	/*
      |-----------------------------------------------------------------------------------------------
-     | Permalinks & Extensions
+     | Hashable ID Prefix
      |-----------------------------------------------------------------------------------------------
      |
      */
-	'permalink' => [
-		'post' => [
-			'{slug}-{hashableId}',
-			'{slug}/{hashableId}',
-			'{slug}_{hashableId}',
-			'{hashableId}-{slug}',
-			'{hashableId}/{slug}',
-			'{hashableId}_{slug}',
-			'{hashableId}',
-		],
-	],
-	'permalinkExt' => [
-		'',
-		'.html',
-		'.htm',
-		'.php',
-		'.asp',
-		'.aspx',
-		'.jsp',
-	],
-	'hashableIdPrefix' => '',
+    'hashableIdPrefix' => env('HASHABLE_ID_PREFIX', ''),
 
 	/*
      |-----------------------------------------------------------------------------------------------
@@ -445,34 +369,41 @@ return [
      |-----------------------------------------------------------------------------------------------
 	 |
 	 | api.token: Token to authenticate each HTTP request
-	 |
 	 | api.client: Type of HTTP requests (can be: none, curl)
-     | - none: To consume the API by making internal HTTP requests (using Laravel sub requests)
+	 | - none: To consume the API by making internal HTTP requests (using Laravel sub requests)
 	 | - curl: To consume the API by making external HTTP requests (using CURL)
-	 | - timeout: API timeout when 'curl' is used to consume the API (in seconds)
+	 | api.timeout: HTTP timeout during API calls (in seconds)
+	 | api.retry.sleep: HTTP retry times during API calls
+	 | api.retry.sleep: HTTP retry sleep during API calls (in milliseconds)
 	 |
      */
 	'api' => [
 		'token'   => env('APP_API_TOKEN'),
 		'client'  => env('APP_HTTP_CLIENT', 'none'),
 		'timeout' => env('APP_API_TIMEOUT', 60),
-	],
-
-	/*
-     |-----------------------------------------------------------------------------------------------
-     | Package Types Configuration
-     |-----------------------------------------------------------------------------------------------
-	 |
-	 | Define the model types for promotion and subscription packages
-	 | - promotion: Packages that promote individual posts
-	 | - subscription: Packages that subscribe users for multiple posts
-	 |
-     */
-	'package' => [
-		'type' => [
-			'promotion'    => 'App\Models\Post',
-			'subscription' => 'App\Models\User',
+		'retry' => [
+			'times' => env('APP_API_RETRY_TIMES', 3),
+			'sleep' => env('APP_API_RETRY_SLEEP', 2000),
 		],
+		// Optional
+		// Pattern: host:port (or) ip:port - Example: proxy.example.tld:3128
+		'proxy' => env('APP_API_PROXY'),
 	],
-
+	
+	/*
+	 |-----------------------------------------------------------------------------------------------
+	 | Packages Options
+	 |-----------------------------------------------------------------------------------------------
+	 |
+	 | package.type.promotion: The promotion packages are about Post
+	 | package.type.promotion: The subscription packages are about User
+	 |
+	 */
+    'package' => [
+	    'type' => [
+		    'promotion'    => 'App\Models\Post',
+		    'subscription' => 'App\Models\User',
+	    ],
+    ],
+	
 ];

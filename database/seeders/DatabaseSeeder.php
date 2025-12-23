@@ -13,43 +13,42 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
 	/**
 	 * Seed the application's database.
-	 *
-	 * @return void
-	 * @throws \Doctrine\DBAL\Exception
 	 */
-	public function run()
+	public function run(): void
 	{
 		// Code start execution time
 		$startTime = now();
 		
-		DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+		Schema::disableForeignKeyConstraints();
 		
 		// Truncate all tables
-		$tables = DBTool::getDatabaseTables(DB::getTablePrefix());
+		$prefix = DB::getTablePrefix();
+		$tables = DBTool::getDatabaseTables($prefix, false);
 		if (count($tables) > 0) {
 			foreach ($tables as $table) {
-				DB::statement('ALTER TABLE ' . $table . ' AUTO_INCREMENT=1;');
+				$rawTable = $prefix . $table;
+				
+				DB::statement('ALTER TABLE ' . $rawTable . ' AUTO_INCREMENT=1;');
 				
 				// Don't truncate some tables (eg. migrations, ...)
-				if (
-					str_contains($table, 'migrations')
-					|| str_contains($table, 'users')
-				) {
+				if ($table == 'migrations' || $table == 'users') {
 					continue;
 				}
 				
-				if (str_contains($table, 'blacklist')) {
-					if (!isLocalEnv()) {
+				// Don't truncate the 'blacklist' table in production (or in other environment than local)
+				if (!isLocalEnv()) {
+					if ($table == 'blacklist') {
 						continue;
 					}
 				}
 				
-				DB::statement('TRUNCATE TABLE ' . $table . ';');
+				DB::table($table)->truncate();
 			}
 		}
 		
@@ -57,9 +56,7 @@ class DatabaseSeeder extends Seeder
 		$this->call(LanguageSeeder::class);
 		$this->call(AdvertisingSeeder::class);
 		$this->call(CategorySeeder::class);
-		$this->call(ContinentSeeder::class);
 		$this->call(CurrencySeeder::class);
-		$this->call(GenderSeeder::class);
 		$this->call(HomeSectionSeeder::class);
 		$this->call(PackageSeeder::class);
 		$this->call(PageSeeder::class);
@@ -68,7 +65,6 @@ class DatabaseSeeder extends Seeder
 		$this->call(ReportTypeSeeder::class);
 		$this->call(SalaryTypeSeeder::class);
 		$this->call(SettingSeeder::class);
-		$this->call(UserTypeSeeder::class);
 		$this->call(CountrySeeder::class);
 		
 		$isDevOrDemoEnv = (isDevEnv() || isDemoEnv());
@@ -102,7 +98,7 @@ class DatabaseSeeder extends Seeder
 			}
 		}
 		
-		DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+		Schema::enableForeignKeyConstraints();
 		
 		// Get the code's execution's duration
 		$this->execTimeLog($startTime->diffForHumans(now(), CarbonInterface::DIFF_ABSOLUTE, false, 3));

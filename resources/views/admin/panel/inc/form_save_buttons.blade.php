@@ -5,7 +5,7 @@
 	<div class="btn-group">
 		
 		<button type="submit" class="btn btn-primary shadow">
-			<span class="fa fa-save" role="presentation" aria-hidden="true"></span> &nbsp;
+			<span class="fa-regular fa-floppy-disk" role="presentation" aria-hidden="true"></span> &nbsp;
 			<span data-value="{{ $saveAction['active']['value'] }}">{{ $saveAction['active']['label'] }}</span>
 		</button>
 		
@@ -24,5 +24,5 @@
 	
 	</div>
 	
-	<a href="{{ url($xPanel->route) }}" class="btn btn-secondary shadow"><span class="fa fa-ban"></span> &nbsp;{{ trans('admin.cancel') }}</a>
+	<a href="{{ url($xPanel->route) }}" class="btn btn-secondary shadow"><span class="fa-solid fa-ban"></span> &nbsp;{{ trans('admin.cancel') }}</a>
 </div>

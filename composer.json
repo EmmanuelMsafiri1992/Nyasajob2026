@@ -31,12 +31,11 @@
 		"chriskonnertz/open-graph": "~2",
 		"cocur/slugify": "^4.3",
 		"cviebrock/eloquent-sluggable": "^11.0",
-		"doctrine/dbal": "^3.6",
 		"fakerphp/faker": "^1.23",
 		"geoip2/geoip2": "^3.0",
 		"giggsey/libphonenumber-for-php": "^8.13",
-		"guzzlehttp/guzzle": "^7.5",
-		"hashids/hashids": "^5.0",
+		"guzzlehttp/guzzle": "^7.4",
+		"hashids/hashids": "^5.0.2",
 		"intervention/image": "^2.7",
 		"jaybizzle/crawler-detect": "^1.2",
 		"jaybizzle/laravel-crawler-detect": "^1.2",
@@ -50,14 +49,13 @@
 		"laravel/vonage-notification-channel": "^3.3",
 		"league/flysystem-aws-s3-v3": "^3.27",
 		"league/flysystem-ftp": "^3.27",
-		"league/flysystem-sftp-v3": "^3.27",
+		"league/flysystem-sftp-v3": "^3.26",
 		"livecontrol/eloquent-datatable": "dev-master",
 		"mailersend/laravel-driver": "^2.5",
 		"mews/purifier": "^3.4",
 		"paypal/paypal-checkout-sdk": "^1.0",
 		"predis/predis": "^2.2",
 		"prologue/alerts": "^1.2",
-		"propaganistas/laravel-phone": "^5.3",
 		"resend/resend-php": "^0.12.0",
 		"spatie/flysystem-dropbox": "^3.0",
 		"spatie/laravel-backup": "^8.6",
@@ -71,7 +69,7 @@
 		"symfony/http-client": "^7.1",
 		"symfony/mailgun-mailer": "^7.0",
 		"symfony/postmark-mailer": "^7.0",
-		"vemcogroup/laravel-sparkpost-driver": "^5.1",
+		"vemcogroup/laravel-sparkpost-driver": "^5.0.7",
 		"watson/sitemap": "^5.2"
 	},
 	"require-dev": {
@@ -80,8 +78,8 @@
 		"laravel/pint": "^1.13",
 		"laravel/sail": "^1.26",
 		"mockery/mockery": "^1.6",
-		"nunomaduro/collision": "^8.0",
-		"phpunit/phpunit": "^11.0",
+		"nunomaduro/collision": "^8.1",
+		"phpunit/phpunit": "^11.0.1",
 		"spatie/laravel-ignition": "^2.4"
 	},
 	"autoload": {
@@ -125,11 +123,16 @@
 			"Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
 			"@php artisan package:discover --ansi"
 		],
+		"post-update-cmd": [
+			"@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+		],
 		"post-root-package-install": [
 			"@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
 		],
 		"post-create-project-cmd": [
-			"@php artisan key:generate --ansi"
+			"@php artisan key:generate --ansi",
+			"@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+			"@php artisan migrate --graceful --ansi"
 		]
 	},
 	"extra": {
@@ -144,8 +147,9 @@
 		"optimize-autoloader": true,
 		"preferred-install": "dist",
 		"sort-packages": true,
-		"platform": {
-			"php": "8.3.19"
+		"allow-plugins": {
+			"pestphp/pest-plugin": true,
+			"php-http/discovery": true
 		}
 	},
 	"minimum-stability": "dev",

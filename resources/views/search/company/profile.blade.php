@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -42,13 +55,13 @@
 						<div class="{{ $colDetails }}">
 							<div class="seller-info seller-profile">
 								<div class="seller-profile-img">
-									<a><img src="{{ data_get($company, 'logo_url.full') }}" class="img-fluid img-thumbnail" alt="img"></a>
+									<a><img src="{{ data_get($company, 'logo_url.medium') }}" class="img-fluid img-thumbnail" alt="img"></a>
 								</div>
 								<h3 class="no-margin no-padding link-color uppercase">
 									@if (auth()->check())
 										@if (auth()->user()->id == data_get($company, 'user_id'))
 											<a href="{{ url('account/companies/' . data_get($company, 'id') . '/edit') }}" class="btn btn-default">
-												<i class="far fa-edit"></i> {{ t('Edit') }}
+												<i class="fa-regular fa-pen-to-square"></i> {{ t('Edit') }}
 											</a>
 										@endif
 									@endif
@@ -62,16 +75,16 @@
 								<div class="seller-social-list">
 									<ul class="share-this-post">
 										@if (!empty(data_get($company, 'linkedin')))
-											<li><a href="{{ data_get($company, 'linkedin') }}" target="_blank"><i class="fab fa-linkedin"></i></a></li>
+											<li><a href="{{ data_get($company, 'linkedin') }}" target="_blank"><i class="fa-brands fa-linkedin"></i></a></li>
 										@endif
 										@if (!empty(data_get($company, 'facebook')))
-											<li><a class="facebook" href="{{ data_get($company, 'facebook') }}" target="_blank"><i class="fab fa-facebook-square"></i></a></li>
+											<li><a class="facebook" href="{{ data_get($company, 'facebook') }}" target="_blank"><i class="fa-brands fa-square-facebook"></i></a></li>
 										@endif
 										@if (!empty(data_get($company, 'twitter')))
-											<li><a href="{{ data_get($company, 'twitter') }}" target="_blank"><i class="fab fa-twitter-square"></i></a></li>
+											<li><a href="{{ data_get($company, 'twitter') }}" target="_blank"><i class="fa-brands fa-square-x-twitter"></i></a></li>
 										@endif
 										@if (!empty(data_get($company, 'pinterest')))
-											<li><a class="pinterest" href="{{ data_get($company, 'pinterest') }}" target="_blank"><i class="fab fa-pinterest-square"></i></a></li>
+											<li><a class="pinterest" href="{{ data_get($company, 'pinterest') }}" target="_blank"><i class="fa-brands fa-square-pinterest"></i></a></li>
 										@endif
 									</ul>
 								</div>
@@ -161,7 +174,7 @@
 						<!--/.posts-wrapper-->
 						
 						<div class="tab-box save-search-bar text-center">
-							@if (request()->filled('q') && request()->get('q') != '' && $count->get('all') > 0)
+							@if (request()->filled('q') && request()->query('q') != '' && $count->get('all') > 0)
 								<a id="saveSearch"
 								   data-name="{!! request()->fullUrlWithoutQuery(['_token', 'location']) !!}"
 								   data-count="{{ data_get($count, '0') }}"

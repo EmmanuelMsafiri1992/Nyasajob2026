@@ -1,12 +1,28 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class BetweenRule implements Rule
+class BetweenRule implements ValidationRule
 {
-	public $min = 0;
-	public $max = 999999;
+	public int $min = 0;
+	public int $max = 999999;
 	
 	public function __construct($min, $max)
 	{
@@ -15,15 +31,26 @@ class BetweenRule implements Rule
 	}
 	
 	/**
+	 * Run the validation rule.
+	 */
+	public function validate(string $attribute, mixed $value, Closure $fail): void
+	{
+		if (!$this->passes($attribute, $value)) {
+			$fail(trans('validation.between_rule', ['min' => $this->min, 'max' => $this->max]));
+		}
+	}
+	
+	/**
 	 * Determine if the validation rule passes.
 	 * Multi-bytes version of the Laravel "between" rule.
 	 *
-	 * @param  string  $attribute
-	 * @param  mixed  $value
+	 * @param string $attribute
+	 * @param mixed $value
 	 * @return bool
 	 */
-	public function passes($attribute, $value)
+	public function passes(string $attribute, mixed $value): bool
 	{
+		$value = getAsString($value);
 		$value = strip_tags($value);
 		
 		if (mb_strlen($value) < $this->min) {
@@ -35,15 +62,5 @@ class BetweenRule implements Rule
 		}
 		
 		return true;
-	}
-	
-	/**
-	 * Get the validation error message.
-	 *
-	 * @return string
-	 */
-	public function message()
-	{
-		return trans('validation.between_rule', ['min' => $this->min, 'max' => $this->max]);
 	}
 }

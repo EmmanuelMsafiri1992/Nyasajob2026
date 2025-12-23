@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\EntityCollection;
@@ -23,7 +38,7 @@ class SalaryTypeController extends BaseController
 		
 		$message = ($salaryTypes->count() <= 0) ? t('no_salary_types_found') : null;
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -44,6 +59,6 @@ class SalaryTypeController extends BaseController
 		
 		$resource = new SalaryTypeResource($salaryType);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

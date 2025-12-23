@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 use App\Http\Controllers\Api\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\ResetPasswordController;
@@ -18,6 +33,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\PostTypeController;
+use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\ReportTypeController;
 use App\Http\Controllers\Api\ResumeController;
 use App\Http\Controllers\Api\SalaryTypeController;
@@ -70,7 +86,7 @@ Route::namespace('Auth')
 				
 				Route::controller(SocialController::class)
 					->group(function ($router) {
-						$router->pattern('provider', 'facebook|linkedin|google');
+						$router->pattern('provider', 'facebook|linkedin|twitter-oauth-2|google');
 						Route::get('{provider}', 'getProviderTargetUrl');
 						Route::get('{provider}/callback', 'handleProviderCallback');
 					});
@@ -133,6 +149,7 @@ Route::prefix('userTypes')
 		Route::get('{id}', 'show')->name('userTypes.show');
 	});
 
+
 // categories
 Route::prefix('categories')
 	->controller(CategoryController::class)
@@ -194,6 +211,15 @@ Route::prefix('users')
 		Route::post('/', 'store')->name('users.store');
 		Route::middleware(['auth:sanctum'])->group(function ($router) {
 			Route::get('{id}/stats', 'stats')->name('users.stats');
+			
+			// Removal (fake deletion) of the user's photo
+			// Note: The user's photo is stored as a file path in a column instead of entry row.
+			// So the HTTP's GET method can be used to empty the photo column and its file.
+			Route::get('{id}/photo/delete', 'removePhoto')->name('users.photo.delete');
+			Route::put('{id}/photo', 'updatePhoto')->name('users.photo.update');
+			Route::put('{id}/dark-mode', 'setDarkMode')->name('users.darkMode.update');
+			
+			// Update User (with its photo)
 			Route::put('{id}', 'update')->name('users.update');
 		});
 		Route::delete('{id}', 'destroy')->name('users.destroy');
@@ -216,6 +242,7 @@ Route::prefix('companies')
 		Route::get('{id}', 'show')->name('companies.show');
 		Route::middleware(['auth:sanctum'])
 			->group(function ($router) {
+				$router->pattern('id', '[0-9]+');
 				$router->pattern('ids', '[0-9,]+');
 				
 				Route::post('/', 'store')->name('companies.store');
@@ -228,13 +255,15 @@ Route::prefix('companies')
 Route::prefix('resumes')
 	->controller(ResumeController::class)
 	->group(function ($router) {
+		$router->pattern('id', '[0-9]+');
+		
+		Route::get('/', 'index')->name('resumes.index');
+		Route::get('{id}', 'show')->name('resumes.show');
 		Route::middleware(['auth:sanctum'])
 			->group(function ($router) {
 				$router->pattern('id', '[0-9]+');
 				$router->pattern('ids', '[0-9,]+');
 				
-				Route::get('/', 'index')->name('resumes.index');
-				Route::get('{id}', 'show')->name('resumes.show');
 				Route::post('/', 'store')->name('resumes.store');
 				Route::put('{id}', 'update')->name('resumes.update');
 				Route::delete('{ids}', 'destroy')->name('resumes.destroy');
@@ -253,11 +282,13 @@ Route::prefix('posts')
 		Route::middleware(['auth:sanctum'])
 			->group(function ($router) {
 				$router->pattern('ids', '[0-9,]+');
+				Route::put('{id}/offline', 'offline')->name('posts.offline');
+				Route::put('{id}/repost', 'repost')->name('posts.repost');
 				Route::put('{id}', 'update')->name('posts.update');
 				Route::delete('{ids}', 'destroy')->name('posts.destroy');
 			});
 		
-		// posts - Email Address or Phone Number verification
+		// listings - Email Address or Phone Number verification
 		$router->pattern('field', 'email|phone');
 		$router->pattern('token', '.*');
 		Route::get('{id}/verify/resend/email', 'reSendEmailVerification');
@@ -293,12 +324,13 @@ Route::prefix('savedSearches')
 			});
 	});
 
-// packages
+// packages (promotion|subscription)
 Route::prefix('packages')
 	->controller(PackageController::class)
 	->group(function ($router) {
 		$router->pattern('id', '[0-9]+');
-		Route::get('/', 'index')->name('packages.index');
+		Route::get('promotion', 'index')->name('packages.promotion.index');
+		Route::get('subscription', 'index')->name('packages.subscription.index');
 		Route::get('{id}', 'show')->name('packages.show');
 	});
 
@@ -311,21 +343,39 @@ Route::prefix('paymentMethods')
 		Route::get('{id}', 'show')->name('paymentMethods.show');
 	});
 
-// payments
+// payments (promotion|subscription)
 Route::prefix('payments')
 	->controller(PaymentController::class)
 	->group(function ($router) {
 		Route::middleware(['auth:sanctum'])
 			->group(function ($router) {
-				$router->pattern('id', '[0-9]+');
-				Route::get('/', 'index')->name('payments.index');
-				Route::get('{id}', 'show')->name('payments.show');
-				
-				Route::prefix('posts')
+				// promotion
+				Route::prefix('promotion')
 					->group(function ($router) {
-						$router->pattern('postId', '[0-9]+');
-						Route::get('{postId}/payments', 'index')->name('posts.payments');
+						Route::get('/', 'index')->name('payments.promotion.index');
+						
+						Route::prefix('posts')
+							->group(function ($router) {
+								$router->pattern('postId', '[0-9]+');
+								Route::get('{postId}/payments', 'index')->name('posts.payments');
+							});
 					});
+				
+				// subscription
+				Route::prefix('subscription')
+					->group(function ($router) {
+						Route::get('/', 'index')->name('payments.subscription.index');
+						
+						Route::prefix('users')
+							->group(function ($router) {
+								$router->pattern('userId', '[0-9]+');
+								Route::get('{userId}/payments', 'index')->name('users.payments');
+							});
+					});
+				
+				// show
+				$router->pattern('id', '[0-9]+');
+				Route::get('{id}', 'show')->name('payments.show');
 			});
 		
 		Route::post('/', 'store')->name('payments.store');
@@ -419,16 +469,50 @@ Route::prefix('captcha')
 		Route::get('/', 'getCaptcha')->name('captcha.getCaptcha');
 	});
 
-// Interactive Progress (Courses)
-Route::prefix('interactive-progress')
-	->controller(\App\Http\Controllers\Api\InteractiveProgressController::class)
-	->middleware(['web', 'auth'])
+// Salary Calculator API
+Route::prefix('salary-calculator')
+	->controller(\App\Http\Controllers\Api\SalaryCalculatorApiController::class)
 	->group(function ($router) {
-		$router->pattern('lessonId', '[0-9]+');
-		Route::post('step', 'saveStepProgress')->name('interactive.step');
-		Route::post('complete', 'completeLesson')->name('interactive.complete');
-		Route::get('lesson/{lessonId}', 'getLessonProgress')->name('interactive.lesson');
-		Route::post('lesson/{lessonId}/reset', 'resetProgress')->name('interactive.reset');
+		Route::post('/', 'calculate')->name('salary.calculate');
+		Route::post('compare-locations', 'compareLocations')->name('salary.compareLocations');
+		Route::get('job-titles', 'popularJobTitles')->name('salary.jobTitles');
+		Route::get('trends', 'salaryTrends')->name('salary.trends');
+		Route::post('submit-data', 'submitSalaryData')->name('salary.submitData');
+	});
+
+// Career Assessment API  
+Route::prefix('career-assessment')
+	->group(function ($router) {
+		Route::get('/', [\App\Http\Controllers\Api\CareerAssessmentApiController::class, 'index'])->name('assessment.index');
+		Route::get('{type}', [\App\Http\Controllers\Api\CareerAssessmentApiController::class, 'show'])->name('assessment.show');
+		Route::post('submit', [\App\Http\Controllers\Api\CareerAssessmentApiController::class, 'submit'])->name('assessment.submit');
+		Route::get('results/{id}', [\App\Http\Controllers\Api\CareerAssessmentApiController::class, 'results'])->name('assessment.results');
+	});
+
+// Enhanced Subscriptions API
+Route::prefix('subscriptions')
+	->controller(SubscriptionController::class)
+	->group(function ($router) {
+		Route::get('/', 'index')->name('subscriptions.index');
+		Route::get('analytics', 'analytics')->name('subscriptions.analytics');
+		Route::middleware(['auth:sanctum'])->group(function ($router) {
+			Route::post('/', 'store')->name('subscriptions.store');
+			Route::get('current', 'current')->name('subscriptions.current');
+			Route::put('current', 'update')->name('subscriptions.update');
+			Route::delete('current', 'cancel')->name('subscriptions.cancel');
+			Route::get('usage-stats', 'usageStats')->name('subscriptions.usageStats');
+			Route::post('check-feature', 'checkFeature')->name('subscriptions.checkFeature');
+		});
+	});
+
+// Candidate Scoring API
+Route::prefix('candidate-scoring')
+	->middleware(['auth:sanctum'])
+	->group(function ($router) {
+		Route::get('my-score', [\App\Http\Controllers\Api\CandidateScoringApiController::class, 'myScore'])->name('scoring.myScore');
+		Route::get('improvement-tips', [\App\Http\Controllers\Api\CandidateScoringApiController::class, 'improvementTips'])->name('scoring.tips');
+		Route::post('update-score', [\App\Http\Controllers\Api\CandidateScoringApiController::class, 'updateScore'])->name('scoring.update');
+		Route::get('leaderboard', [\App\Http\Controllers\Api\CandidateScoringApiController::class, 'leaderboard'])->name('scoring.leaderboard');
 	});
 
 // fallback
@@ -437,6 +521,6 @@ Route::prefix('interactive-progress')
 Route::any('{any}', function () {
 	return response()->json([
 		'success' => false,
-		'message' => 'Page Not Found.',
+		'message' => 'API endpoint not found.',
 	], 404);
 })->where('any', '^(?!plugins).*$')->name('any.other');

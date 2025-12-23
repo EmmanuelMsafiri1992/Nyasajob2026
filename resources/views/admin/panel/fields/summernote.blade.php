@@ -1,6 +1,11 @@
 {{-- summernote editor --}}
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+        {!! $field['label'] !!}
+        @if (isset($field['required']) && $field['required'])
+            <span class="text-danger">*</span>
+        @endif
+    </label>
     @include('admin.panel.fields.inc.translatable_icon')
     <textarea
         name="{{ $field['name'] }}"
@@ -31,17 +36,17 @@
         <script src="{{ asset('assets/plugins/summernote/summernote.min.js') }}"></script>
         <?php
         $editorLocale = '';
-        if (file_exists(public_path() . '/assets/plugins/summernote/lang/summernote-' . ietfLangTag(config('app.locale')) . '.js')) {
-            $editorLocale = ietfLangTag(config('app.locale'));
+        if (file_exists(public_path() . '/assets/plugins/summernote/lang/summernote-' . getLangTag(config('app.locale')) . '.js')) {
+            $editorLocale = getLangTag(config('app.locale'));
         }
         if (empty($editorLocale)) {
-            if (file_exists(public_path() . '/assets/plugins/summernote/lang/summernote-' . ietfLangTag(config('lang.locale')) . '.js')) {
-                $editorLocale = ietfLangTag(config('lang.locale'));
+            if (file_exists(public_path() . '/assets/plugins/summernote/lang/summernote-' . config('lang.tag') . '.js')) {
+                $editorLocale = config('lang.tag');
             }
         }
         if (empty($editorLocale)) {
-            if (file_exists(public_path() . '/assets/plugins/summernote/lang/summernote-' . strtolower(ietfLangTag(config('lang.locale'))) . '.js')) {
-                $editorLocale = strtolower(ietfLangTag(config('lang.locale')));
+            if (file_exists(public_path() . '/assets/plugins/summernote/lang/summernote-' . strtolower(config('lang.tag')) . '.js')) {
+                $editorLocale = strtolower(config('lang.tag'));
             }
         }
         if (empty($editorLocale)) {
@@ -52,7 +57,7 @@
             <script src="{{ url('assets/plugins/summernote/lang/summernote-' . $editorLocale . '.js') }}" type="text/javascript"></script>
         @endif
         <script>
-            jQuery(document).ready(function($) {
+            onDocumentReady((event) => {
                 $('.summernote').summernote({
                     lang: '{{ $editorLocale }}',
                     tabsize: 2,

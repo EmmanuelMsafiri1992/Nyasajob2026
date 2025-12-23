@@ -1,18 +1,14 @@
-<?php
-	$currDisplay = config('settings.list.display_mode');
-	$typeOfDisplay = [
-		'list'    => 'make-list',
-		'compact' => 'make-compact',
-		'grid'    => 'make-grid',
-	];
-	// '$display' var is sent from the FileController file through view(...)->render()
-	if (isset($display) && !empty($display) && isset($typeOfDisplay[$display])) {
-		$currDisplay = $typeOfDisplay[$display];
+@php
+	$displayMode = config('settings.listings_list.display_mode');
+	// '$displayKey' var is sent from the FileController::cssStyle() file through view(...)->render()
+	$displayKey ??= null;
+	if (isValidDisplayModeKey($displayKey)) {
+		$displayMode = getDisplayMode($displayKey);
 	}
 	
 	// Default ribbons positions (related to the page size)
 	// https://getbootstrap.com/docs/5.0/layout/breakpoints/
-
+	
 	$rBorderWidth = 12;
 	$rWidth = 140;
 	$rLeft = 0;
@@ -21,7 +17,7 @@
 	$rsPaddingStart = 10;
 	$rsTop = 0;
 	
-	if (config('settings.list.left_sidebar')) {
+	if (config('settings.listings_list.left_sidebar')) {
 		// xxl (>=1400px)
 		$rWidthXxl = 140;
 		$rsFontSizeXxl = 11;
@@ -76,9 +72,9 @@
 		$rWidthXs = 180;
 		$rsFontSizeXs = 11;
 	}
-
-	if (in_array($currDisplay, ['make-list', 'make-compact'])) {
-		if (config('settings.list.left_sidebar')) {
+	
+	if (in_array($displayMode, ['make-list', 'make-compact'])) {
+		if (config('settings.listings_list.left_sidebar')) {
 			$rWidth = $rWidthXxl = 100;
 		} else {
 			$rWidth = $rWidthXxl = 140;
@@ -92,7 +88,7 @@
 		$rsTop = -1;
 		
 		$rsPaddingStart = 5;
-		if ($currDisplay == 'make-compact') {
+		if ($displayMode == 'make-compact') {
 			$rWidthXxl = 130;
 			$rWidthXl = 130;
 			$rWidthLg = 120;
@@ -106,12 +102,12 @@
 			$rsFontSize = $rsFontSizeXxl = $rsFontSizeXl = 9;
 		}
 	} else {
-		$gridViewCols = config('settings.list.grid_view_cols');
+		$gridViewCols = config('settings.listings_list.grid_view_cols');
 		
 		$rWidthXs = 120;
 		$rsFontSizeXs = 10;
 		
-		if (config('settings.list.left_sidebar')) {
+		if (config('settings.listings_list.left_sidebar')) {
 			$rBorderWidth = 10;
 			if ($gridViewCols == 4) {
 				$rWidth = $rWidthXxl = 120;
@@ -124,7 +120,7 @@
 			}
 		}
 	}
-?>
+@endphp
 <style>
 	
 	/* Ribbons: Media Screen - Dynamic */

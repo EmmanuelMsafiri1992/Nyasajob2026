@@ -1,16 +1,18 @@
-<?php
-$post ??= [];
-$resumes ??= [];
-$totalResumes ??= 0;
-$lastResume ??= [];
-?>
+@php
+	$post ??= [];
+	$resumes ??= [];
+	$totalResumes ??= 0;
+	$lastResume ??= [];
+	
+	$fiTheme = config('larapen.core.fileinput.theme', 'bs5');
+@endphp
 <div class="modal fade" id="applyJob" tabindex="-1" role="dialog">
 	<div class="modal-dialog">
 		<div class="modal-content">
 			
 			<div class="modal-header px-3">
 				<h4 class="modal-title">
-					<i class="fas fa-envelope"></i> {{ t('Contact Employer') }}
+					<i class="fa-solid fa-envelope"></i> {{ t('Contact Employer') }}
 				</h4>
 				
 				<button type="button" class="close" data-bs-dismiss="modal">
@@ -19,8 +21,12 @@ $lastResume ??= [];
 				</button>
 			</div>
 			
-			<form role="form" method="POST" action="{{ url('account/messages/posts/' . data_get($post, 'id')) }}" enctype="multipart/form-data">
+			@php
+				$actionUrl = url('account/messages/posts/' . data_get($post, 'id'));
+			@endphp
+			<form role="form" method="POST" action="{{ $actionUrl }}" enctype="multipart/form-data">
 				{!! csrf_field() !!}
+				@honeypot
 				<div class="modal-body">
 
 					@if (isset($errors) && $errors->any() && old('messageForm')=='1')
@@ -51,8 +57,9 @@ $lastResume ??= [];
 						@endphp
 						<div class="mb-3 required">
 							<label class="control-label" for="name">{{ t('Name') }} <sup>*</sup></label>
-							<div class="input-group">
-								<input id="fromName" name="name"
+							<div class="input-group{{ $fromNameError }}">
+								<input id="fromName"
+								       name="name"
 									   type="text"
 									   class="form-control{{ $fromNameError }}"
 									   placeholder="{{ t('your_name') }}"
@@ -68,17 +75,20 @@ $lastResume ??= [];
 					@else
 						@php
 							$fromEmailError = (isset($errors) && $errors->has('email')) ? ' is-invalid' : '';
+							$emailRequiredClass = ($authFieldValue == 'email') ? ' required' : '';
 						@endphp
-						<div class="mb-3 required">
+						<div class="mb-3{{ $emailRequiredClass }}">
 							<label class="control-label" for="email">{{ t('email') }}
 								@if ($authFieldValue == 'email')
 									<sup>*</sup>
 								@endif
 							</label>
-							<div class="input-group">
-								<span class="input-group-text"><i class="far fa-envelope"></i></span>
-								<input id="fromEmail" name="email"
+							<div class="input-group{{ $fromEmailError }}">
+								<span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
+								<input id="fromEmail"
+								       name="email"
 									   type="text"
+									   data-valid-type="email"
 									   class="form-control{{ $fromEmailError }}"
 									   placeholder="{{ t('eg_email') }}"
 									   value="{{ old('email', $authUser->email ?? null) }}"
@@ -98,14 +108,16 @@ $lastResume ??= [];
 							$phoneCountryValue = $authUser->phone_country ?? config('country.code');
 							$phoneValue = phoneE164($phoneValue, $phoneCountryValue);
 							$phoneValueOld = phoneE164(old('phone', $phoneValue), old('phone_country', $phoneCountryValue));
+							$phoneRequiredClass = ($authFieldValue == 'phone') ? ' required' : '';
 						@endphp
-						<div class="mb-3 required">
+						<div class="mb-3{{ $phoneRequiredClass }}">
 							<label class="control-label" for="phone">{{ t('phone_number') }}
 								@if ($authFieldValue == 'phone')
 									<sup>*</sup>
 								@endif
 							</label>
-							<input id="fromPhone" name="phone"
+							<input id="fromPhone"
+							       name="phone"
 								   type="tel"
 								   maxlength="60"
 								   class="form-control m-phone{{ $fromPhoneError }}"
@@ -120,21 +132,26 @@ $lastResume ??= [];
 					<input name="auth_field" type="hidden" value="{{ $authFieldValue }}">
 					
 					{{-- body --}}
-					<?php $bodyError = (isset($errors) && $errors->has('body')) ? ' is-invalid' : ''; ?>
+					@php
+						$bodyError = (isset($errors) && $errors->has('body')) ? ' is-invalid' : '';
+					@endphp
 					<div class="mb-3 required">
 						<label class="control-label" for="body">
 							{{ t('Message') }} <span class="text-count">(500 max)</span> <sup>*</sup>
 						</label>
-						<textarea id="body" name="body"
-							rows="5"
-							class="form-control required{{ $bodyError }}"
-							style="height: 150px;"
-							placeholder="{{ t('your_message_here') }}"
+						<textarea id="body"
+						          name="body"
+						          rows="5"
+						          class="form-control required{{ $bodyError }}"
+						          style="min-height: 150px;"
+						          placeholder="{{ t('your_message_here') }}"
 						>{{ old('body') }}</textarea>
 					</div>
 					
 					{{-- filename --}}
-					<?php $resumeIdError = (isset($errors) && $errors->has('resume_id')) ? ' is-invalid' : ''; ?>
+					@php
+						$resumeIdError = (isset($errors) && $errors->has('resume_id')) ? ' is-invalid' : '';
+					@endphp
 					<div class="mb-2">
 						<label class="control-label" for="filename">{{ t('Resume') }} </label>
 						<div class="form-text text-muted">{!! t('Select a Resume') !!}</div>
@@ -144,7 +161,6 @@ $lastResume ??= [];
 							@endphp
 							@if (!empty($resumes) && $totalResumes > 0)
 								@foreach ($resumes as $iResume)
-									@continue(!$pDisk->exists(data_get($iResume, 'filename')))
 									@php
 										$iResume = $iResume ?? [];
 										$iResumeId = data_get($iResume, 'id');
@@ -153,13 +169,17 @@ $lastResume ??= [];
 											: (!empty($lastResume) ? data_get($lastResume, 'id') : 0);
 									@endphp
 									<div class="form-check pt-2">
-										<input id="resumeId{{ $iResumeId }}" name="resume_id"
+										<input id="resumeId{{ $iResumeId }}"
+										       name="resume_id"
 											   value="{{ $iResumeId }}"
 											   type="radio"
 											   class="form-check-input{{ $resumeIdError }}" @checked($selectedResume == $iResumeId)
 										>
 										<label class="form-check-label" for="resumeId{{ $iResumeId }}">
-											{{ data_get($iResume, 'name') }} - <a href="{{ privateFileUrl(data_get($iResume, 'filename')) }}" target="_blank">{{ t('Download') }}</a>
+											{{ data_get($iResume, 'name') }} -
+											<a href="{{ privateFileUrl(data_get($iResume, 'filename')) }}" target="_blank">
+												{{ t('Download') }}
+											</a>
 										</label>
 									</div>
 								@endforeach
@@ -179,7 +199,10 @@ $lastResume ??= [];
 					</div>
 					
 					<div class="mb-3">
-						@includeFirst([config('larapen.core.customizedViewPath') . 'account.resume._form', 'account.resume._form'], ['originForm' => 'message'])
+						@includeFirst([
+							config('larapen.core.customizedViewPath') . 'account.resume._form',
+							'account.resume._form'
+						], ['originForm' => 'message'])
 					</div>
 					
 					@include('layouts.inc.tools.captcha', ['label' => true])
@@ -204,9 +227,15 @@ $lastResume ??= [];
 	@if (config('lang.direction') == 'rtl')
 		<link href="{{ url('assets/plugins/bootstrap-fileinput/css/fileinput-rtl.min.css') }}" rel="stylesheet">
 	@endif
+	@if (str_starts_with($fiTheme, 'explorer'))
+		<link href="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.min.css') }}" rel="stylesheet">
+	@endif
 	<style>
 		.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
 			box-shadow: 0 0 5px 0 #666666;
+		}
+		.file-loading:before {
+			content: " {{ t('loading_wd') }}";
 		}
 	</style>
 @endsection
@@ -216,7 +245,7 @@ $lastResume ??= [];
 	
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/plugins/sortable.min.js') }}" type="text/javascript"></script>
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/fileinput.min.js') }}" type="text/javascript"></script>
-	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/fas/theme.js') }}" type="text/javascript"></script>
+	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.js') }}" type="text/javascript"></script>
 	<script src="{{ url('common/js/fileinput/locales/' . config('app.locale') . '.js') }}" type="text/javascript"></script>
 	
 	<script>
@@ -226,25 +255,29 @@ $lastResume ??= [];
 		
 		{{-- Resume --}}
 		@php
-			$lastResumeExists = (!empty(data_get($lastResume, 'filename')) && $pDisk->exists(data_get($lastResume, 'filename')));
-			$lastResumeId = $lastResumeExists ? data_get($lastResume, 'id', 0) : 0;
+			$lastResumeId = data_get($lastResume, 'id', 0);
 			$lastResumeId = old('resume_id', $lastResumeId);
 		@endphp
-		var lastResumeId = {{ $lastResumeId }};
+		let lastResumeId = {{ $lastResumeId }};
 		
-		$(document).ready(function () {
+		onDocumentReady((event) => {
+			{{-- Re-open the modal if error occured --}}
 			@if (isset($errors) && $errors->any())
 				@if ($errors->any() && old('messageForm')=='1')
-					{{-- Re-open the modal if error occured --}}
-					let quickLogin = new bootstrap.Modal(document.getElementById('applyJob'), {});
-					quickLogin.show();
+					const applyJobEl = document.getElementById('applyJob');
+					if (applyJobEl) {
+						let quickLogin = new bootstrap.Modal(applyJobEl, {});
+						quickLogin.show();
+					}
 				@endif
 			@endif
 			
 			{{-- Resume --}}
 			getResume(lastResumeId);
-			$('#resumeId input').bind('click, change', function() {
-				getResume($(this).val());
+			const resumeIdInputEls = document.querySelectorAll('#resumeId input');
+			resumeIdInputEls.forEach((input) => {
+				input.addEventListener('click', (event) => getResume(event.target.value));
+				input.addEventListener('change', (event) => getResume(event.target.value));
 			});
 		});
 	</script>

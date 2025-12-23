@@ -1,25 +1,35 @@
 {{-- select2 from ajax --}}
 @php
-	$connected_entity = new $field['model'];
-	$connected_entity_key_name = $connected_entity->getKeyName();
-	$old_value = old($field['name']) ? old($field['name']) : (isset($field['value']) ? $field['value'] : (isset($field['default']) ? $field['default'] : false ));
+	$field ??= [];
+	
+	$entityModel = !empty($xPanel) ? $xPanel->model : null;
+	
+	$connectedEntity = new $field['model'];
+	$connectedEntityKeyName = $connectedEntity->getKeyName();
+	
+	$oldValue = $field['value'] ?? ($field['default'] ?? false);
+	$oldValue = old($field['name'], $oldValue);
 @endphp
 
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-	<label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+	<label class="form-label fw-bolder">
+		{!! $field['label'] !!}
+		@if (isset($field['required']) && $field['required'])
+			<span class="text-danger">*</span>
+		@endif
+	</label>
 	@include('admin.panel.fields.inc.translatable_icon')
-    <?php $entity_model = $xPanel->model; ?>
 	
 	<select
 			name="{{ $field['name'] }}"
 			style="width: 100%"
 			id="select2_ajax_{{ $field['name'] }}"
-			@include('admin.panel.inc.field_attributes', ['default_class' =>  'form-control'])
+			@include('admin.panel.inc.field_attributes', ['default_class' => 'form-control'])
 	>
 		
-		@if ($old_value)
+		@if ($oldValue)
 			@php
-				$item = $connected_entity->find($old_value);
+				$item = $connectedEntity->find($oldValue);
 			@endphp
 			@if ($item)
 				<option value="{{ $item->getKey() }}" selected>
@@ -44,7 +54,7 @@
 	@push('crud_fields_styles')
 	{{-- include select2 css--}}
 	<link href="{{ asset('assets/plugins/select2/css/select2.min.css') }}" rel="stylesheet" type="text/css" />
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+	<link href="{{ asset('assets/plugins/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
 	@endpush
 	
 	{{-- FIELD JS - will be loaded in the after_scripts section --}}
@@ -58,7 +68,7 @@
 {{-- include field specific select2 js--}}
 @push('crud_fields_scripts')
 <script>
-	jQuery(document).ready(function($) {
+	onDocumentReady((event) => {
 		// trigger select2 for each untriggered select2 box
 		$("#select2_ajax_{{ $field['name'] }}").each(function (i, obj) {
 			if (!$(obj).hasClass("select2-hidden-accessible"))
@@ -86,7 +96,7 @@
 									textField = "{{ $field['attribute'] }}";
 									return {
 										text: item[textField],
-										id: item["{{ $connected_entity_key_name }}"]
+										id: item["{{ $connectedEntityKeyName }}"]
 									}
 								}),
 								more: data.current_page < data.last_page

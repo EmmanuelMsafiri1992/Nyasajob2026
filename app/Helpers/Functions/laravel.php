@@ -1,6 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 use App\Helpers\Arr;
 use App\Helpers\Cookie;
+use App\Helpers\DotenvEditor;
 use App\Helpers\Ip;
 use App\Helpers\Response\Ajax;
 use App\Helpers\Response\Api;
@@ -116,7 +132,7 @@ function isTranslatableColumn($model, string $column): bool
  * @param string|null $locale
  * @return array|\Illuminate\Contracts\Translation\Translator|string|null
  */
-function t(?string $key = null, array $replace = [], string $file = 'global', ?string $locale = null)
+function t(string $key = null, array $replace = [], string $file = 'global', string $locale = null)
 {
 	if (is_null($locale)) {
 		$locale = config('app.locale');
@@ -160,14 +176,8 @@ function updateAppKeyWithoutArtisan(bool $clearCookies = false): void
 	}
 	
 	$appKey = generateAppKey();
-
-	// Update .env file
-	$envPath = base_path('.env');
-	if (file_exists($envPath)) {
-		$envContent = file_get_contents($envPath);
-		$envContent = preg_replace('/^APP_KEY=.*/m', 'APP_KEY=' . $appKey, $envContent);
-		file_put_contents($envPath, $envContent);
-	}
+	DotenvEditor::setKey('APP_KEY', $appKey);
+	DotenvEditor::save();
 }
 
 /**
@@ -197,7 +207,7 @@ function getIp(?string $defaultIp = ''): string
  * @param string|null $url
  * @return string
  */
-function getHost(?string $url = null): string
+function getHost(string $url = null): string
 {
 	if (!empty($url)) {
 		$host = parse_url($url, PHP_URL_HOST);
@@ -218,7 +228,7 @@ function getHost(?string $url = null): string
  * @param string|null $url
  * @return string
  */
-function getDomain(?string $url = null): string
+function getDomain(string $url = null): string
 {
 	if (!empty($url)) {
 		$host = parse_url($url, PHP_URL_HOST);
@@ -280,7 +290,7 @@ function getCookieDomain(): string
  * @param bool|null $secure
  * @return string
  */
-function getUrlWithoutQuery(?string $url, ?bool $secure = null): string
+function getUrlWithoutQuery(?string $url, bool $secure = null): string
 {
 	if (empty($url)) {
 		$url = request()->fullUrl();
@@ -341,7 +351,7 @@ function getUrlQuery(?string $url, $except = null): array
  * @param string|null $url
  * @return bool
  */
-function isLocalEnv(?string $url = null): bool
+function isLocalEnv(string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
@@ -553,7 +563,7 @@ function getRawBaseUrl(): string
  * @param string|null $pattern
  * @return string
  */
-function getRequestPath(?string $pattern = null): string
+function getRequestPath(string $pattern = null): string
 {
 	if (empty($pattern)) {
 		return request()->path();
@@ -826,7 +836,7 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
  * @param string|null $locale
  * @return string
  */
-function getColumnTranslation($column, ?string $locale = null): string
+function getColumnTranslation($column, string $locale = null): string
 {
 	if (empty($locale)) {
 		$locale = app()->getLocale();
@@ -871,7 +881,7 @@ function getRelativePath(?string $path): string
  * @param string|null $acceptLanguage
  * @return array
  */
-function parseAcceptLanguageHeader(?string $acceptLanguage = null): array
+function parseAcceptLanguageHeader(string $acceptLanguage = null): array
 {
 	if (empty($acceptLanguage)) {
 		$acceptLanguage = request()->server('HTTP_ACCEPT_LANGUAGE');

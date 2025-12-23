@@ -35,7 +35,7 @@ if (isset($cities, $city) && !collect($cities)->contains($city)) {
 						<strong>
 							<a href="{!! \App\Helpers\UrlGen::city($iCity, null, $cat ?? null) !!}" title="{{ data_get($iCity, 'name') }}">
 								{{ data_get($iCity, 'name') }}
-								@if (config('settings.list.count_cities_listings'))
+								@if (config('settings.listings_list.count_cities_listings'))
 									<span class="count">&nbsp;{{ data_get($iCity, 'posts_count') ?? 0 }}</span>
 								@endif
 							</a>
@@ -43,7 +43,7 @@ if (isset($cities, $city) && !collect($cities)->contains($city)) {
 					@else
 						<a href="{!! \App\Helpers\UrlGen::city($iCity, null, $cat ?? null) !!}" title="{{ data_get($iCity, 'name') }}">
 							{{ data_get($iCity, 'name') }}
-							@if (config('settings.list.count_cities_listings'))
+							@if (config('settings.listings_list.count_cities_listings'))
 								<span class="count">&nbsp;{{ data_get($iCity, 'posts_count') ?? 0 }}</span>
 							@endif
 						</a>

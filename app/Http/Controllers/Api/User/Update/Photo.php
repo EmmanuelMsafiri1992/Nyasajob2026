@@ -1,69 +1,79 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\User\Update;
 
 use App\Helpers\Files\Upload;
 use App\Http\Resources\UserResource;
+use App\Models\Scopes\VerifiedScope;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 trait Photo
 {
 	/**
 	 * Update the User's Photo
 	 *
-	 * @param \App\Models\User $user
-	 * @param $request
-	 * @return array
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @param $userId
+	 * @param \Illuminate\Http\Request $request
+	 * @return \Illuminate\Http\JsonResponse
 	 */
-	public function updatePhoto(User $user, $request)
+	public function updateUserPhoto($userId, Request $request): \Illuminate\Http\JsonResponse
 	{
-		$data = [
-			'success' => true,
-			'result'  => null,
-		];
+		$user = User::withoutGlobalScopes([VerifiedScope::class])->where('id', $userId)->first();
 		
 		if (empty($user)) {
-			$data['success'] = false;
-			$data['message'] = t('user_not_found');
-			
-			return $data;
+			return apiResponse()->notFound(t('user_not_found'));
+		}
+		
+		$authUser = auth('sanctum')->user();
+		if (empty($authUser)) {
+			return apiResponse()->unauthorized();
 		}
 		
 		// Check logged User
-		if (auth('sanctum')->user()->getAuthIdentifier() != $user->id) {
-			$data['success'] = false;
-			$data['message'] = t('Unauthorized action');
-			
-			return $data;
+		if ($authUser->getAuthIdentifier() != $user->id) {
+			return apiResponse()->unauthorized();
 		}
 		
 		$file = $request->file('photo');
 		if (empty($file)) {
-			$data['success'] = false;
-			$data['message'] = 'File is empty.';
-			
-			return $data;
+			return apiResponse()->error('File is empty.');
 		}
-		
-		$extra = [];
 		
 		// Upload & save the picture
 		$param = [
 			'destPath' => 'avatars/' . strtolower($user->country_code) . '/' . $user->id,
-			'width'    => (int)config('larapen.core.picture.otherTypes.user.width', 800),
-			'height'   => (int)config('larapen.core.picture.otherTypes.user.height', 800),
-			'ratio'    => config('larapen.core.picture.otherTypes.user.ratio', '1'),
-			'upsize'   => config('larapen.core.picture.otherTypes.user.upsize', '0'),
+			'width'    => (int)config('larapen.media.resize.namedOptions.avatar.width', 800),
+			'height'   => (int)config('larapen.media.resize.namedOptions.avatar.height', 800),
+			'ratio'    => config('larapen.media.resize.namedOptions.avatar.ratio', '1'),
+			'upsize'   => config('larapen.media.resize.namedOptions.avatar.upsize', '0'),
 		];
 		$user->photo = Upload::image($param['destPath'], $file, $param);
 		$user->save();
 		
 		// Result data
-		$data['message'] = t('Your photo or avatar have been updated');
-		$data['result'] = (new UserResource($user))->toArray($request);
+		$data = [
+			'success' => true,
+			'message' => t('Your photo or avatar have been updated'),
+			'result'  => (new UserResource($user))->toArray($request),
+		];
 		
-		if (isFromTheAppsWebEnvironment()) {
+		$extra = [];
+		if (doesRequestIsFromWebApp()) {
 			// Get the FileInput plugin's data
 			$fileInput = [];
 			$fileInput['initialPreview'] = [];
@@ -79,16 +89,12 @@ trait Photo
 				
 				// Extra Fields for AJAX file removal (related to the $initialPreviewConfigUrl)
 				$initialPreviewConfigExtra = [
-					'_token'       => csrf_token(),
-					'_method'      => 'PUT',
-					'name'         => $user->name,
-					'phone'        => $user->phone,
-					'email'        => $user->email,
-					'remove_photo' => 1,
+					'_token'  => csrf_token(),
+					'_method' => 'PUT',
 				];
 				
 				// Build Bootstrap-FileInput plugin's parameters
-				$fileInput['initialPreview'][] = imgUrl($user->photo, 'user');
+				$fileInput['initialPreview'][] = imgUrl($user->photo, 'avatar');
 				
 				$fileInput['initialPreviewConfig'][] = [
 					'caption' => basename($user->photo),
@@ -103,38 +109,32 @@ trait Photo
 		
 		$data['extra'] = $extra;
 		
-		return $data;
+		return apiResponse()->json($data);
 	}
 	
 	/**
 	 * Remove the User's photo
 	 *
-	 * @param \App\Models\User $user
-	 * @param $request
-	 * @return array
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @param $userId
+	 * @param \Illuminate\Http\Request $request
+	 * @return \Illuminate\Http\JsonResponse
 	 */
-	public function removePhoto(User $user, $request)
+	public function removeUserPhoto($userId, Request $request): \Illuminate\Http\JsonResponse
 	{
-		$data = [
-			'success' => true,
-			'result'  => null,
-		];
+		$user = User::withoutGlobalScopes([VerifiedScope::class])->where('id', $userId)->first();
 		
 		if (empty($user)) {
-			$data['success'] = false;
-			$data['message'] = t('user_not_found');
+			return apiResponse()->notFound(t('user_not_found'));
+		}
+		
+		$authUser = auth('sanctum')->user();
+		if (empty($authUser)) {
+			return apiResponse()->unauthorized();
 		}
 		
 		// Check logged User
-		if (auth('sanctum')->user()->getAuthIdentifier() != $user->id) {
-			$data['success'] = false;
-			$data['message'] = t('Unauthorized action');
-		}
-		
-		if (!isset($data['success']) || !$data['success']) {
-			return $data;
+		if ($authUser->getAuthIdentifier() != $user->id) {
+			return apiResponse()->unauthorized();
 		}
 		
 		// Remove all the current user's photos, by removing his photos' directory.
@@ -147,9 +147,13 @@ trait Photo
 		$user->photo = null;
 		$user->save();
 		
-		$data['message'] = t('Your photo or avatar has been deleted');
-		$data['result'] = (new UserResource($user))->toArray($request);
+		// Result data
+		$data = [
+			'success' => true,
+			'message' => t('Your photo or avatar has been deleted'),
+			'result'  => (new UserResource($user))->toArray($request),
+		];
 		
-		return $data;
+		return apiResponse()->json($data);
 	}
 }

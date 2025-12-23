@@ -1,7 +1,26 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Setting;
 
 use App\Helpers\Date;
+
+/*
+ * settings.backup.option
+ */
 
 class BackupSetting
 {
@@ -95,7 +114,7 @@ class BackupSetting
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.backup_disable_notifications_hint', ['email' => config('settings.app.email')]),
 				'wrapperAttributes' => [
-					'class' => 'col-md-6 mt-4',
+					'class' => 'col-md-6 mt-3',
 				],
 			],
 			
@@ -140,7 +159,7 @@ class BackupSetting
 				'options'           => self::backupFrequencyAt(),
 				'hint'              => trans('admin.taking_backup_at_hint', ['timeZone' => Date::getAppTimeZone()]),
 				'wrapperAttributes' => [
-					'class' => 'col-md-6',
+					'class' => 'col-md-6 taking-backup-field',
 				],
 			],
 			
@@ -210,13 +229,13 @@ class BackupSetting
 			],
 		];
 		
-		return $fields;
+		return addOptionsGroupJavaScript(__NAMESPACE__, __CLASS__, $fields);
 	}
 	
 	/**
 	 * @return array
 	 */
-	private static function backupFrequencies()
+	private static function backupFrequencies(): array
 	{
 		return [
 			'none'    => trans('admin.taking_backup_option_0'),
@@ -230,13 +249,13 @@ class BackupSetting
 	/**
 	 * @return array
 	 */
-	private static function backupFrequencyAt()
+	private static function backupFrequencyAt(): array
 	{
 		$hours = [];
 		
 		for ($i = 0; $i <= 23; $i++) {
 			$hh = str_pad($i, 2, '0', STR_PAD_LEFT);
-			for ($j = 0; $j <= 59; $j+=15) {
+			for ($j = 0; $j <= 59; $j += 15) {
 				$mm = str_pad($j, 2, '0', STR_PAD_LEFT);
 				$hour = $hh . ':' . $mm;
 				$hours[$hour] = $hour;

@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -38,7 +51,7 @@
 		
 		@includeFirst([config('larapen.core.customizedViewPath') . 'search.inc.breadcrumbs', 'search.inc.breadcrumbs'])
 		
-		@if (config('settings.list.show_cats_in_top'))
+		@if (config('settings.listings_list.show_cats_in_top'))
 			@if (isset($cats) && !empty($cats))
 				<div class="container mb-2 hide-xs">
 					<div class="row p-0 m-0">
@@ -50,7 +63,10 @@
 		@endif
 		
 		@if (isset($topAdvertising) && !empty($topAdvertising))
-			@includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.advertising.top', 'layouts.inc.advertising.top'], ['paddingTopExists' => true])
+			@includeFirst([
+				config('larapen.core.customizedViewPath') . 'layouts.inc.advertising.top',
+				'layouts.inc.advertising.top'
+			], ['paddingTopExists' => true])
 			@php
 				$paddingTopExists = false;
 			@endphp
@@ -97,7 +113,7 @@
 								<ul class="list-unstyled list-inline no-margin no-padding">
 									<li class="filter-toggle">
 										<a class="">
-											<i class="fas fa-bars"></i> {{ t('Filters') }}
+											<i class="fa-solid fa-list"></i> {{ t('Filters') }}
 										</a>
 									</li>
 									<li>
@@ -105,13 +121,17 @@
 										<div class="dropdown">
 											<a data-bs-toggle="dropdown" class="dropdown-toggle">{{ t('Sort by') }}</a>
 											<ul class="dropdown-menu">
-												@if (isset($orderByOptions) && !empty($orderByOptions))
+												@if (!empty($orderByOptions))
 													@foreach($orderByOptions as $option)
 														@if (data_get($option, 'condition'))
 															@php
 																$optionUrl = request()->fullUrlWithQuery((array)data_get($option, 'query'));
 															@endphp
-															<li><a href="{!! $optionUrl !!}" rel="nofollow">{{ data_get($option, 'label') }}</a></li>
+															<li>
+																<a href="{!! $optionUrl !!}" rel="nofollow">
+																	{{ data_get($option, 'label') }}
+																</a>
+															</li>
 														@endif
 													@endforeach
 												@endif
@@ -127,7 +147,7 @@
 							<div class="tab-filter pb-2">
 								{{-- OrderBy Desktop --}}
 								<select id="orderBy" class="niceselecter select-sort-by small" data-style="btn-select" data-width="auto">
-									@if (isset($orderByOptions) && !empty($orderByOptions))
+									@if (!empty($orderByOptions))
 										@foreach($orderByOptions as $option)
 											@if (data_get($option, 'condition'))
 												@php
@@ -152,23 +172,28 @@
 							</div>
 							<div class="float-end col-md-3 col-sm-4 col-12 text-end text-center-xs listing-view-action">
 								@if (!empty(request()->all()))
-									<a class="clear-all-button text-muted" href="{!! \App\Helpers\UrlGen::searchWithoutQuery() !!}">{{ t('Clear all') }}</a>
+									<a class="clear-all-button text-muted" href="{!! \App\Helpers\UrlGen::searchWithoutQuery() !!}">
+										{{ t('Clear all') }}
+									</a>
 								@endif
 							</div>
 							<div style="clear:both;"></div>
 						</div>
 
 						<div class="posts-wrapper jobs-list">
-							@includeFirst([config('larapen.core.customizedViewPath') . 'search.inc.posts.template.list', 'search.inc.posts.template.list'])
+							@includeFirst([
+								config('larapen.core.customizedViewPath') . 'search.inc.posts.template.list',
+								'search.inc.posts.template.list'
+							])
 						</div>
 						
-						@if (request()->filled('q') && request()->get('q') != '' && data_get($count, '0') > 0)
+						@if (request()->filled('q') && request()->query('q') != '' && data_get($count, '0') > 0)
 							<div class="tab-box save-search-bar text-center">
 								<a id="saveSearch"
-								   data-name="{!! request()->fullUrlWithoutQuery(['_token', 'location']) !!}"
-								   data-count="{{ data_get($count, '0') }}"
+								   data-search-url="{!! request()->fullUrlWithoutQuery(['_token', 'location']) !!}"
+								   data-results-count="{{ data_get($count, '0') }}"
 								>
-									<i class="far fa-bell"></i> {{ t('Save Search') }}
+									<i class="fa-regular fa-bell"></i> {{ t('Save Search') }}
 								</a>
 							</div>
 						@endif
@@ -183,7 +208,10 @@
 		</div>
 		
 		{{-- Advertising --}}
-		@includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.advertising.bottom', 'layouts.inc.advertising.bottom'])
+		@includeFirst([
+			config('larapen.core.customizedViewPath') . 'layouts.inc.advertising.bottom',
+			'layouts.inc.advertising.bottom'
+		])
 		
 		{{-- Promo Post Button --}}
 		@if (!auth()->check())
@@ -193,7 +221,7 @@
 						<h2>{{ t('Looking for a job') }}</h2>
 						<h5>{{ t('Upload your Resume and easily apply to jobs from any device') }}</h5>
 						<a href="{{ \App\Helpers\UrlGen::register() . '?type=2' }}" class="btn btn-border btn-border btn-listing">
-							<i class="fas fa-paperclip"></i> {{ t('Add Your Resume') }}
+							<i class="fa-solid fa-paperclip"></i> {{ t('Add Your Resume') }}
 						</a>
 					</div>
 				</div>
@@ -214,12 +242,12 @@
 		@endif
 		
 		{{-- Show Posts Tags --}}
-		@if (config('settings.list.show_listings_tags'))
-			@if (isset($tags) && !empty($tags))
+		@if (config('settings.listings_list.show_listings_tags'))
+			@if (!empty($tags))
 				<div class="container">
 					<div class="card mb-3">
 						<div class="card-body">
-							<h2 class="card-title"><i class="fas fa-tags"></i> {{ t('Tags') }}:</h2>
+							<h2 class="card-title"><i class="fa-solid fa-tags"></i> {{ t('Tags') }}:</h2>
 							@foreach($tags as $iTag)
 								<span class="d-inline-block border border-inverse bg-light rounded-1 py-1 px-2 my-1 me-1">
 									<a href="{{ \App\Helpers\UrlGen::tag($iTag) }}">
@@ -237,20 +265,58 @@
 
 @section('modal_location')
 	@parent
-	@includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.modal.location', 'layouts.inc.modal.location'])
+	@includeFirst([
+		config('larapen.core.customizedViewPath') . 'layouts.inc.modal.location',
+		'layouts.inc.modal.location'
+	])
 @endsection
 
 @section('after_scripts')
 	<script>
-        $(document).ready(function () {
-			$('#postType a').click(function (e) {
-				e.preventDefault();
-				var goToUrl = $(this).attr('href');
-				redirect(goToUrl);
-			});
-			$('#orderBy').change(function () {
-				var goToUrl = $(this).val();
-				redirect(goToUrl);
+		onDocumentReady((event) => {
+			const postTypeEls = document.querySelectorAll('#postType a');
+			if (postTypeEls.length > 0) {
+				postTypeEls.forEach((element) => {
+					element.addEventListener('click', (event) => {
+						event.preventDefault();
+						
+						const goToUrl = event.target.getAttribute('href');
+						if (goToUrl) {
+							redirect(goToUrl);
+						}
+					});
+				});
+			}
+			
+			{{-- orderBy: HTML Select --}}
+			const orderByEl = document.getElementById('orderBy');
+			if (orderByEl) {
+				orderByEl.addEventListener('change', (event) => {
+					event.preventDefault();
+					
+					const goToUrl = event.target.value;
+					if (goToUrl) {
+						redirect(goToUrl);
+					}
+				});
+			}
+			
+			{{-- orderBy: jQuery Nice Select --}}
+			onDomElementsAdded('.select-sort-by li.option', (elements) => {
+				if (elements.length <= 0) {
+					return false;
+				}
+				
+				elements.forEach((element) => {
+					element.addEventListener('click', (event) => {
+						event.preventDefault();
+						
+						const goToUrl = event.target.dataset.value;
+						if (goToUrl) {
+							redirect(goToUrl);
+						}
+					});
+				});
 			});
 		});
 	</script>

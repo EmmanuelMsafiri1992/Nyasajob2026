@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Models\Country;
@@ -20,7 +35,10 @@ class PaymentMethodObserver
 	{
 		/*
 		// Delete the payments of this PaymentMethod
-		$payments = Payment::withoutGlobalScope(StrictActiveScope::class)->where('payment_method_id', $paymentMethod->id);
+		$payments = Payment::query()
+			->withoutGlobalScope(StrictActiveScope::class)
+			->where('payment_method_id', $paymentMethod->id);
+		
 		if ($payments->count() > 0) {
 			foreach ($payments->cursor() as $payment) {
 				// NOTE: Take account the payment plugins install/uninstall
@@ -58,16 +76,46 @@ class PaymentMethodObserver
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $paymentMethod
+	 * @return void
 	 */
-	private function clearCache($paymentMethod)
+	private function clearCache($paymentMethod): void
 	{
 		try {
+			// Collection
+			$plugins = array_keys((array)config('plugins.installed'));
+			$cachePluginsId = !empty($plugins) ? '.plugins.' . implode(',', $plugins) : '';
+			
 			// Need to be caught (Independently)
-			$countries = Country::withoutGlobalScopes([ActiveScope::class, LocalizedScope::class])->get(['code']);
+			$countries = Country::query()
+				->withoutGlobalScopes([ActiveScope::class, LocalizedScope::class])
+				->get(['code']);
 			
 			if ($countries->count() > 0) {
 				foreach ($countries as $country) {
-					cache()->forget($country->code . '.paymentMethods.all');
+					$cacheId = $country->code . '.paymentMethods.all';
+					if (cache()->has($cacheId)) {
+						cache()->forget($cacheId);
+					}
+					
+					$cacheId = $country->code . '.paymentMethods.all' . $cachePluginsId;
+					if (cache()->has($cacheId)) {
+						cache()->forget($cacheId);
+					}
+				}
+			}
+			
+			// Object
+			if (!empty($paymentMethod->id)) {
+				$cacheId = 'paymentMethod.id.' . $paymentMethod->id;
+				if (cache()->has($cacheId)) {
+					cache()->forget($cacheId);
+				}
+			}
+			
+			if (!empty($paymentMethod->name)) {
+				$cacheId = 'paymentMethod.name.' . $paymentMethod->name;
+				if (cache()->has($cacheId)) {
+					cache()->forget($cacheId);
 				}
 			}
 		} catch (\Throwable $e) {

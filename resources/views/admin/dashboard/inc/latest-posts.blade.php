@@ -5,7 +5,7 @@
 			<div class="d-md-flex">
 				<div>
 					<h4 class="card-title fw-bold">
-						<span class="lstick d-inline-block align-middle"></span>{{ trans('admin.Latest Ads') }}
+						<span class="lstick d-inline-block align-middle"></span>{{ trans('admin.Latest Listings') }}
 					</h4>
 				</div>
 				<div class="ms-auto">
@@ -45,7 +45,7 @@
 								</td>
 								<td class="td-nowrap">
 									<div class="sparkbar" data-color="#00a65a" data-height="20">
-										{{ \App\Helpers\Date::format($post->created_at, 'datetime') }}
+										{!! \App\Helpers\Date::format($post->created_at, 'datetime') !!}
 									</div>
 								</td>
 							</tr>

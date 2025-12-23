@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Helpers\Files\Storage\StorageDisk;
@@ -8,7 +23,6 @@ use App\Models\Post;
 use App\Models\SubAdmin1;
 use App\Models\SubAdmin2;
 use Illuminate\Support\Facades\File;
-use Prologue\Alerts\Facades\Alert;
 
 class CountryObserver
 {
@@ -25,9 +39,9 @@ class CountryObserver
 		
 		// Cannot delete the current country when the Domain Mapping plugin is installed
 		if (config('plugins.domainmapping.installed')) {
-			if (strtolower($country->code) == strtolower(config('settings.geo_location.default_country_code'))) {
+			if (strtolower($country->code) == strtolower(config('settings.localization.default_country_code'))) {
 				$msg = trans('admin.Cannot delete the current country when the Domain Mapping plugin is installed');
-				Alert::error($msg)->flash();
+				notification($msg, 'error');
 				
 				return false;
 			}
@@ -36,7 +50,7 @@ class CountryObserver
 		// Remove background_image files (if exists)
 		if (!empty($country->background_image)) {
 			if (
-				!str_contains($country->background_image, config('larapen.core.picture.default'))
+				!str_contains($country->background_image, config('larapen.media.picture'))
 				&& $disk->exists($country->background_image)
 			) {
 				$disk->delete($country->background_image);
@@ -44,7 +58,7 @@ class CountryObserver
 		}
 		
 		// Delete all SubAdmin1
-		$admin1s = SubAdmin1::countryOf($country->code);
+		$admin1s = SubAdmin1::inCountry($country->code);
 		if ($admin1s->count() > 0) {
 			foreach ($admin1s->cursor() as $admin1) {
 				$admin1->delete();
@@ -52,7 +66,7 @@ class CountryObserver
 		}
 		
 		// Delete all SubAdmin2
-		$admin2s = SubAdmin2::countryOf($country->code);
+		$admin2s = SubAdmin2::inCountry($country->code);
 		if ($admin2s->count() > 0) {
 			foreach ($admin2s->cursor() as $admin2) {
 				$admin2->delete();
@@ -60,7 +74,7 @@ class CountryObserver
 		}
 		
 		// Delete all Cities
-		$cities = City::countryOf($country->code);
+		$cities = City::inCountry($country->code);
 		if ($cities->count() > 0) {
 			foreach ($cities->cursor() as $city) {
 				$city->delete();
@@ -68,7 +82,7 @@ class CountryObserver
 		}
 		
 		// Delete all Posts
-		$posts = Post::countryOf($country->code);
+		$posts = Post::inCountry($country->code);
 		if ($posts->count() > 0) {
 			foreach ($posts->cursor() as $post) {
 				$post->delete();
@@ -122,8 +136,9 @@ class CountryObserver
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $country
+	 * @return void
 	 */
-	private function clearCache($country)
+	private function clearCache($country): void
 	{
 		try {
 			cache()->flush();
@@ -133,8 +148,10 @@ class CountryObserver
 	
 	/**
 	 * Remove the robots.txt file (It will be re-generated automatically)
+	 *
+	 * @return void
 	 */
-	private function removeRobotsTxtFile()
+	private function removeRobotsTxtFile(): void
 	{
 		$robotsFile = public_path('robots.txt');
 		if (File::exists($robotsFile)) {

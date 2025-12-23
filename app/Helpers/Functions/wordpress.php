@@ -354,7 +354,7 @@ function remove_accents(?string $string): ?string
         );
         
         // Used for locale-specific rules
-        $locale = detectLocale();
+        $locale = removeLocaleCodeset(detectLocale());
         
         if ('de_DE' == $locale || 'de_DE_formal' == $locale) {
             $chars[chr(195) . chr(132)] = 'Ae';

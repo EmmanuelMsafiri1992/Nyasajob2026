@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Files;
 
 use App\Helpers\Files\Storage\StorageDisk;
@@ -8,7 +23,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
-use Prologue\Alerts\Facades\Alert;
 use Illuminate\Http\File as HttpFile;
 
 class Upload
@@ -41,7 +55,7 @@ class Upload
 			}
 			
 			// Never save in DB the default fallback picture path
-			if (str_contains($file, config('larapen.core.picture.default'))) {
+			if (str_contains($file, config('larapen.media.picture'))) {
 				$file = null;
 			}
 			
@@ -67,7 +81,7 @@ class Upload
 			
 			// Param(s)
 			if (is_string($param) || empty($param)) {
-				$type = (!empty($type)) ? $type . '_' : '';
+				$type = !empty($param) ? $param . '_' : '';
 				
 				$width = (int)config('settings.upload.img_resize_' . $type . 'width', 1000);
 				$height = (int)config('settings.upload.img_resize_' . $type . 'height', 1000);
@@ -92,7 +106,7 @@ class Upload
 			$filename = $filename . '.' . $extension;
 			
 			// Fix the Image Orientation
-			if (exifExtIsEnabled()) {
+			if (isExifExtensionEnabled()) {
 				$image = $image->orientate();
 			}
 			
@@ -195,18 +209,16 @@ class Upload
 	 */
 	public static function fromBase64(?string $base64File, bool $test = true): bool|UploadedFile
 	{
-		if (
-			empty($base64File)
-			|| !is_string($base64File)
-			|| !str_starts_with($base64File, 'data:image')
-		) {
+		$isBase64File = (!empty($base64File) && str_starts_with($base64File, 'data:image'));
+		
+		if (!$isBase64File) {
 			return false;
 		}
 		
 		// Get file extension
 		$matches = [];
 		preg_match('#data:image/([^;]+);base64#', $base64File, $matches);
-		$extension = (isset($matches[1]) && !empty($matches[1])) ? $matches[1] : 'png';
+		$extension = !empty($matches[1]) ? $matches[1] : 'png';
 		
 		// Get file data base64 string
 		// $fileData = preg_replace('#^data:image/\w+;base64,#i', '', $base64File);
@@ -260,11 +272,7 @@ class Upload
 	private static function showError(\Throwable $e)
 	{
 		if (!isFromApi()) {
-			if (isFromAdminPanel()) {
-				Alert::error($e->getMessage())->flash();
-			} else {
-				flash($e->getMessage())->error();
-			}
+			notification($e->getMessage(), 'error');
 		} else {
 			abort(500, $e->getMessage());
 		}

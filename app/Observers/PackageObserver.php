@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Models\Package;
@@ -34,6 +49,7 @@ class PackageObserver
 	{
 		if ($package->recommended == 1) {
 			$affected = DB::table($package->getTable())
+				->where('type', $package->type)
 				->where('id', '!=', $package->id)
 				->update(['recommended' => 0]);
 		}
@@ -67,8 +83,9 @@ class PackageObserver
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $package
+	 * @return void
 	 */
-	private function clearCache($package)
+	private function clearCache($package): void
 	{
 		try {
 			cache()->flush();

@@ -1,5 +1,18 @@
 @charset "utf-8";
-
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 /*
 http://www.colorpicker.com/
@@ -17,7 +30,7 @@ SteelBlue
 
 /*
 Base Theme Color || If you want to replace a specific known color
-    
+
 @dividerColor:       #e6e6e6;
 
 @linkColor:          #369;
@@ -96,12 +109,23 @@ body,
 		font-size: 1.05rem;
 	}
 }
+/* dropdown-menu */
+#navbarsDefault .dropdown-menu {
+	min-width: 225px;
+}
+
 /* dropdown-items-links */
 ul.dropdown-menu.user-menu > li a,
 li.lang-menu ul.dropdown-menu > li a {
 	font-family: "Roboto", Helvetica, Arial, sans-serif;
 	font-size: .84rem;
 	font-weight: 400;
+}
+ul.dropdown-menu.user-menu > li a.btn,
+li.lang-menu ul.dropdown-menu > li a.btn {
+	font-family: "Roboto", Helvetica, Arial, sans-serif !important;
+	font-size: .84rem !important;
+	font-weight: 400 !important;
 }
 /* intro-titles */
 h1.intro-title {
@@ -149,7 +173,7 @@ ul li, ol li {
 	padding: 3px 0 3px 0;
 }
 
-#wrapper {
+html:not([theme="dark"]) #wrapper {
 	padding-top: 84px;
 	background-color: #FFFFFF;
 }
@@ -261,9 +285,11 @@ img {
 	background-color: #fafafa;
 }
 
-.f-category {
-	border-color: #f5f5f5 #f5f5f5 #f5f5f5 -moz-use-text-color;
+html:not([theme="dark"]) .f-category {
+	/* border-color: #f5f5f5 #f5f5f5 #f5f5f5 -moz-use-text-color; */
 	border: 1px solid #f5f5f5;
+}
+.f-category {
 	padding: 25px 15px;
 }
 
@@ -271,7 +297,7 @@ img {
 	height: 60px;
 }
 
-.content-box {
+html:not([theme="dark"]) .content-box {
 	box-shadow: none;
 	border: 1px solid #ddd; /* #ebebeb */
 }
@@ -492,23 +518,20 @@ button.btn-search {
 	color: #FFFFFF;
 }
 
-.page-info-lite {
+html:not([theme="dark"]) .page-info-lite {
 	background-color: #fafafa;
 	padding: 5px;
 }
 
-.page-info-lite h5 {
+html:not([theme="dark"]) .page-info-lite h5 {
 	color: #999999;
 }
 
-.page-info-lite .iconbox-wrap-icon .icon,
-.page-info-lite .iconbox-wrap-icon .fas,
-.page-info-lite .iconbox-wrap-icon .far,
-.page-info-lite .iconbox-wrap-icon .fab {
+html:not([theme="dark"]) .page-info-lite .iconbox-wrap-icon,
+html:not([theme="dark"]) .page-info-lite .iconbox-wrap-icon i {
 	color: #999999;
 }
-
-.page-info-lite .iconbox-wrap-text {
+html:not([theme="dark"]) .page-info-lite .iconbox-wrap-text {
 	color: #999999;
 }
 
@@ -1411,7 +1434,7 @@ aside .inner-box.enable-long-words {
 }
 
 /* Remove inner-box shadow */
-.inner-box {
+html:not([theme="dark"]) .inner-box {
 	border-style: solid;
 	border-width: 1px;
 	border-color: #e2e2e2;
@@ -1605,6 +1628,12 @@ li.lang-menu ul.dropdown-menu > li {
 	margin: 0;
 	padding: 2px;
 }
+.dropdown-menu > li > a.btn {
+	padding: 5px !important;
+	height: 30px !important;
+	width: 200px !important;
+	margin: auto;
+}
 @media screen and (max-width: 767px) {
 	ul.dropdown-menu.user-menu,
 	li.lang-menu ul.dropdown-menu {
@@ -1634,6 +1663,29 @@ li.lang-menu ul.dropdown-menu > li {
 .form-group .control-label.is-invalid,
 .form-group .control-label.was-validated {
 	color: #dc3545;
+}
+
+div:not(.input-group) > .form-control.is-invalid,
+div:not(.input-group) > .form-control.was-validated,
+.select2-container--default.is-invalid .select2-selection--multiple.is-invalid {
+	border-color: #dc3545;
+}
+
+div:not(.input-group) > .form-control.is-invalid:focus,
+div:not(.input-group) > .form-control.was-validated:focus,
+.select2-container--default.is-invalid.select2-container--focus {
+	border-color: #dc3545;
+	box-shadow: 0 1px 0 #dc3545, 0 -1px 0 #dc3545, -1px 0 0 #dc3545, 1px 0 0 #dc3545;
+}
+
+.input-group.is-invalid,
+.input-group.was-validated {
+	border: 1px solid #dc3545;
+	border-radius: 6px;
+}
+.input-group.is-invalid:focus-within,
+.input-group.was-validated:focus-within {
+	box-shadow: 0 1px 0 #dc3545, 0 -1px 0 #dc3545, -1px 0 0 #dc3545, 1px 0 0 #dc3545;
 }
 
 .is-invalid .select2-selection {
@@ -1712,6 +1764,10 @@ h1.p-price-tag span {
 	min-height: 38px;
 	padding: .5rem .75rem;
 }
+html[theme="dark"] #catsContainer {
+	color: var(--text-color-meta);
+	background-color: var(--input-bg);
+}
 
 /* Show/Hide password in forms */
 .show-pwd {
@@ -1778,21 +1834,21 @@ pre {
 	width: 100% !important;
 }
 
-#navbarsDefault .dropdown-menu {
-	min-width: 190px;
-}
-
 /* Bootstrap Dropdown With Hover */
 .open-on-hover.dropdown:hover .dropdown-menu {
 	display: block;
 	margin-top: 0; /* remove the gap so it doesn't close */
 }
 
+.dropdown-item.active, .dropdown-item:active {
+	background-color: transparent;
+}
+
 /* intl-tel-input : Full width input */
 .iti {
 	width: 100%;
 }
-/* intl-tel-input : Bootstrap input-group*/
+/* intl-tel-input : Bootstrap input-group */
 .input-group .iti .form-control {
 	border-radius: 6px 0 0 6px;
 }

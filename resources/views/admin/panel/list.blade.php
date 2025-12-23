@@ -4,11 +4,11 @@
 	$bulkActionAllowed = (
 		isset($xPanel)
 		&& (
-			$xPanel->hasButton('bulk_deletion_btn')
-			|| $xPanel->hasButton('bulk_activation_btn')
-			|| $xPanel->hasButton('bulk_deactivation_btn')
-			|| $xPanel->hasButton('bulk_approval_btn')
-			|| $xPanel->hasButton('bulk_disapproval_btn')
+			$xPanel->hasButton('bulk_deletion_button')
+			|| $xPanel->hasButton('bulk_activation_button')
+			|| $xPanel->hasButton('bulk_deactivation_button')
+			|| $xPanel->hasButton('bulk_approval_button')
+			|| $xPanel->hasButton('bulk_disapproval_button')
 		)
 	);
 @endphp
@@ -38,7 +38,7 @@
 			@if (isTranslatableModel($xPanel->model))
 			<div class="card mb-0 rounded">
 				<div class="card-body">
-					<h3 class="card-title"><i class="fa fa-question-circle"></i> {{ trans('admin.Help') }}</h3>
+					<h3 class="card-title"><i class="fa-regular fa-circle-question"></i> {{ trans('admin.Help') }}</h3>
 					<p class="card-text">
 						{!! trans('admin.help_translatable_table') !!}
 						@if (config('larapen.admin.show_translatable_field_icon'))
@@ -192,8 +192,7 @@
     @endif
 
     <script type="text/javascript">
-        jQuery(document).ready(function($) {
-	
+	    onDocumentReady((event) => {
 			/* DEBUG */
 			/* If don't want your end users to see the alert() message during error. */
 			/* $.fn.dataTable.ext.errMode = 'throw'; */
@@ -219,9 +218,16 @@
                 }
             @endif
 			
+	        @php
+		        $defaultPageLength = $xPanel->getDefaultPageLength();
+				$defaultPageLength = \Illuminate\Support\Number::clamp($defaultPageLength, min: 1, max: 100);
+				$lengthArray = generateNumberRange(min: 10, max: 100, interval: 10,requiredValue: $defaultPageLength);
+				$jsLengthArray = collect($lengthArray)->toJson();
+	        @endphp
+			
             var table = $("#crudTable").DataTable({
-				"pageLength": {{ $xPanel->getDefaultPageLength() }},
-				"lengthMenu": [[10, 25, 50, 100, 250, 500], [10, 25, 50, 100, 250, 500]],
+				"pageLength": {{ $defaultPageLength }},
+				"lengthMenu": [{{ $jsLengthArray }}, {{ $jsLengthArray }}],
 				/* Disable initial sort */
 				"aaSorting": [],
 				"language": {
@@ -254,7 +260,16 @@
 					"serverSide": true,
 					"ajax": {
 						"url": "{{ url($xPanel->route . '/search') . '?' . request()->getQueryString() }}",
-						"type": "POST"
+						"type": "POST",
+						beforeSend: function () {
+							/* Loading (Show) */
+							let loadingDataEl = $('#loadingData');
+							loadingDataEl.busyLoad('hide');
+							loadingDataEl.busyLoad('show', {
+								text: "{{ t('loading_wd') }}",
+								custom: createCustomSpinnerEl()
+							});
+						}
 					},
 				@endif
 			
@@ -297,23 +312,17 @@
 				},
 	
 				/* Called before the DataTable redraw the table */
-				preDrawCallback : function (settings) {
-					let loadingDataEl = $('#loadingData');
-					loadingDataEl.busyLoad('hide');
-					loadingDataEl.busyLoad('show', {
-						text: "{{ t('loading_wd') }}",
-						custom: createCustomSpinnerEl()
-					});
-				},
+				preDrawCallback : function (settings) {},
 			
 				/* Other initialisation options */
 				drawCallback : function() {
+					/* Loading (Hide) */
 					let loadingDataEl = $('#loadingData');
 					loadingDataEl.busyLoad('hide');
 					
 					/* Page Info */
-					var info = this.api().page.info();
-					var textInfo = "{{ trans('admin.info') }}";
+					let info = this.api().page.info();
+					let textInfo = "{{ trans('admin.info') }}";
 					textInfo = textInfo.replace('_START_', (info.recordsTotal > 0) ? (info.start + 1) : 0);
 					textInfo = textInfo.replace('_END_', info.end);
 					textInfo = textInfo.replace('_TOTAL_', addThousandsSeparator(info.recordsTotal, '{{ trans('admin.thousands') }}'));
@@ -340,7 +349,7 @@
             @if ($xPanel->exportButtons)
 				/* Move the datatable buttons in the top-right corner and make them smaller */
 				table.buttons().each(function(button) {
-					if (button.node.className.indexOf('buttons-columnVisibility') == -1) {
+					if (button.node.className.indexOf('buttons-columnVisibility') === -1) {
 						button.node.className = button.node.className + " btn-sm";
 					}
 				});
@@ -348,7 +357,7 @@
             @endif
 			
             $.ajaxPrefilter(function(options, originalOptions, xhr) {
-                var token = $('meta[name="csrf_token"]').attr('content');
+	            let token = $('meta[name="csrf_token"]').attr('content');
 
                 if (token) {
                     return xhr.setRequestHeader('X-XSRF-TOKEN', token);
@@ -376,7 +385,7 @@
 				deleteBtnEl.click(function(e) {
                     e.preventDefault();
 					
-					var jsThis = this;
+					let jsThis = this;
 					
 					Swal.fire({
 						position: 'top',
@@ -432,7 +441,7 @@
 					table.ajax.reload(null, false);
 				});
 				ajax.fail(function(xhr) {
-					let message = getJqueryAjaxError(xhr);
+					let message = getErrorMessageFromXhr(xhr);
 					if (message !== null) {
 						pnAlert(message, 'error');
 					}
@@ -471,7 +480,7 @@
 							if (isDemoDomain()) {
 								/* Delete the row from the table */
 								$.each(selectedItems, function() {
-									if (clickedEl.attr('name') == 'deletion') {
+									if (clickedEl.attr('name') === 'deletion') {
 										$(this).closest('tr').remove();
 									}
 								});
@@ -540,7 +549,7 @@
 					
 					/* Delete the row from the table */
 					$.each(selectedItems, function() {
-						if (clickedEl.attr('name') == 'deletion') {
+						if (clickedEl.attr('name') === 'deletion') {
 							$(this).parentsUntil('tr').parent().remove();
 						}
 					});
@@ -551,7 +560,7 @@
 					return false;
 				});
 				ajax.fail(function(xhr) {
-					let message = getJqueryAjaxError(xhr);
+					let message = getErrorMessageFromXhr(xhr);
 					if (message !== null) {
 						pnAlert(message, 'error');
 					}
@@ -564,9 +573,9 @@
 				function registerDetailsRowButtonAction() {
 					/* Add event listener for opening and closing details */
 					$('#crudTable tbody').on('click', 'td .details-row-button', function() {
-						var tr = $(this).closest('tr');
-						var btn = $(this);
-						var row = table.row( tr );
+						let tr = $(this).closest('tr');
+						let btn = $(this);
+						let row = table.row( tr );
 	
 						if (row.child.isShown()) {
 							
@@ -617,10 +626,10 @@
 		function addThousandsSeparator(nStr, separator = ',') {
 			nStr += '';
 			nStr = nStr.replace(separator, '');
-			var x = nStr.split('.');
-			var x1 = x[0];
-			var x2 = x.length > 1 ? '.' + x[1] : '';
-			var rgx = /(\d+)(\d{3})/;
+			let x = nStr.split('.');
+			let x1 = x[0];
+			let x2 = x.length > 1 ? '.' + x[1] : '';
+			let rgx = /(\d+)(\d{3})/;
 			while (rgx.test(x1)) {
 				x1 = x1.replace(rgx, '$1' + separator + '$2');
 			}

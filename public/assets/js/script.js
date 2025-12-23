@@ -1,75 +1,46 @@
-/* Prevent errors, If these variables are missing. */
+/* Prevent errors if these variables are missing. */
 
 /* Categories Parameters */
 if (typeof maxSubCats === 'undefined') {
 	var maxSubCats = 3;
 }
 
-var headerHeight = $('.navbar-site').height();
-var wrapper = $('#wrapper');
-
 // Modernizr touch event detect
-function is_touch_device() {
+function isFromTouchDevice() {
 	return 'ontouchstart' in window;
 }
 
-var isTouchDevice = is_touch_device();
+var isTouchDevice = isFromTouchDevice();
 
 /* console.log('is touch device : ',isTouchDevice); */
 
-$(document).ready(function () {
-	/*
-	$(function () {
-		$('[data-bs-toggle="tooltip"]').tooltip()
-	});
+onDocumentReady((event) => {
 	
-	$(window).on('load', function() {
-		$('[data-bs-toggle="popover"]').popover();
-	});
-	*/
+	/* Enable tooltips everywhere */
+	initElementTooltips(getHtmlElement()); /* Default trigger: 'hover focus' */
+	initElementTooltips(getHtmlElement(), {trigger: 'hover'}, 'tooltipHover');
 	
-	/* tooltips */
-	/* Enable tooltips everywhere (Default trigger: 'hover focus') */
-	let tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-	let tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-		return new bootstrap.Tooltip(tooltipTriggerEl);
-	});
-	
-	/* Enable tooltips everywhere (Default trigger: 'hover') */
-	let tooltipHoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltipHover"]'));
-	let tooltipHoverList = tooltipHoverTriggerList.map(function (tooltipTriggerEl) {
-		return new bootstrap.Tooltip(tooltipTriggerEl, {
-			trigger : 'hover'
-		});
-	});
-	
-	/* popper.js */
-	/* Enable popovers everywhere */
-	let popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-	let popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
-		return new bootstrap.Popover(popoverTriggerEl, {
-			html: true
-		});
-	});
+	/* Enable poppers everywhere */
+	initElementPopovers(getHtmlElement(), {html: true});
 	
 	/* Change a tooltip size in Bootstrap 4.x */
-	$('#locSearch').on('mouseover mouseenter mouseleave mousemove', function () {
-		$('.tooltip-inner').css({"width": "300px", "max-width": "300px"});
-	});
-	
-	
-	var navbarSite = $('.navbar-site');
-	
-	
-	/* Get Page Direction */
-	var rtlIsEnabled = false;
-	var dir = $('html').attr('dir');
-	if (dir === 'rtl') {
-		rtlIsEnabled = true;
+	const locSearchEl = document.getElementById('locSearch');
+	if (locSearchEl) {
+		const tooltipEvents = ['mouseover', 'mouseenter', 'mouseleave', 'mousemove'];
+		tooltipEvents.forEach((event) => {
+			locSearchEl.addEventListener(event, applyTooltipStyles);
+		});
 	}
 	
+	/* Get Page Direction */
+	let htmlEl = getHtmlElement();
+	let isRTLEnabled = (htmlEl.getAttribute('dir') === 'rtl');
 	
 	/* SET HEADER HEIGHT AS PADDING-TOP to WRAPPER */
+	
+	let wrapper = $('#wrapper');
+	let navbarSite = $('.navbar-site');
+	let headerHeight = navbarSite.height();
 	
 	function setWrapperHeight() {
 		wrapper.css('padding-top', headerHeight + 'px');
@@ -80,10 +51,10 @@ $(document).ready(function () {
 	/* ON SCROLL FADE OUT */
 	
 	function fadeOnScroll(target) {
-		var target = $('' + target + ''),
-			targetHeight = target.outerHeight();
+		let targetEl = $('' + target + ''),
+			targetElHeight = targetEl.outerHeight();
 		$(document).scroll(function () {
-			var scrollPercent = (targetHeight - window.scrollY) / targetHeight;
+			let scrollPercent = (targetElHeight - window.scrollY) / targetElHeight;
 			scrollPercent >= 0 && (target.css("background-color", "rgba(0,0,0," + (1.1 - scrollPercent) + ")"))
 		});
 	}
@@ -103,37 +74,11 @@ $(document).ready(function () {
 		thisEl.parent('li').addClass('active');
 	});
 	
-	$("#ajaxTabs li > a").click(function () {
-		
-		$("#allAds").empty().append("<div id='loading text-center'> <br> <img class='center-block' src='images/loading.gif' alt='Loading' /> <br> </div>");
-		$("#ajaxTabs li").removeClass('active');
-		$(this).parent('li').addClass('active');
-		$.ajax({
-			url: this.href,
-			success: function (html) {
-				$("#allAds").empty().append(html);
-				$('.tooltipHere').tooltip('hide');
-			}
-		});
-		return false;
-	});
-	
-	urls = $('#ajaxTabs li:first-child a').attr("href");
-	
-	$("#allAds").empty().append("<div id='loading text-center'> <br> <img class='center-block' src='images/loading.gif' alt='Loading' /> <br>  </div>");
-	$.ajax({
-		url: urls,
-		success: function (html) {
-			$("#allAds").empty().append(html);
-			$('.tooltipHere').tooltip('hide');
-			
-			/* default grid view class invoke into ajax content (product item) */
-			$(function () {
-				$('.hasGridView .item-list').addClass('make-grid');
-			});
-		}
-	});
-	
+	/*
+	 * IMPORTANT: Don't use this example ajax tab in production; this code is demo purpose.
+	 * IMPORTANT: Don't use this example ajax tab in production; this code is demo purpose.
+	 * ...
+	 */
 	
 	/*==================================
 	 List view clickable || CATEGORY
@@ -163,36 +108,29 @@ $(document).ready(function () {
 	 Global Plugins ||
 	 ==================================*/
 	
-	$('.long-list').hideMaxListItems({
-		'max': 8,
-		'speed': 500,
-		'moreText': langLayout.hideMaxListItems.moreText + ' ([COUNT])',
-		'lessText': langLayout.hideMaxListItems.lessText
+	hideMaxListItems('.long-list', {
+		max: 8,
+		speed: 500,
+		moreText: langLayout.hideMaxListItems.moreText + ' ([COUNT])',
+		lessText: langLayout.hideMaxListItems.lessText
 	});
-	
-	$('.long-list-user').hideMaxListItems({
-		'max': 12,
-		'speed': 500,
-		'moreText': langLayout.hideMaxListItems.moreText + ' ([COUNT])',
-		'lessText': langLayout.hideMaxListItems.lessText
+	hideMaxListItems('.long-list-user', {
+		max: 12,
+		speed: 500,
+		moreText: langLayout.hideMaxListItems.moreText + ' ([COUNT])',
+		lessText: langLayout.hideMaxListItems.lessText
 	});
-	
-	$('.long-list-home').hideMaxListItems({
-		'max': maxSubCats,
-		'speed': 500,
-		'moreText': langLayout.hideMaxListItems.moreText + ' ([COUNT])',
-		'lessText': langLayout.hideMaxListItems.lessText
+	hideMaxListItems('.long-list-home', {
+		max: maxSubCats,
+		speed: 500,
+		moreText: langLayout.hideMaxListItems.moreText + ' ([COUNT])',
+		lessText: langLayout.hideMaxListItems.lessText
 	});
 	
 	/* Bootstrap Collapse + jQuery hideMaxListItem fix on mobile */
 	$('.btn-cat-collapsed').click(function () {
 		var targetSelector = $(this).data('target');
 		var isExpanded = $(this).attr('aria-expanded');
-		
-		/*
-		console.log(targetSelector);
-		console.log(isExpanded);
-		*/
 		
 		if (typeof isExpanded === 'undefined') {
 			return false;
@@ -206,8 +144,6 @@ $(document).ready(function () {
 			$('.cat-list ' + targetSelector).next('.maxlist-more').show();
 		}
 	});
-	
-	// $("select.selecter").niceSelect({ /* custom scroll select plugin */ });
 	
 	$(".niceselecter").niceSelect({ /* category list Short by */
 		// customClass: "select-sort-by"
@@ -225,7 +161,7 @@ $(document).ready(function () {
 	
 	
 	/*=======================================================================================
-	 cat-collapse Hmepage Category Responsive view
+	 cat-collapse Homepage Category Responsive view
 	 =======================================================================================*/
 	
 	var catCollapse = $('.cat-collapse');
@@ -272,7 +208,7 @@ $(document).ready(function () {
 	var sidebarDirection = {};
 	var sidebarDirectionClose = {};
 	
-	if (rtlIsEnabled) {
+	if (isRTLEnabled) {
 		sidebarDirection = {right: '-251px'};
 		sidebarDirectionClose = {right: '0'};
 	} else {
@@ -294,55 +230,15 @@ $(document).ready(function () {
 		$('.menu-overly-mask').removeClass('is-visible');
 	});
 	
-	
 	$(document).on('click', '.closeFilter', function () {
 		$(".mobile-filter-sidebar").animate(sidebarDirection, 250, "linear", function () {
 		});
 		$('.menu-overly-mask').removeClass('is-visible');
 	});
 	
-	/*
-	$(".filter-toggle").click(function () {
-		$('.mobile-filter-sidebar').prepend("<div class='closeFilter'>X</div>");
-		if (rtlIsEnabled) {
-			$(".mobile-filter-sidebar").animate({"right": "0"}, 250, "linear", function () {
-			});
-		} else {
-			$(".mobile-filter-sidebar").animate({"left": "0"}, 250, "linear", function () {
-			});
-		}
-		$('.menu-overly-mask').addClass('is-visible');
-	});
-
-	$(".menu-overly-mask").click(function () {
-		if (rtlIsEnabled) {
-			$(".mobile-filter-sidebar").animate({"right": "-251px"}, 250, "linear", function () {
-			});
-		} else {
-			$(".mobile-filter-sidebar").animate({"left": "-251px"}, 250, "linear", function () {
-			});
-		}
-		$('.menu-overly-mask').removeClass('is-visible');
-	});
-
-
-	$(document).on('click', '.closeFilter', function () {
-		if (rtlIsEnabled) {
-			$(".mobile-filter-sidebar").animate({"right": "-251px"}, 250, "linear", function () {
-			});
-		} else {
-			$(".mobile-filter-sidebar").animate({"left": "-251px"}, 250, "linear", function () {
-			});
-		}
-		$('.menu-overly-mask').removeClass('is-visible');
-	});
-	*/
-	
-	
 	/* cityName will replace with selected location/area from location modal */
 	
 	$('#browseLocations').on('shown.bs.modal', function (e) {
-		/* alert('Modal is successfully shown!'); */
 		$("ul.list-link li a").click(function () {
 			$('ul.list-link li a').removeClass('active');
 			$(this).addClass('active');
@@ -354,7 +250,6 @@ $(document).ready(function () {
 	$("#checkAll").click(function () {
 		$('.add-img-selector input:checkbox').not(this).prop('checked', this.checked);
 	});
-	
 	
 	var stickyScroller = function () {
 		var intialscroll = 0;
@@ -395,20 +290,24 @@ $(document).ready(function () {
 	/* Check 'assets/js/app/messenger.js' */
 	
 	/* Check New Messages */
+	/* 60000 = 60 seconds (Timer) */
 	if (typeof timerNewMessagesChecking !== 'undefined') {
 		checkNewMessages();
 		if (timerNewMessagesChecking > 0) {
-			setInterval(function () {
-				checkNewMessages();
-				/* 60000 = 60 seconds (Timer) */
-			}, timerNewMessagesChecking);
+			setInterval(() => checkNewMessages(), timerNewMessagesChecking);
 		}
 	}
 	
-	/* Show/hide password in forms */
-	$('.eyeOfPwd').click(function (e) {
-		showPwd();
-	});
+	/* Toggle (Show|hide) Password Field Value */
+	const togglePasswordLinkEls = document.querySelectorAll('.toggle-password-link');
+	if (togglePasswordLinkEls.length > 0) {
+		togglePasswordLinkEls.forEach((element) => {
+			element.addEventListener('click', (e) => {
+				e.preventDefault();
+				togglePassword(e.target);
+			});
+		});
+	}
 	
 	/* Data loading-mask pre-configuration */
 	$.busyLoadSetup({
@@ -438,6 +337,19 @@ function createCustomSpinnerEl() {
 }
 
 /**
+ * Change a tooltip size in Bootstrap 4.x
+ */
+function applyTooltipStyles() {
+	const tooltipInnerEls = document.querySelectorAll('.tooltip-inner');
+	if (tooltipInnerEls.length > 0) {
+		tooltipInnerEls.forEach((element) => {
+			element.style.width = "300px";
+			element.style.maxWidth = "300px";
+		});
+	}
+}
+
+/**
  * Set Country Phone Code
  * @param countryCode
  * @param countries
@@ -447,7 +359,10 @@ function setCountryPhoneCode(countryCode, countries) {
 	if (typeof countryCode === "undefined" || typeof countries === "undefined") return false;
 	if (typeof countries[countryCode] === "undefined") return false;
 	
-	$('#phoneCountry').html(countries[countryCode]['phone']);
+	const phoneCountryEl = document.getElementById('phoneCountry');
+	if (phoneCountryEl) {
+		phoneCountryEl.innerHTML = countries[countryCode]['phone'];
+	}
 }
 
 /**
@@ -456,65 +371,45 @@ function setCountryPhoneCode(countryCode, countries) {
  * @returns {boolean}
  */
 function setUserType(userTypeId) {
-	let companyContainerEl = $('#companyBloc');
-	let resumeContainerEl = $('#resumeBloc');
+	let companyElSelector = '#companyBloc';
+	let resumeElSelector = '#resumeBloc';
 	
-	companyContainerEl.hide();
-	resumeContainerEl.hide();
+	setElementsVisibility("hide", companyElSelector);
+	setElementsVisibility("hide", resumeElSelector);
 	
-	if (typeof userTypeId === "undefined") {
-		return false;
+	let coNameDivEl;
+	const coNameEl = document.querySelector('input[name="company[name]"]');
+	if (coNameEl) {
+		coNameEl.classList.remove("is-invalid");
+		coNameDivEl = coNameEl.closest("div");
+		if (coNameDivEl) {
+			coNameDivEl.classList.remove("required");
+		}
 	}
 	
-	/* Company */
-	if (userTypeId == 1) {
-		companyContainerEl.show();
+	let coDescriptionDivEl;
+	const coDescriptionEl = document.querySelector('textarea[name="company[description]"]');
+	if (coDescriptionEl) {
+		coDescriptionEl.classList.remove("is-invalid");
+		coDescriptionDivEl = coDescriptionEl.closest("div");
+		if (coDescriptionDivEl) {
+			coDescriptionDivEl.classList.remove("required");
+		}
 	}
 	
-	/* Candidate */
-	if (userTypeId == 2) {
-		resumeContainerEl.show();
-	}
-}
-
-/**
- * Show price & Payment Methods
- * @param packagePrice
- * @param packageCurrencySymbol
- * @param packageCurrencyInLeft
- */
-function showAmount(packagePrice, packageCurrencySymbol, packageCurrencyInLeft) {
-	/* Show Amount */
-	$('.payable-amount').html(packagePrice);
-	
-	/* Show Amount Currency */
-	$('.amount-currency').html(packageCurrencySymbol);
-	if (packageCurrencyInLeft == 1) {
-		$('.amount-currency.currency-in-left').show();
-		$('.amount-currency.currency-in-right').hide();
-	} else {
-		$('.amount-currency.currency-in-left').hide();
-		$('.amount-currency.currency-in-right').show();
+	if (userTypeId === 1 || userTypeId === '1') {
+		setElementsVisibility("show", companyElSelector);
+		if (coNameDivEl) {
+			coNameDivEl.classList.add("required");
+		}
+		if (coDescriptionDivEl) {
+			coDescriptionDivEl.classList.add("required");
+		}
 	}
 	
-	/* If price <= 0 hide the Payment Method selection */
-	if (packagePrice <= 0) {
-		$('#packagesTable tbody tr:last').hide();
-	} else {
-		$('#packagesTable tbody tr:last').show();
+	if (userTypeId === 2 || userTypeId === '2') {
+		setElementsVisibility("show", resumeElSelector);
 	}
-}
-
-/**
- * Get the Selected Package Price
- * @param selectedPackage
- * @returns {*|jQuery}
- */
-function getPackagePrice(selectedPackage) {
-	let price = $('#price-' + selectedPackage + ' .price-int').html();
-	price = parseFloat(price);
-	
-	return price;
 }
 
 /**
@@ -522,35 +417,47 @@ function getPackagePrice(selectedPackage) {
  * @param companyId
  */
 function getCompany(companyId) {
+	const logoFieldEl = document.getElementById('logoField');
+	const logoFieldElValue = document.getElementById('logoFieldValue');
+	const companyFieldsEl = document.getElementById('companyFields');
+	const companyIdEl = document.getElementById('companyId');
+	const companyFormLinkEl = document.getElementById('companyFormLink');
+	
 	if (companyId === 0 || companyId === '0' || companyId === '') {
-		$('#logoField').hide();
-		$('#logoFieldValue').html('');
-		
-		$('#companyFields').show();
+		logoFieldEl.style.display = 'none';
+		logoFieldElValue.innerHTML = '';
+		companyFieldsEl.style.display = '';
 	} else {
-		$('#companyFields').hide();
+		companyFieldsEl.style.display = 'none';
 		
-		var selectedCompanyLogo = $('#companyId').find('option:selected').data('logo');
-		$('#logoFieldValue').html('<img src="' + selectedCompanyLogo + '">');
+		const selectedOption = companyIdEl.options[companyIdEl.selectedIndex];
+		const selectedCompanyLogo = selectedOption.getAttribute('data-logo');
+		logoFieldElValue.innerHTML = '<img src="' + selectedCompanyLogo + '">';
 		
-		var companyFormLinkElement = $('#companyFormLink');
-		var companyFormLinkHrefValue = companyFormLinkElement.attr('href');
-		companyFormLinkHrefValue = companyFormLinkHrefValue.replace(/companies\/([0-9]+|new)\/edit/, 'companies/' + companyId + '/edit');
-		companyFormLinkElement.attr('href', companyFormLinkHrefValue);
+		const searchValue = /companies\/([0-9]+|new)\/edit/;
+		const replaceValue = 'companies/' + companyId + '/edit';
 		
-		$('#logoField').show();
+		let companyFormLinkHrefValue = companyFormLinkEl.getAttribute('href');
+		companyFormLinkHrefValue = companyFormLinkHrefValue.replace(searchValue, replaceValue);
+		companyFormLinkEl.setAttribute('href', companyFormLinkHrefValue);
+		
+		logoFieldEl.style.display = '';
 	}
 }
+
 
 /**
  * Get Candidate's Resume details
  * @param resumeId
  */
 function getResume(resumeId) {
-	if (resumeId == 0 || resumeId == '') {
-		$('#resumeFields').show();
-	} else {
-		$('#resumeFields').hide();
+	let resumeFields = document.getElementById('resumeFields');
+	if (resumeFields) {
+		if (resumeId === 0 || resumeId === '0' || resumeId === '') {
+			resumeFields.style.display = 'block';
+		} else {
+			resumeFields.style.display = 'none';
+		}
 	}
 }
 
@@ -558,7 +465,7 @@ function getResume(resumeId) {
  * Check Threads with New Messages
  */
 function checkNewMessages() {
-	var oldValue = $('.dropdown-toggle .count-threads-with-new-messages').html();
+	let oldValue = $('.dropdown-toggle .count-threads-with-new-messages').html();
 	if (typeof oldValue === 'undefined') {
 		return false;
 	}
@@ -583,7 +490,7 @@ function checkNewMessages() {
 			return false;
 		}
 		
-		var counterBoxes = $('.count-threads-with-new-messages');
+		let counterBoxes = $('.count-threads-with-new-messages');
 		
 		/* Logged Users - Notification */
 		if (data.countThreadsWithNewMessages > 0) {
@@ -602,16 +509,25 @@ function checkNewMessages() {
 }
 
 /**
- * Show/Hide password in forms
+ * Toggle (Show|hide) Password Field Value
+ * @param togglePasswordLinkIconEl
  */
-function showPwd() {
-	let el = $('.show-pwd-group #mPassword, .show-pwd-group #password');
+function togglePassword(togglePasswordLinkIconEl) {
+	const togglePasswordLinkEl = togglePasswordLinkIconEl.parentElement;
+	const inputGroup = togglePasswordLinkEl.closest('.toggle-password-wrapper');
+	const passwordFieldEls = inputGroup.querySelectorAll('input[type="password"], .is-password-field');
 	
-	if (el.attr('type') === 'password') {
-		el.prop('type', 'text');
-		$(this).find('.eyeOfPwd').html('<i class="far fa-eye"></i>');
-	} else {
-		el.prop('type', 'password');
-		$(this).find('.eyeOfPwd').html('<i class="far fa-eye-slash"></i>');
+	if (passwordFieldEls.length > 0) {
+		passwordFieldEls.forEach((element) => {
+			if (element.type === 'password') {
+				element.classList.add('is-password-field');
+				element.type = 'text';
+				togglePasswordLinkEl.innerHTML = '<i class="fa-regular fa-eye"></i>';
+			} else {
+				element.type = 'password';
+				togglePasswordLinkEl.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+				element.classList.remove('is-password-field');
+			}
+		});
 	}
 }

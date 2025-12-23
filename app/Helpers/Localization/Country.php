@@ -1,6 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Localization;
 
+use App\Enums\Continent;
 use App\Helpers\Arr;
 use App\Helpers\Cookie;
 use App\Helpers\GeoIP;
@@ -13,21 +29,20 @@ use App\Models\Scopes\ActiveScope;
 use App\Models\Scopes\ReviewedScope;
 use App\Models\Scopes\VerifiedScope;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Route;
 use App\Models\Setting;
 use Jaybizzle\CrawlerDetect\CrawlerDetect;
 
 class Country
 {
-	public $defaultCountryCode = '';
-	public $defaultUrl = '/';
-	public $defaultPage = '/';
+	public ?string $defaultCountryCode = '';
+	public string $defaultUrl = '/';
+	public string $defaultPage = '/';
 	
 	protected static ?Collection $countries = null;
 	protected static ?Collection $languages = null;
 	
-	public $country;
-	public $ipCountry;
+	public Collection $country;
+	public Collection $ipCountry;
 	
 	public static int $cacheExpiration = 3600;
 	public static int $cookieExpiration = 3600;
@@ -38,9 +53,9 @@ class Country
 	public function __construct()
 	{
 		// Default values
-		$this->defaultCountryCode = config('settings.geo_location.default_country_code');
-		$this->defaultUrl = url(config('larapen.localization.default_uri'));
-		$this->defaultPage = url(config('larapen.localization.countries_list_uri'));
+		$this->defaultCountryCode = config('settings.localization.default_country_code');
+		$this->defaultUrl = url(config('larapen.localization.default_uri', $this->defaultUrl));
+		$this->defaultPage = url(config('larapen.localization.countries_list_uri', $this->defaultPage));
 		
 		// Cache & Cookies Expiration Time
 		self::$cacheExpiration = (int)config('settings.optimization.cache_expiration', self::$cacheExpiration);
@@ -59,23 +74,24 @@ class Country
 	
 	/**
 	 * @return \Illuminate\Support\Collection
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function find(): Collection
 	{
 		// Get user's country by its IP address
 		$this->ipCountry = $this->getCountryFromIP();
+		$this->country = collect();
 		
 		// Get the country
 		if (isFromApi()) {
 			// API call
 			
 			// 'countryCode' query parameter is required for guests
-			$this->country = $this->getCountryFromQueryString();
+			if ($this->country->isEmpty()) {
+				$this->country = $this->getCountryFromQueryString();
+			}
 			
-			// Don't fill the 'countryCode' parameter if user is logged
-			// To change country, user need to update their country.
+			// Don't fill the 'countryCode' parameter if a user is logged
+			// To change country, user needs to update their country.
 			if ($this->country->isEmpty()) {
 				$this->country = $this->getCountryFromLoggedUser();
 			}
@@ -105,7 +121,9 @@ class Country
 		} else {
 			// WEB call
 			
-			$this->country = $this->getCountryFromDomain();
+			if ($this->country->isEmpty()) {
+				$this->country = $this->getCountryFromDomain();
+			}
 			
 			if ($this->country->isEmpty()) {
 				$this->country = $this->getCountryFromQueryString();
@@ -150,34 +168,47 @@ class Country
 	 */
 	public function validateTheCountry()
 	{
-		// SKIP...
-		// - Countries Selection Page
-		// - All XML Sitemap Pages
-		// - robots.txt
-		// - Feed Page
-		// - etc.
+		if (isFromApi()) {
+			return;
+		}
+		
+		/*
+		 * --------------------------------------------------------------------
+		 * Skip possible redirection:
+		 * --------------------------------------------------------------------
+		 * - On the installation or update URLs
+		 * - On static files (JS or CSS) content generation URLs
+		 * - On the robots.txt file content generation URL
+		 * - On AJAX URLs (including CAPTCHA code generation URLs)
+		 * - On pages where a selected country is not needed (even prohibited):
+		 *   Countries list page, Feeds page, XML sitemaps, etc.
+		 * --------------------------------------------------------------------
+		 */
+		$firstUriSegmentsToSkip = [
+			'install',
+			'upgrade',
+			config('larapen.localization.countries_list_uri'),
+			'robots',
+			'robots.txt',
+			'lang',
+			'page',
+			'feed',
+			'common', // .js
+			'plugins', // Plugins URLs
+			'login', // Login redirects to popup modal
+			'logout', // Logout route
+			'register', // Registration route
+		];
+		
 		if (
 			!appInstallFilesExist()
-			|| in_array(request()->segment(1), [
-				'install',
-				'upgrade',
-				config('larapen.localization.countries_list_uri'),
-				'robots',
-				'robots.txt',
-				'lang',
-				'locale',
-				'page',
-				'feed',
-				'common',
-				'advertise',
-			])
+			|| in_array(request()->segment(1), $firstUriSegmentsToSkip)
 			|| (isAdminPanel() && request()->segment(1) == 'captcha')
 			|| str_ends_with(request()->url(), '.xml')
 			|| str_ends_with(request()->url(), '.css')
 		) {
 			return;
 		}
-		
 		
 		// REDIRECT... If Country not found, then redirect to country selection page
 		if (!$this->isAvailableCountry($this->country->get('code'))) {
@@ -200,7 +231,7 @@ class Country
 	public function getMostPopulatedCountry(): Collection
 	{
 		try {
-			$country = CountryModel::orderBy('population', 'DESC')->firstOrFail();
+			$country = CountryModel::query()->orderByDesc('population')->firstOrFail();
 			if (!empty($country)) {
 				if ($this->isAvailableCountry($country->code)) {
 					return self::getCountryInfo($country->code);
@@ -226,7 +257,7 @@ class Country
 				return self::getCountryInfo($defaultCountryCode);
 			}
 		} else {
-			// If only one country is activated, auto-select it as default country.
+			// If only one country is activated, auto-select it as the default country.
 			try {
 				$countries = CountryModel::all();
 			} catch (\Throwable $e) {
@@ -281,7 +312,7 @@ class Country
 	}
 	
 	/**
-	 * Get Country from logged User
+	 * Get Country from listing details page
 	 *
 	 * @return \Illuminate\Support\Collection
 	 */
@@ -290,42 +321,56 @@ class Country
 		$country = collect();
 		
 		// Check if the Post Details controller is called
-		if (
-			str_contains(Route::currentRouteAction(), 'Post\DetailsController')
-			|| str_contains(Route::currentRouteAction(), 'MultiSteps\EditController')
-			|| str_contains(Route::currentRouteAction(), 'SingleStep\EditController')
-		) {
-			// Get and Check the Controller's Method Parameters
-			$parameters = request()->route()->parameters();
-			
-			// Check if the Listing's ID key exists
-			$idKey = array_key_exists('hashableId', $parameters) ? 'hashableId' : 'id';
-			$idKeyDoesNotExist = (
-				empty($parameters[$idKey])
-				|| (!isHashedId($parameters[$idKey]) && !is_numeric($parameters[$idKey]))
-			);
-			
-			// Return empty collection if the Listing ID does not found
-			if ($idKeyDoesNotExist) {
-				return collect();
-			}
-			
-			// Set the Parameters
-			$postId = $parameters[$idKey];
-			
-			// Decode Hashed ID
-			$postId = hashId($postId, true) ?? $postId;
-			
-			// Get the Post
-			$post = Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])->where('id', $postId)->first();
-			if (empty($post)) {
-				return collect();
-			}
-			
-			// Get the Post's Country Info (If available)
-			if ($this->isAvailableCountry($post->country_code)) {
-				$country = self::getCountryInfo($post->country_code);
-			}
+		$isFromPostDetailsPage = (
+			str_contains(currentRouteAction(), 'Post\ShowController')
+			|| str_contains(currentRouteAction(), 'MultiSteps\EditController')
+			|| str_contains(currentRouteAction(), 'SingleStep\EditController')
+		);
+		if (!$isFromPostDetailsPage) {
+			return $country;
+		}
+		
+		// Get and Check the Controller's Method Parameters
+		$parameters = request()->route()->parameters();
+		
+		// Check if the Listing's ID key exists
+		$idKey = array_key_exists('hashableId', $parameters) ? 'hashableId' : 'id';
+		$idKeyDoesNotExist = (
+			empty($parameters[$idKey])
+			|| (!isHashedId($parameters[$idKey]) && !is_numeric($parameters[$idKey]))
+		);
+		
+		// Return an empty collection if the Listing ID does not found
+		if ($idKeyDoesNotExist) {
+			return collect();
+		}
+		
+		// Set the Parameters
+		$postId = $parameters[$idKey];
+		
+		// Decode Hashed ID
+		$postId = hashId($postId, true) ?? $postId;
+		
+		// Get the Post
+		$post = null;
+		try {
+			$cacheId = 'post.' . $postId . '.auto.find.country';
+			$post = cache()->remember($cacheId, self::$cacheExpiration, function () use ($postId) {
+				return Post::query()
+					->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
+					->where('id', $postId)
+					->first();
+			});
+		} catch (\Throwable $e) {
+		}
+		
+		if (empty($post)) {
+			return collect();
+		}
+		
+		// Get the Post's Country Info (If available)
+		if ($this->isAvailableCountry($post->country_code)) {
+			$country = self::getCountryInfo($post->country_code);
 		}
 		
 		return $country;
@@ -338,10 +383,15 @@ class Country
 	 */
 	public function getCountryFromDomain(): Collection
 	{
+		$domains = config('domains');
+		if (!is_array($domains)) {
+			return collect();
+		}
+		
 		$host = getHost(url()->current());
 		
-		$domain = collect((array)config('domains'))->firstWhere('host', $host);
-		if (!empty($domain) && isset($domain['country_code']) && !empty($domain['country_code'])) {
+		$domain = collect($domains)->firstWhere('host', $host);
+		if (!empty($domain) && !empty($domain['country_code'])) {
 			$countryCode = $domain['country_code'];
 			if ($this->isAvailableCountry($countryCode)) {
 				return self::getCountryInfo($countryCode);
@@ -370,14 +420,14 @@ class Country
 	 * Get Country from Request (GET & POST|PUT)
 	 *
 	 * @return \Illuminate\Support\Collection
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function getCountryFromQueryString(): Collection
 	{
+		$oldQueryValue = request()->query('d', request()->query('site'));
+		
 		$countryCode = isFromApi()
-			? request()->get('countryCode')
-			: request()->get('country') ?? (request()->get('d') ?? request()->get('site'));
+			? request()->query('countryCode')
+			: request()->query('country', $oldQueryValue);
 		
 		if ($this->isAvailableCountry($countryCode)) {
 			return self::getCountryInfo($countryCode);
@@ -409,24 +459,22 @@ class Country
 	 * Get Country from City
 	 *
 	 * @return \Illuminate\Support\Collection
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function getCountryFromCity(): Collection
 	{
 		$countryCode = null;
 		$cityId = null;
 		
-		if (str_contains(Route::currentRouteAction(), 'Search\CityController')) {
-			if (!config('settings.seo.multi_countries_urls')) {
+		if (str_contains(currentRouteAction(), 'Search\CityController')) {
+			if (!config('settings.seo.multi_country_urls')) {
 				$cityId = request()->segment(3);
 			} else {
 				$cityId = request()->segment(4);
 			}
 		}
-		if (str_contains(Route::currentRouteAction(), 'Search\SearchController')) {
+		if (str_contains(currentRouteAction(), 'Search\SearchController')) {
 			if (request()->filled('l')) {
-				$cityId = request()->get('l');
+				$cityId = request()->query('l');
 			}
 		}
 		
@@ -455,8 +503,8 @@ class Country
 		$crawler = new CrawlerDetect();
 		if ($crawler->isCrawler()) {
 			// Don't set the default country for homepage
-			if (!str_contains(Route::currentRouteAction(), 'HomeController')) {
-				$countryCode = config('settings.geo_location.default_country_code');
+			if (!str_contains(currentRouteAction(), 'HomeController')) {
+				$countryCode = config('settings.localization.default_country_code');
 				if ($this->isAvailableCountry($countryCode)) {
 					return self::getCountryInfo($countryCode);
 				}
@@ -556,17 +604,21 @@ class Country
 			// If country is an instance of Country Model instead of \Std object
 			// @todo: Find a best way to take to account this feature
 			if (method_exists($country, 'save')) {
-				// Get the Country's most populated City
-				$city = cache()->remember('country.' . $countryCode . '.mostPopulatedCity', self::$cacheExpiration, function () use ($countryCode) {
-					return City::where('country_code', $countryCode)->orderBy('population', 'DESC')->first();
-				});
-				
-				// Get the Country's most populated City's TimeZone
-				$timeZone = (!empty($city) && !empty($city->time_zone)) ? $city->time_zone : $timeZone;
-				
-				// Save the TimeZone to prevent performance issue
-				$country->time_zone = $timeZone;
-				$country->save();
+				try {
+					// Get the Country's most populated City
+					$cacheId = 'country.' . $countryCode . '.mostPopulatedCity';
+					$city = cache()->remember($cacheId, self::$cacheExpiration, function () use ($countryCode) {
+						return City::where('country_code', $countryCode)->orderByDesc('population')->first();
+					});
+					
+					// Get the Country's most populated City's TimeZone
+					$timeZone = (!empty($city) && !empty($city->time_zone)) ? $city->time_zone : $timeZone;
+					
+					// Save the TimeZone to prevent performance issue
+					$country->time_zone = $timeZone;
+					$country->save();
+				} catch (\Throwable $e) {
+				}
 			}
 		}
 		
@@ -575,18 +627,25 @@ class Country
 		
 		// Get the Country's Currency
 		$currency = null;
-		if (isset($country['currency_code']) && !empty($country['currency_code'])) {
-			$currency = cache()->remember('currency.' . $country['currency_code'], self::$cacheExpiration, function () use ($country) {
-				return Currency::find($country['currency_code']);
-			});
+		$currencyCode = $country['currency_code'] ?? null;
+		if (!empty($currencyCode)) {
+			try {
+				$cacheId = 'currency.' . $currencyCode;
+				$currency = cache()->remember($cacheId, self::$cacheExpiration, function () use ($currencyCode) {
+					return Currency::find($currencyCode);
+				});
+			} catch (\Throwable $e) {
+			}
 		}
 		
 		// Get the Country's Language
-		$lang = self::getLangFromCountry($country['languages'] ?? '');
+		$languages = $country['languages'] ?? '';
+		$countryCode = $country['code'] ?? null;
+		$lang = self::getLangFromCountry($languages, $countryCode);
 		
 		// Update some existing columns & Add new columns
 		$country['time_zone'] = $timeZone;
-		$country['currency'] = (!empty($currency)) ? $currency : [];
+		$country['currency'] = !empty($currency) ? $currency : [];
 		$country['lang'] = $lang;
 		
 		// Get the Country as Collection
@@ -597,16 +656,17 @@ class Country
 	 * Only used for search bots
 	 *
 	 * @param $languages
+	 * @param string|null $countryCode
 	 * @return \Illuminate\Support\Collection
 	 */
-	public static function getLangFromCountry($languages): Collection
+	public static function getLangFromCountry($languages, ?string $countryCode = null): Collection
 	{
 		if (is_null(self::$languages)) {
 			self::$languages = Language::getLanguages();
 		}
 		
 		// Get language code
-		$langCode = $hrefLang = '';
+		$langCode = '';
 		if (trim($languages) != '') {
 			// Get the country's languages codes
 			$countryLanguageCodes = explode(',', $languages);
@@ -616,15 +676,16 @@ class Country
 			
 			if ($availableLanguages->count() > 0) {
 				$found = false;
-				foreach ($countryLanguageCodes as $isoLang) {
-					foreach ($availableLanguages as $language) {
-						if (str_starts_with(strtolower($isoLang), strtolower($language->abbr))) {
-							$langCode = $language->abbr;
-							$hrefLang = $isoLang;
+				foreach ($countryLanguageCodes as $countryLangCode) {
+					foreach ($availableLanguages as $lang) {
+						$iLangCode = data_get($lang, 'code');
+						if (str_starts_with(strtolower($iLangCode), strtolower($countryLangCode))) {
+							$langCode = $iLangCode;
 							$found = true;
 							break;
 						}
 					}
+					
 					if ($found) {
 						break;
 					}
@@ -637,7 +698,7 @@ class Country
 			$isAvailableLang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
 			
 			if (!empty($isAvailableLang)) {
-				$lang = collect($isAvailableLang)->merge(collect(['hreflang' => $hrefLang]));
+				$lang = collect($isAvailableLang);
 			} else {
 				$lang = self::getLangFromConfig();
 			}
@@ -657,12 +718,12 @@ class Country
 			self::$languages = Language::getLanguages();
 		}
 		
-		$langCode = config('appLang.abbr');
+		$langCode = config('appLang.code');
 		
 		// Default language (from Admin panel OR Config)
 		$lang = self::$languages->has($langCode) ? self::$languages->get($langCode) : [];
 		
-		return collect($lang)->merge(collect(['hreflang' => config('appLang.abbr')]));
+		return collect($lang);
 	}
 	
 	/**
@@ -683,7 +744,7 @@ class Country
 				} else {
 					$countries->active();
 				}
-				$countries = $countries->with(['continent', 'currency'])->orderBy('name')->get();
+				$countries = $countries->with(['currency'])->orderBy('name')->get();
 				
 				if ($countries->count() > 0) {
 					$countries = $countries->keyBy('code');
@@ -693,7 +754,13 @@ class Country
 			});
 		} catch (\Throwable $e) {
 			// To prevent HTTP 500 Error when site is not installed.
-			return collect(['US' => collect(['code' => 'US', 'name' => 'United States'])]);
+			$fallbackCountry = [
+				'code'           => 'US',
+				'name'           => 'United States',
+				'continent_code' => 'NA',
+			];
+			
+			return collect([$fallbackCountry['code'] => collect($fallbackCountry)]);
 		}
 		
 		// Country filters
@@ -704,7 +771,7 @@ class Country
 				$countryArray['name'] = $country->name;
 				
 				// Get only Countries with currency
-				if (isset($country->currency) && !empty($country->currency)) {
+				if (!empty($country->currency)) {
 					$tab[$code] = collect($countryArray);
 				} else {
 					// Just for debug
@@ -712,7 +779,7 @@ class Country
 				}
 				
 				// Get only allowed Countries with active Continent
-				if (!isset($country->continent) || $country->continent->active != 1) {
+				if (empty(Continent::find($country->continent_code))) {
 					unset($tab[$code]);
 				}
 			}
@@ -751,7 +818,7 @@ class Country
 		if (isFromApi()) {
 			return;
 		}
-		if (!config('settings.geo_location.active')) {
+		if (!config('settings.localization.geoip_activation')) {
 			return;
 		}
 		if (config('geoip.default') != 'maxmind_database') {
@@ -760,23 +827,25 @@ class Country
 		if (!auth()->check()) {
 			return;
 		}
-		if (!auth()->user()->can(Permission::getStaffPermissions())) {
+		if (!doesUserHavePermission(auth()->user(), Permission::getStaffPermissions())) {
 			return;
 		}
 		
 		try {
 			// Get settings
-			$setting = Setting::where('key', 'geo_location')->first(['id']);
+			$setting = Setting::where('key', 'localization')->first(['id']);
 			
 			// Notice message for admin users
 			if (!empty($setting)) {
-				$url = admin_url("settings/" . $setting->id . "/edit");
+				$url = admin_url('settings/' . $setting->id . '/edit');
 				$maxmindDbDir = storage_path('database/maxmind/');
 				
 				$msg = "<h4><strong>Only Admin Users can see this message</strong></h4>";
 				$msg .= "The <strong>Maxmind database file</strong> is not found on your server. ";
-				$msg .= "You have to download the Maxmind's <a href='" . self::$maxmindDatabaseUrl . "' target='_blank'>GeoLite2-City.mmdb</a> database file ";
-				$msg .= "and extract it in the <code>" . $maxmindDbDir . "</code> folder on your server like this <code>" . $maxmindDbDir . "GeoLite2-City.mmdb</code>";
+				$msg .= "You have to download the Maxmind's ";
+				$msg .= "<a href='" . self::$maxmindDatabaseUrl . "' target='_blank'>GeoLite2-City.mmdb</a> ";
+				$msg .= "database file and extract it in the <code>" . $maxmindDbDir . "</code> ";
+				$msg .= "folder on your server like this <code>" . $maxmindDbDir . "GeoLite2-City.mmdb</code>";
 				$msg .= "<br><br>";
 				$msg .= "<a href='" . $url . "' class='btn btn-xs btn-thin btn-default-lite' id='disableGeoOption'>";
 				$msg .= "Disable the Geolocation";

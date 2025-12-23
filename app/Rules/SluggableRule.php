@@ -1,37 +1,50 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Rules;
 
-use Illuminate\Contracts\Validation\Rule;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class SluggableRule implements Rule
+class SluggableRule implements ValidationRule
 {
 	/**
-	 * Determine if the validation rule passes.
-	 *
-	 * @param  string  $attribute
-	 * @param  mixed  $value
-	 * @return bool
+	 * Run the validation rule.
 	 */
-	public function passes($attribute, $value)
+	public function validate(string $attribute, mixed $value, Closure $fail): void
 	{
-		$value = trim(strip_tags($value));
-		$value = stripNonUtf($value);
-		$value = slugify($value);
-		
-		if (!empty(trim($value))) {
-			return true;
-		} else {
-			return false;
+		if (!$this->passes($attribute, $value)) {
+			$fail(trans('validation.sluggable_rule'));
 		}
 	}
 	
 	/**
-	 * Get the validation error message.
+	 * Determine if the validation rule passes.
 	 *
-	 * @return string
+	 * @param string $attribute
+	 * @param mixed $value
+	 * @return bool
 	 */
-	public function message()
+	public function passes(string $attribute, mixed $value): bool
 	{
-		return trans('validation.sluggable_rule');
+		$value = getAsString($value);
+		$value = trim(strip_tags($value));
+		$value = stripNonUtf8Chars($value);
+		$value = slugify($value);
+		
+		return !empty(trim($value));
 	}
 }

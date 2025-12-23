@@ -1,10 +1,41 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Setting;
+
+/*
+ * settings.upload.option
+ */
 
 class UploadSetting
 {
 	public static function getValues($value, $disk)
 	{
+		$config = config('larapen.media.resize.namedOptions.default');
+		$method = data_get($config, 'method', 'resize');
+		$width = data_get($config, 'width', 900);
+		$height = data_get($config, 'height', 900);
+		$ratio = data_get($config, 'ratio', '1');
+		$upsize = data_get($config, 'upsize', '0');
+		$position = data_get($config, 'position', 'center');
+		$relative = data_get($config, 'relative', false);
+		$bgColor = data_get($config, 'bgColor', 'ffffff');
+		
+		$resizeOptionsNamesArray = array_keys((array)config('larapen.media.resize.namedOptions'));
+		
 		if (empty($value)) {
 			
 			$value['file_types'] = 'pdf,doc,docx,word,rtf,rtx,ppt,pptx,odt,odp,wps,jpeg,jpg,bmp,png';
@@ -16,45 +47,31 @@ class UploadSetting
 			$value['min_image_size'] = '0';
 			$value['max_image_size'] = '2500';
 			
-			$value['img_resize_width'] = '1500';
-			$value['img_resize_height'] = '1500';
-			$value['img_resize_ratio'] = '1';
-			$value['img_resize_upsize'] = '1';
-			$value['img_resize_logo_width'] = '500';
-			$value['img_resize_logo_height'] = '100';
-			$value['img_resize_logo_ratio'] = '1';
-			$value['img_resize_logo_upsize'] = '1';
-			$value['img_resize_cat_width'] = '70';
-			$value['img_resize_cat_height'] = '70';
-			$value['img_resize_cat_ratio'] = '1';
-			$value['img_resize_cat_upsize'] = '0';
+			// default
+			$settingKeyPrefix = 'img_resize_default';
+			$value[$settingKeyPrefix . '_method'] = $method;
+			$value[$settingKeyPrefix . '_width'] = $width;
+			$value[$settingKeyPrefix . '_height'] = $height;
+			$value[$settingKeyPrefix . '_ratio'] = $ratio;
+			$value[$settingKeyPrefix . '_upsize'] = $upsize;
+			$value[$settingKeyPrefix . '_position'] = $position;
+			$value[$settingKeyPrefix . '_relative'] = $relative;
+			$value[$settingKeyPrefix . '_bgColor'] = $bgColor;
 			
-			$value['img_resize_small_resize_type'] = '2';
-			$value['img_resize_small_width'] = '120';
-			$value['img_resize_small_height'] = '90';
-			$value['img_resize_small_ratio'] = '1';
-			$value['img_resize_small_upsize'] = '0';
-			$value['img_resize_small_position'] = 'center';
-			$value['img_resize_small_relative'] = '0';
-			$value['img_resize_small_bg_color'] = '#FFFFFF';
-			
-			$value['img_resize_medium_resize_type'] = '2';
-			$value['img_resize_medium_width'] = '320';
-			$value['img_resize_medium_height'] = '240';
-			$value['img_resize_medium_ratio'] = '1';
-			$value['img_resize_medium_upsize'] = '0';
-			$value['img_resize_medium_position'] = 'center';
-			$value['img_resize_medium_relative'] = '0';
-			$value['img_resize_medium_bg_color'] = '#FFFFFF';
-			
-			$value['img_resize_big_resize_type'] = '0';
-			$value['img_resize_big_width'] = '816';
-			$value['img_resize_big_height'] = '460';
-			$value['img_resize_big_ratio'] = '1';
-			$value['img_resize_big_upsize'] = '0';
-			$value['img_resize_big_position'] = 'center';
-			$value['img_resize_big_relative'] = '0';
-			$value['img_resize_big_bg_color'] = '#FFFFFF';
+			// others
+			foreach ($resizeOptionsNamesArray as $optionsName) {
+				$config = config('larapen.media.resize.namedOptions.' . $optionsName);
+				$settingKeyPrefix = 'img_resize_' . str_replace('-', '_', $optionsName);
+				
+				$value[$settingKeyPrefix . '_method'] = data_get($config, 'method', $method);
+				$value[$settingKeyPrefix . '_width'] = data_get($config, 'width', $width);
+				$value[$settingKeyPrefix . '_height'] = data_get($config, 'height', $height);
+				$value[$settingKeyPrefix . '_ratio'] = data_get($config, 'ratio', $ratio);
+				$value[$settingKeyPrefix . '_upsize'] = data_get($config, 'upsize', $upsize);
+				$value[$settingKeyPrefix . '_position'] = data_get($config, 'position', $position);
+				$value[$settingKeyPrefix . '_relative'] = data_get($config, 'relative', $relative);
+				$value[$settingKeyPrefix . '_bgColor'] = data_get($config, 'bgColor', $bgColor);
+			}
 			
 		} else {
 			
@@ -81,116 +98,62 @@ class UploadSetting
 				$value['max_image_size'] = '2500';
 			}
 			
-			if (!array_key_exists('img_resize_width', $value)) {
-				$value['img_resize_width'] = '1500';
+			// default
+			$settingKeyPrefix = 'img_resize_default';
+			if (!array_key_exists($settingKeyPrefix . '_method', $value)) {
+				$value[$settingKeyPrefix . '_method'] = $method;
 			}
-			if (!array_key_exists('img_resize_height', $value)) {
-				$value['img_resize_height'] = '1500';
+			if (!array_key_exists($settingKeyPrefix . '_width', $value)) {
+				$value[$settingKeyPrefix . '_width'] = $width;
 			}
-			if (!array_key_exists('img_resize_ratio', $value)) {
-				$value['img_resize_ratio'] = '1';
+			if (!array_key_exists($settingKeyPrefix . '_height', $value)) {
+				$value[$settingKeyPrefix . '_height'] = $height;
 			}
-			if (!array_key_exists('img_resize_upsize', $value)) {
-				$value['img_resize_upsize'] = '1';
+			if (!array_key_exists($settingKeyPrefix . '_ratio', $value)) {
+				$value[$settingKeyPrefix . '_ratio'] = $ratio;
 			}
-			if (!array_key_exists('img_resize_logo_width', $value)) {
-				$value['img_resize_logo_width'] = '500';
+			if (!array_key_exists($settingKeyPrefix . '_upsize', $value)) {
+				$value[$settingKeyPrefix . '_upsize'] = $upsize;
 			}
-			if (!array_key_exists('img_resize_logo_height', $value)) {
-				$value['img_resize_logo_height'] = '100';
+			if (!array_key_exists($settingKeyPrefix . '_position', $value)) {
+				$value[$settingKeyPrefix . '_position'] = $position;
 			}
-			if (!array_key_exists('img_resize_logo_ratio', $value)) {
-				$value['img_resize_logo_ratio'] = '1';
+			if (!array_key_exists($settingKeyPrefix . '_relative', $value)) {
+				$value[$settingKeyPrefix . '_relative'] = $relative;
 			}
-			if (!array_key_exists('img_resize_logo_upsize', $value)) {
-				$value['img_resize_logo_upsize'] = '1';
-			}
-			if (!array_key_exists('img_resize_cat_width', $value)) {
-				$value['img_resize_cat_width'] = '70';
-			}
-			if (!array_key_exists('img_resize_cat_height', $value)) {
-				$value['img_resize_cat_height'] = '70';
-			}
-			if (!array_key_exists('img_resize_cat_ratio', $value)) {
-				$value['img_resize_cat_ratio'] = '1';
-			}
-			if (!array_key_exists('img_resize_cat_upsize', $value)) {
-				$value['img_resize_cat_upsize'] = '0';
+			if (!array_key_exists($settingKeyPrefix . '_bgColor', $value)) {
+				$value[$settingKeyPrefix . '_bgColor'] = $bgColor;
 			}
 			
-			if (!array_key_exists('img_resize_small_resize_type', $value)) {
-				$value['img_resize_small_resize_type'] = '2';
-			}
-			if (!array_key_exists('img_resize_small_width', $value)) {
-				$value['img_resize_small_width'] = '120';
-			}
-			if (!array_key_exists('img_resize_small_height', $value)) {
-				$value['img_resize_small_height'] = '90';
-			}
-			if (!array_key_exists('img_resize_small_ratio', $value)) {
-				$value['img_resize_small_ratio'] = '1';
-			}
-			if (!array_key_exists('img_resize_small_upsize', $value)) {
-				$value['img_resize_small_upsize'] = '0';
-			}
-			if (!array_key_exists('img_resize_small_position', $value)) {
-				$value['img_resize_small_position'] = 'center';
-			}
-			if (!array_key_exists('img_resize_small_relative', $value)) {
-				$value['img_resize_small_relative'] = '0';
-			}
-			if (!array_key_exists('img_resize_small_bg_color', $value)) {
-				$value['img_resize_small_bg_color'] = '#FFFFFF';
-			}
-			
-			if (!array_key_exists('img_resize_medium_resize_type', $value)) {
-				$value['img_resize_medium_resize_type'] = '2';
-			}
-			if (!array_key_exists('img_resize_medium_width', $value)) {
-				$value['img_resize_medium_width'] = '320';
-			}
-			if (!array_key_exists('img_resize_medium_height', $value)) {
-				$value['img_resize_medium_height'] = '240';
-			}
-			if (!array_key_exists('img_resize_medium_ratio', $value)) {
-				$value['img_resize_medium_ratio'] = '1';
-			}
-			if (!array_key_exists('img_resize_medium_upsize', $value)) {
-				$value['img_resize_medium_upsize'] = '0';
-			}
-			if (!array_key_exists('img_resize_medium_position', $value)) {
-				$value['img_resize_medium_position'] = 'center';
-			}
-			if (!array_key_exists('img_resize_medium_relative', $value)) {
-				$value['img_resize_medium_relative'] = '0';
-			}
-			if (!array_key_exists('img_resize_medium_bg_color', $value)) {
-				$value['img_resize_medium_bg_color'] = '#FFFFFF';
-			}
-			
-			if (!array_key_exists('img_resize_big_resize_type', $value)) {
-				$value['img_resize_big_resize_type'] = '0';
-			}
-			if (!array_key_exists('img_resize_big_width', $value)) {
-				$value['img_resize_big_width'] = '816';
-			}
-			if (!array_key_exists('img_resize_big_height', $value)) {
-				$value['img_resize_big_height'] = '460';
-			}
-			if (!array_key_exists('img_resize_big_ratio', $value)) {
-				$value['img_resize_big_ratio'] = '1';
-			}
-			if (!array_key_exists('img_resize_big_upsize', $value)) {
-				$value['img_resize_big_upsize'] = '0';
-			}
-			if (!array_key_exists('img_resize_big_position', $value)) {
-				$value['img_resize_big_position'] = 'center';
-			}
-			if (!array_key_exists('img_resize_big_relative', $value)) {
-				$value['img_resize_big_relative'] = '0';
-			}
-			if (!array_key_exists('img_resize_big_bg_color', $value)) {
-				$value['img_resize_big_bg_color'] = '#FFFFFF';
+			// others
+			foreach ($resizeOptionsNamesArray as $optionsName) {
+				$config = config('larapen.media.resize.namedOptions.' . $optionsName);
+				$settingKeyPrefix = 'img_resize_' . str_replace('-', '_', $optionsName);
+				
+				if (!array_key_exists($settingKeyPrefix . '_method', $value)) {
+					$value[$settingKeyPrefix . '_method'] = data_get($config, 'method', $method);
+				}
+				if (!array_key_exists($settingKeyPrefix . '_width', $value)) {
+					$value[$settingKeyPrefix . '_width'] = data_get($config, 'width', $width);
+				}
+				if (!array_key_exists($settingKeyPrefix . '_height', $value)) {
+					$value[$settingKeyPrefix . '_height'] = data_get($config, 'height', $height);
+				}
+				if (!array_key_exists($settingKeyPrefix . '_ratio', $value)) {
+					$value[$settingKeyPrefix . '_ratio'] = data_get($config, 'ratio', $ratio);
+				}
+				if (!array_key_exists($settingKeyPrefix . '_upsize', $value)) {
+					$value[$settingKeyPrefix . '_upsize'] = data_get($config, 'upsize', $upsize);
+				}
+				if (!array_key_exists($settingKeyPrefix . '_position', $value)) {
+					$value[$settingKeyPrefix . '_position'] = data_get($config, 'position', $position);
+				}
+				if (!array_key_exists($settingKeyPrefix . '_relative', $value)) {
+					$value[$settingKeyPrefix . '_relative'] = data_get($config, 'relative', $relative);
+				}
+				if (!array_key_exists($settingKeyPrefix . '_bgColor', $value)) {
+					$value[$settingKeyPrefix . '_bgColor'] = data_get($config, 'bgColor', $bgColor);
+				}
 			}
 			
 		}
@@ -203,19 +166,20 @@ class UploadSetting
 					(str($k)->startsWith(['img_resize_']) && str($k)->endsWith(['_width', '_height']))
 					|| str($k)->endsWith(['_file_size', '_image_size'])
 				) {
-					$value[$k] = strToDigit($v);
+					$value[$k] = forceToInt($v);
 				}
 			}
 			
 			// 'bgcolor' & 'relative' get format
-			$typesOfResize = ['square', 'small', 'medium', 'big', 'large'];
-			foreach ($typesOfResize as $type) {
-				if (array_key_exists('img_resize_' . $type . '_bg_color', $value)) {
-					$value['img_resize_' . $type . '_relative'] = ($value['img_resize_' . $type . '_relative'] == '1');
-					$value['img_resize_' . $type . '_bg_color'] = str_replace('#', '', $value['img_resize_' . $type . '_bg_color']);
+			foreach ($resizeOptionsNamesArray as $optionsName) {
+				$settingKeyPrefix = 'img_resize_' . str_replace('-', '_', $optionsName);
+				
+				if (array_key_exists($settingKeyPrefix . '_bgColor', $value)) {
+					$value[$settingKeyPrefix . '_relative'] = ($value[$settingKeyPrefix . '_relative'] == '1');
+					$value[$settingKeyPrefix . '_bgColor'] = str_replace('#', '', $value[$settingKeyPrefix . '_bgColor']);
 					if (isAdminPanel()) {
-						$value['img_resize_' . $type . '_relative'] = ($value['img_resize_' . $type . '_relative']) ? '1' : '0';
-						$value['img_resize_' . $type . '_bg_color'] = '#' . $value['img_resize_' . $type . '_bg_color'];
+						$value[$settingKeyPrefix . '_relative'] = ($value[$settingKeyPrefix . '_relative']) ? '1' : '0';
+						$value[$settingKeyPrefix . '_bgColor'] = '#' . $value[$settingKeyPrefix . '_bgColor'];
 					}
 				}
 			}
@@ -233,7 +197,7 @@ class UploadSetting
 					(str($k)->startsWith(['img_resize_']) && str($k)->endsWith(['_width', '_height']))
 					|| str($k)->endsWith(['_file_size', '_image_size'])
 				) {
-					$value[$k] = strToDigit($v);
+					$value[$k] = forceToInt($v);
 				}
 			}
 		}
@@ -241,7 +205,7 @@ class UploadSetting
 		return $value;
 	}
 	
-	public static function getFields($diskName)
+	public static function getFields($diskName): array
 	{
 		$fields = [
 			[
@@ -294,23 +258,7 @@ class UploadSetting
 				'name'              => 'image_quality',
 				'label'             => trans('admin.image_quality_label'),
 				'type'              => 'select2_from_array',
-				'options'           => [
-					10  => '10',
-					20  => '20',
-					30  => '30',
-					40  => '40',
-					50  => '50',
-					55  => '55',
-					60  => '60',
-					65  => '65',
-					70  => '70',
-					75  => '75',
-					80  => '80',
-					85  => '85',
-					90  => '90',
-					95  => '95',
-					100 => '100',
-				],
+				'options'           => collect(generateNumberRange(10, 100, 10))->mapWithKeys(fn ($i) => [$i => $i])->toArray(),
 				'hint'              => trans('admin.image_quality_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
@@ -345,7 +293,7 @@ class UploadSetting
 				'value' => trans('admin.img_resize_default_sep_value'),
 			],
 			[
-				'name'              => 'img_resize_width',
+				'name'              => 'img_resize_default_width',
 				'label'             => trans('admin.img_resize_width_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_width_hint'),
@@ -354,7 +302,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_height',
+				'name'              => 'img_resize_default_height',
 				'label'             => trans('admin.img_resize_height_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_height_hint'),
@@ -363,7 +311,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_ratio',
+				'name'              => 'img_resize_default_ratio',
 				'label'             => trans('admin.img_resize_ratio_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_ratio_hint'),
@@ -372,7 +320,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_upsize',
+				'name'              => 'img_resize_default_upsize',
 				'label'             => trans('admin.img_resize_upsize_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_upsize_hint'),
@@ -380,11 +328,25 @@ class UploadSetting
 					'class' => 'col-md-6',
 				],
 			],
+			
+			// logo
 			[
 				'name'  => 'img_resize_logo_sep',
 				'type'  => 'custom_html',
 				'value' => trans('admin.img_resize_logo_sep_value'),
 			],
+			[
+				'name'              => 'img_resize_logo_method',
+				'label'             => trans('admin.img_resize_type_resize_method_label'),
+				'type'              => 'select2_from_array',
+				'options'           => self::resizeMethods(),
+				'hint'              => trans('admin.img_resize_type_resize_method_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+				'newline'           => true,
+			],
+			
 			[
 				'name'              => 'img_resize_logo_width',
 				'label'             => trans('admin.img_resize_width_label'),
@@ -421,6 +383,126 @@ class UploadSetting
 					'class' => 'col-md-6',
 				],
 			],
+			[
+				'name'              => 'img_resize_logo_position',
+				'label'             => trans('admin.img_resize_type_position_label'),
+				'type'              => 'select2_from_array',
+				'options'           => self::resizePositions(),
+				'hint'              => trans('admin.img_resize_type_position_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-4',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_relative',
+				'label'             => trans('admin.img_resize_type_relative_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.img_resize_type_relative_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-4',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_bgColor',
+				'label'             => trans('admin.img_resize_type_bgColor_label'),
+				'type'              => 'color_picker',
+				'attributes'        => [
+					'placeholder' => '#FFFFFF',
+				],
+				'hint'              => trans('admin.img_resize_type_bg_color_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-4',
+				],
+			],
+			
+			/*
+			// logo-admin
+			[
+				'name'  => 'img_resize_logo_admin_sep',
+				'type'  => 'custom_html',
+				'value' => trans('admin.img_resize_logo_admin_sep_value'),
+			],
+			[
+				'name'              => 'img_resize_logo_admin_method',
+				'label'             => trans('admin.img_resize_type_resize_method_label'),
+				'type'              => 'select2_from_array',
+				'options'           => self::resizeMethods(),
+				'hint'              => trans('admin.img_resize_type_resize_method_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+				'newline' => true,
+			],
+			[
+				'name'              => 'img_resize_logo_admin_width',
+				'label'             => trans('admin.img_resize_width_label'),
+				'type'              => 'number',
+				'hint'              => trans('admin.img_resize_width_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_admin_height',
+				'label'             => trans('admin.img_resize_height_label'),
+				'type'              => 'number',
+				'hint'              => trans('admin.img_resize_height_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_admin_ratio',
+				'label'             => trans('admin.img_resize_ratio_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.img_resize_ratio_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_admin_upsize',
+				'label'             => trans('admin.img_resize_upsize_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.img_resize_upsize_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_admin_position',
+				'label'             => trans('admin.img_resize_type_position_label'),
+				'type'              => 'select2_from_array',
+				'options'           => self::resizePositions(),
+				'hint'              => trans('admin.img_resize_type_position_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-4',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_admin_relative',
+				'label'             => trans('admin.img_resize_type_relative_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.img_resize_type_relative_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-4',
+				],
+			],
+			[
+				'name'              => 'img_resize_logo_admin_bgColor',
+				'label'             => trans('admin.img_resize_type_bgColor_label'),
+				'type'              => 'color_picker',
+				'attributes'        => [
+					'placeholder' => '#FFFFFF',
+				],
+				'hint'              => trans('admin.img_resize_type_bg_color_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-4',
+				],
+			],
+			*/
+			
+			// asset.cat
 			[
 				'name'  => 'img_resize_cat_sep',
 				'type'  => 'custom_html',
@@ -473,22 +555,19 @@ class UploadSetting
 				'value' => trans('admin.img_resize_small_sep_value'),
 			],
 			[
-				'name'              => 'img_resize_small_resize_type',
-				'label'             => trans('admin.img_resize_type_resize_type_label'),
+				'name'              => 'img_resize_picture_sm_method',
+				'label'             => trans('admin.img_resize_type_resize_method_label'),
 				'type'              => 'select2_from_array',
-				'options'           => self::resizeTypes(),
-				'hint'              => trans('admin.img_resize_type_resize_type_hint'),
+				'options'           => self::resizeMethods(),
+				'hint'              => trans('admin.img_resize_type_resize_method_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
+				'newline'           => true,
 			],
+			
 			[
-				'name'  => 'sep_3_2',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
-			],
-			[
-				'name'              => 'img_resize_small_width',
+				'name'              => 'img_resize_picture_sm_width',
 				'label'             => trans('admin.img_resize_type_width_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_type_width_hint'),
@@ -497,7 +576,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_small_height',
+				'name'              => 'img_resize_picture_sm_height',
 				'label'             => trans('admin.img_resize_type_height_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_type_height_hint'),
@@ -506,7 +585,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_small_ratio',
+				'name'              => 'img_resize_picture_sm_ratio',
 				'label'             => trans('admin.img_resize_type_ratio_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_ratio_hint'),
@@ -515,7 +594,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_small_upsize',
+				'name'              => 'img_resize_picture_sm_upsize',
 				'label'             => trans('admin.img_resize_type_upsize_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_upsize_hint'),
@@ -524,7 +603,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_small_position',
+				'name'              => 'img_resize_picture_sm_position',
 				'label'             => trans('admin.img_resize_type_position_label'),
 				'type'              => 'select2_from_array',
 				'options'           => self::resizePositions(),
@@ -534,7 +613,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_small_relative',
+				'name'              => 'img_resize_picture_sm_relative',
 				'label'             => trans('admin.img_resize_type_relative_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_relative_hint'),
@@ -543,17 +622,14 @@ class UploadSetting
 				],
 			],
 			[
-				'name'                => 'img_resize_small_bg_color',
-				'label'               => trans('admin.img_resize_type_bg_color_label'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'img_resize_picture_sm_bgColor',
+				'label'             => trans('admin.img_resize_type_bgColor_label'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#FFFFFF',
 				],
-				'hint'                => trans('admin.img_resize_type_bg_color_hint'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.img_resize_type_bg_color_hint'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-4',
 				],
 			],
@@ -563,22 +639,19 @@ class UploadSetting
 				'value' => trans('admin.img_resize_medium_sep_value'),
 			],
 			[
-				'name'              => 'img_resize_medium_resize_type',
-				'label'             => trans('admin.img_resize_type_resize_type_label'),
+				'name'              => 'img_resize_picture_md_method',
+				'label'             => trans('admin.img_resize_type_resize_method_label'),
 				'type'              => 'select2_from_array',
-				'options'           => self::resizeTypes(),
-				'hint'              => trans('admin.img_resize_type_resize_type_hint'),
+				'options'           => self::resizeMethods(),
+				'hint'              => trans('admin.img_resize_type_resize_method_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
+				'newline'           => true,
 			],
+			
 			[
-				'name'  => 'sep_3_3',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
-			],
-			[
-				'name'              => 'img_resize_medium_width',
+				'name'              => 'img_resize_picture_md_width',
 				'label'             => trans('admin.img_resize_type_width_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_type_width_hint'),
@@ -587,7 +660,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_medium_height',
+				'name'              => 'img_resize_picture_md_height',
 				'label'             => trans('admin.img_resize_type_height_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_type_height_hint'),
@@ -596,7 +669,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_medium_ratio',
+				'name'              => 'img_resize_picture_md_ratio',
 				'label'             => trans('admin.img_resize_type_ratio_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_ratio_hint'),
@@ -605,7 +678,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_medium_upsize',
+				'name'              => 'img_resize_picture_md_upsize',
 				'label'             => trans('admin.img_resize_type_upsize_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_upsize_hint'),
@@ -614,7 +687,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_medium_position',
+				'name'              => 'img_resize_picture_md_position',
 				'label'             => trans('admin.img_resize_type_position_label'),
 				'type'              => 'select2_from_array',
 				'options'           => self::resizePositions(),
@@ -624,7 +697,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_medium_relative',
+				'name'              => 'img_resize_picture_md_relative',
 				'label'             => trans('admin.img_resize_type_relative_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_relative_hint'),
@@ -633,42 +706,36 @@ class UploadSetting
 				],
 			],
 			[
-				'name'                => 'img_resize_medium_bg_color',
-				'label'               => trans('admin.img_resize_type_bg_color_label'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'img_resize_picture_md_bgColor',
+				'label'             => trans('admin.img_resize_type_bgColor_label'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#FFFFFF',
 				],
-				'hint'                => trans('admin.img_resize_type_bg_color_hint'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.img_resize_type_bg_color_hint'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-4',
 				],
 			],
 			[
-				'name'  => 'img_resize_big_sep',
+				'name'  => 'img_resize_large_sep',
 				'type'  => 'custom_html',
-				'value' => trans('admin.img_resize_big_sep_value'),
+				'value' => trans('admin.img_resize_large_sep_value'),
 			],
 			[
-				'name'              => 'img_resize_big_resize_type',
-				'label'             => trans('admin.img_resize_type_resize_type_label'),
+				'name'              => 'img_resize_picture_lg_method',
+				'label'             => trans('admin.img_resize_type_resize_method_label'),
 				'type'              => 'select2_from_array',
-				'options'           => self::resizeTypes(),
-				'hint'              => trans('admin.img_resize_type_resize_type_hint'),
+				'options'           => self::resizeMethods(),
+				'hint'              => trans('admin.img_resize_type_resize_method_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
+				'newline'           => true,
 			],
+			
 			[
-				'name'  => 'sep_3_4',
-				'type'  => 'custom_html',
-				'value' => '<div style="clear: both;"></div>',
-			],
-			[
-				'name'              => 'img_resize_big_width',
+				'name'              => 'img_resize_picture_lg_width',
 				'label'             => trans('admin.img_resize_type_width_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_type_width_hint'),
@@ -677,7 +744,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_big_height',
+				'name'              => 'img_resize_picture_lg_height',
 				'label'             => trans('admin.img_resize_type_height_label'),
 				'type'              => 'number',
 				'hint'              => trans('admin.img_resize_type_height_hint'),
@@ -686,7 +753,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_big_ratio',
+				'name'              => 'img_resize_picture_lg_ratio',
 				'label'             => trans('admin.img_resize_type_ratio_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_ratio_hint'),
@@ -695,7 +762,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_big_upsize',
+				'name'              => 'img_resize_picture_lg_upsize',
 				'label'             => trans('admin.img_resize_type_upsize_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_upsize_hint'),
@@ -704,7 +771,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_big_position',
+				'name'              => 'img_resize_picture_lg_position',
 				'label'             => trans('admin.img_resize_type_position_label'),
 				'type'              => 'select2_from_array',
 				'options'           => self::resizePositions(),
@@ -714,7 +781,7 @@ class UploadSetting
 				],
 			],
 			[
-				'name'              => 'img_resize_big_relative',
+				'name'              => 'img_resize_picture_lg_relative',
 				'label'             => trans('admin.img_resize_type_relative_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.img_resize_type_relative_hint'),
@@ -723,23 +790,23 @@ class UploadSetting
 				],
 			],
 			[
-				'name'                => 'img_resize_big_bg_color',
-				'label'               => trans('admin.img_resize_type_bg_color_label'),
-				'type'                => 'color_picker',
-				'colorpicker_options' => [
-					'customClass' => 'custom-class',
-				],
-				'attributes'          => [
+				'name'              => 'img_resize_picture_lg_bgColor',
+				'label'             => trans('admin.img_resize_type_bgColor_label'),
+				'type'              => 'color_picker',
+				'attributes'        => [
 					'placeholder' => '#FFFFFF',
 				],
-				'hint'                => trans('admin.img_resize_type_bg_color_hint'),
-				'wrapperAttributes'   => [
+				'hint'              => trans('admin.img_resize_type_bg_color_hint'),
+				'wrapperAttributes' => [
 					'class' => 'col-md-4',
 				],
 			],
 		];
 		
-		if (auth()->user()->can('clear-images-thumbnails') || userHasSuperAdminPermissions()) {
+		if (
+			doesUserHavePermission(auth()->user(), 'clear-images-thumbnails')
+			|| userHasSuperAdminPermissions()
+		) {
 			$fields = array_merge($fields, [
 				[
 					'name'  => 'clear_images_thumbnails_sep',
@@ -765,30 +832,26 @@ class UploadSetting
 	/**
 	 * @return array
 	 */
-	private static function resizeTypes()
+	private static function resizeMethods(): array
 	{
-		return [
-			0 => trans('admin.img_resize_type_resize_type_option_0'),
-			1 => trans('admin.img_resize_type_resize_type_option_1'),
-			2 => trans('admin.img_resize_type_resize_type_option_2'),
-		];
+		// Note: This is not Intervention referrers
+		$methods = config('larapen.media.resize.methods');
+		
+		return collect($methods)
+			->mapWithKeys(fn ($item) => [$item => ucfirst($item)])
+			->toArray();
 	}
 	
 	/**
 	 * @return array
 	 */
-	private static function resizePositions()
+	private static function resizePositions(): array
 	{
-		return [
-			'top-left'     => trans('admin.img_resize_type_position_option_0'),
-			'top'          => trans('admin.img_resize_type_position_option_1'),
-			'top-right'    => trans('admin.img_resize_type_position_option_2'),
-			'left'         => trans('admin.img_resize_type_position_option_3'),
-			'center'       => trans('admin.img_resize_type_position_option_4'),
-			'right'        => trans('admin.img_resize_type_position_option_5'),
-			'bottom-left'  => trans('admin.img_resize_type_position_option_6'),
-			'bottom'       => trans('admin.img_resize_type_position_option_7'),
-			'bottom-right' => trans('admin.img_resize_type_position_option_8'),
-		];
+		// Note: These are Intervention referrers
+		$positions = config('larapen.media.resize.positions');
+		
+		return collect($positions)
+			->mapWithKeys(fn ($item) => [$item => str($item)->headline()->toString()])
+			->toArray();
 	}
 }

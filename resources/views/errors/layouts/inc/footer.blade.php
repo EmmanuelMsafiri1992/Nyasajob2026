@@ -1,30 +1,35 @@
-<?php
-$socialLinksAreEnabled = (
-	config('settings.social_link.facebook_page_url')
-	|| config('settings.social_link.twitter_url')
-	|| config('settings.social_link.tiktok_url')
-	|| config('settings.social_link.linkedin_url')
-	|| config('settings.social_link.pinterest_url')
-	|| config('settings.social_link.instagram_url')
-);
-$appsLinksAreEnabled = (
-	config('settings.other.ios_app_url')
-	|| config('settings.other.android_app_url')
-);
-$socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled);
-?>
+@php
+	$socialLinksAreEnabled = (
+		config('settings.social_link.facebook_page_url')
+		|| config('settings.social_link.twitter_url')
+		|| config('settings.social_link.tiktok_url')
+		|| config('settings.social_link.linkedin_url')
+		|| config('settings.social_link.pinterest_url')
+		|| config('settings.social_link.instagram_url')
+		|| config('settings.social_link.youtube_url')
+		|| config('settings.social_link.vimeo_url')
+		|| config('settings.social_link.vk_url')
+		|| config('settings.social_link.tumblr_url')
+		|| config('settings.social_link.flickr_url')
+	);
+	$appsLinksAreEnabled = (
+		config('settings.other.ios_app_url')
+		|| config('settings.other.android_app_url')
+	);
+	$socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled);
+@endphp
 <footer class="main-footer">
-	<?php
-	$rowColsLg = $socialAndAppsLinksAreEnabled ? 'row-cols-lg-3' : 'row-cols-lg-2';
-	$rowColsMd = $rowColsLg;
-	
-	$ptFooterContent = '';
-	$mbCopy = ' mb-3';
-	if (config('settings.footer.hide_links')) {
-		$ptFooterContent = ' pt-sm-5 pt-5';
-		$mbCopy = ' mb-4';
-	}
-	?>
+	@php
+		$rowColsLg = $socialAndAppsLinksAreEnabled ? 'row-cols-lg-3' : 'row-cols-lg-2';
+		$rowColsMd = $rowColsLg;
+		
+		$ptFooterContent = '';
+		$mbCopy = ' mb-3';
+		if (config('settings.footer.hide_links')) {
+			$ptFooterContent = ' pt-sm-5 pt-5';
+			$mbCopy = ' mb-4';
+		}
+	@endphp
 	<div class="footer-content{{ $ptFooterContent }}">
 		<div class="container">
 			<div class="row {{ $rowColsLg }} {{ $rowColsMd }} row-cols-sm-2 row-cols-2 g-3">
@@ -35,7 +40,7 @@ $socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled)
 							<h4 class="footer-title">{{ t('Contact and Sitemap') }}</h4>
 							<ul class="list-unstyled footer-nav">
 								<li><a href="{{ \App\Helpers\UrlGen::contact() }}"> {{ t('Contact') }} </a></li>
-								@if (!empty(config('lang.abbr')) && !empty(config('country.icode')))
+								@if (!empty(config('lang.code')) && !empty(config('country.icode')))
 									<li><a href="{{ \App\Helpers\UrlGen::company() }}"> {{ t('Companies') }} </a></li>
 									<li><a href="{{ \App\Helpers\UrlGen::sitemap() }}"> {{ t('sitemap') }} </a></li>
 								@endif
@@ -55,7 +60,7 @@ $socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled)
 									<li><a href="{{ url('account') }}"> {{ t('My Account') }} </a></li>
 									@if (isset(auth()->user()->user_type_id))
 										@if (in_array(auth()->user()->user_type_id, [1]))
-											<li><a href="{{ url('account/posts/list') }}"> {{ t('my_ads') }} </a></li>
+											<li><a href="{{ url('account/posts/list') }}"> {{ t('my_listings') }} </a></li>
 											<li><a href="{{ url('account/companies') }}"> {{ t('My companies') }} </a></li>
 										@endif
 										@if (in_array(auth()->user()->user_type_id, [2]))
@@ -71,10 +76,10 @@ $socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled)
 					@if ($socialAndAppsLinksAreEnabled)
 						<div class="col">
 							<div class="footer-col row">
-								<?php
-								$footerSocialClass = '';
-								$footerSocialTitleClass = '';
-								?>
+								@php
+									$footerSocialClass = '';
+									$footerSocialTitleClass = '';
+								@endphp
 								@if ($appsLinksAreEnabled)
 									<div class="col-sm-12 col-12 p-lg-0">
 										<div class="mobile-app-content">
@@ -99,146 +104,124 @@ $socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled)
 											</div>
 										</div>
 									</div>
-									<?php
-									$footerSocialClass = 'hero-subscribe';
-									$footerSocialTitleClass = 'm-0';
-									?>
+									@php
+										$footerSocialClass = 'hero-subscribe';
+										$footerSocialTitleClass = 'm-0';
+									@endphp
 								@endif
 								
 								@if ($socialLinksAreEnabled)
 									<div class="col-sm-12 col-12 p-lg-0">
 										<div class="{!! $footerSocialClass !!}">
 											<h4 class="footer-title {!! $footerSocialTitleClass !!}">{{ t('Follow us on') }}</h4>
-											<ul class="list-unstyled list-inline mx-0 footer-nav social-list-footer social-list-color footer-nav-inline">
+											<ul class="list-unstyled list-inline mx-0 footer-nav footer-nav-inline social-media social-links">
 												@if (config('settings.social_link.facebook_page_url'))
 													<li>
-														<a class="icon-color fb"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="facebook"
 														   href="{{ config('settings.social_link.facebook_page_url') }}"
 														   title="Facebook"
 														>
-															<i class="fab fa-facebook-square"></i>
+															<i class="fa-brands fa-square-facebook"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.twitter_url'))
 													<li>
-														<a class="icon-color tw"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="x-twitter"
 														   href="{{ config('settings.social_link.twitter_url') }}"
 														   title="X (Twitter)"
 														>
-															<i class="fab fa-twitter-square"></i>
+															<i class="fa-brands fa-square-x-twitter"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.instagram_url'))
 													<li>
-														<a class="icon-color pin"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="instagram"
 														   href="{{ config('settings.social_link.instagram_url') }}"
 														   title="Instagram"
 														>
-															<i class="fab fa-instagram"></i>
+															<i class="fa-brands fa-square-instagram"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.linkedin_url'))
 													<li>
-														<a class="icon-color lin"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="linkedin"
 														   href="{{ config('settings.social_link.linkedin_url') }}"
 														   title="LinkedIn"
 														>
-															<i class="fab fa-linkedin"></i>
+															<i class="fa-brands fa-linkedin"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.pinterest_url'))
 													<li>
-														<a class="icon-color pin"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="pinterest"
 														   href="{{ config('settings.social_link.pinterest_url') }}"
 														   title="Pinterest"
 														>
-															<i class="fab fa-pinterest-square"></i>
+															<i class="fa-brands fa-square-pinterest"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.tiktok_url'))
 													<li>
-														<a class="icon-color tt"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="tiktok"
 														   href="{{ config('settings.social_link.tiktok_url') }}"
 														   title="Tiktok"
 														>
-															<i class="fab fa-tiktok"></i>
+															<i class="fa-brands fa-tiktok"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.youtube_url'))
 													<li>
-														<a class="icon-color yt"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="youtube"
 														   href="{{ config('settings.social_link.youtube_url') }}"
 														   title="YouTube"
 														>
-															<i class="fab fa-youtube"></i>
+															<i class="fa-brands fa-youtube"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.vimeo_url'))
 													<li>
-														<a class="icon-color vim"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="vimeo"
 														   href="{{ config('settings.social_link.vimeo_url') }}"
 														   title="Vimeo"
 														>
-															<i class="fab fa-vimeo"></i>
+															<i class="fa-brands fa-vimeo"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.vk_url'))
 													<li>
-														<a class="icon-color vk"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="vk"
 														   href="{{ config('settings.social_link.vk_url') }}"
 														   title="VK (VKontakte)"
 														>
-															<i class="fab fa-vk"></i>
+															<i class="fa-brands fa-vk"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.tumblr_url'))
 													<li>
-														<a class="icon-color tmb"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="tumblr"
 														   href="{{ config('settings.social_link.tumblr_url') }}"
 														   title="Tumblr"
 														>
-															<i class="fab fa-tumblr-square"></i>
+															<i class="fa-brands fa-square-tumblr"></i>
 														</a>
 													</li>
 												@endif
 												@if (config('settings.social_link.flickr_url'))
 													<li>
-														<a class="icon-color flk"
-														   data-bs-placement="top"
-														   data-bs-toggle="tooltip"
+														<a class="flickr"
 														   href="{{ config('settings.social_link.flickr_url') }}"
 														   title="Flickr"
 														>
-															<i class="fab fa-flickr"></i>
+															<i class="fa-brands fa-flickr"></i>
 														</a>
 													</li>
 												@endif
@@ -256,14 +239,16 @@ $socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled)
 			</div>
 			<div class="row">
 				
-				<?php
+				@php
 					$mtPay = '';
 					$mtCopy = ' mt-md-4 mt-3 pt-2';
-				?>
+				@endphp
 				<div class="col-12">
 					@if (!config('settings.footer.hide_payment_plugins_logos') && isset($paymentMethods) && $paymentMethods->count() > 0)
 						@if (config('settings.footer.hide_links'))
-							<?php $mtPay = ' mt-0'; ?>
+							@php
+								$mtPay = ' mt-0';
+							@endphp
 						@endif
 						<div class="text-center payment-method-logo{{ $mtPay }}">
 							{{-- Payment Plugins --}}
@@ -274,9 +259,13 @@ $socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled)
 							@endforeach
 						</div>
 					@else
-						<?php $mtCopy = ' mt-0'; ?>
+						@php
+							$mtCopy = ' mt-0';
+						@endphp
 						@if (!config('settings.footer.hide_links'))
-							<?php $mtCopy = ' mt-md-4 mt-3 pt-2'; ?>
+							@php
+								$mtCopy = ' mt-md-4 mt-3 pt-2';
+							@endphp
 							<hr class="border-0 bg-secondary">
 						@endif
 					@endif
@@ -287,7 +276,7 @@ $socialAndAppsLinksAreEnabled = ($socialLinksAreEnabled || $appsLinksAreEnabled)
 							@if (config('settings.footer.powered_by_info'))
 								{{ t('Powered by') }} {!! config('settings.footer.powered_by_info') !!}
 							@else
-								{{ t('Powered by') }} <a href="https://laraclassifier.com/jobclass" title="Nyasajob">Nyasajob</a>.
+								{{ t('Powered by') }} <a href="https://laraclassifier.com/jobclass" title="JobClass">JobClass</a>.
 							@endif
 						@endif
 					</div>

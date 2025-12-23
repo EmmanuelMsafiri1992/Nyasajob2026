@@ -1,9 +1,25 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\EntityCollection;
 use App\Http\Resources\LanguageResource;
 use App\Models\Language;
+use App\Models\Scopes\ActiveScope;
 
 /**
  * @group Languages
@@ -17,13 +33,31 @@ class LanguageController extends BaseController
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$languages = Language::query()->get();
+		$isNonActiveIncluded = (request()->filled('includeNonActive') && request()->integer('includeNonActive') == 1);
+		
+		$cacheFiltersId = '.' . (int)$isNonActiveIncluded;
+		
+		$cacheId = 'languages.all' . $cacheFiltersId;
+		$languages = cache()->remember($cacheId, $this->cacheExpiration, function () use ($isNonActiveIncluded) {
+			$languages = Language::query();
+			
+			if ($isNonActiveIncluded) {
+				$languages->withoutGlobalScopes([ActiveScope::class]);
+			} else {
+				$languages->active();
+			}
+			
+			// Sorting
+			$languages = $this->applySorting($languages, ['lft']);
+			
+			return $languages->get();
+		});
 		
 		$resourceCollection = new EntityCollection(class_basename($this), $languages);
 		
 		$message = ($languages->count() <= 0) ? t('no_languages_found') : null;
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -36,14 +70,17 @@ class LanguageController extends BaseController
 	 */
 	public function show($code): \Illuminate\Http\JsonResponse
 	{
-		$language = Language::query()->where('abbr', $code);
-		
-		$language = $language->first();
+		$cacheId = 'language.' . $code;
+		$language = cache()->remember($cacheId, $this->cacheExpiration, function () use ($code) {
+			$language = Language::query()->where('code', $code);
+			
+			return $language->first();
+		});
 		
 		abort_if(empty($language), 404, t('language_not_found'));
 		
 		$resource = new LanguageResource($language);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

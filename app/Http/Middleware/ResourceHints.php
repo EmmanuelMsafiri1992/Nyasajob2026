@@ -1,9 +1,23 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 
 class ResourceHints
 {
@@ -15,10 +29,7 @@ class ResourceHints
 	public function handle(Request $request, Closure $next)
 	{
 		// Exception for Install & Upgrade Routes
-		if (
-			str_contains(Route::currentRouteAction(), 'InstallController')
-			|| str_contains(Route::currentRouteAction(), 'UpgradeController')
-		) {
+		if (isFromInstallOrUpgradeProcess()) {
 			return $next($request);
 		}
 		
@@ -48,9 +59,9 @@ class ResourceHints
 	 * iframe, img, style, script, font, document
 	 *
 	 * @param $buffer
-	 * @return string|string[]
+	 * @return string
 	 */
-	private function applyResourceHints($buffer)
+	private function applyResourceHints($buffer): string
 	{
 		$newContent = $this->preload();
 		$newContent .= $this->prefetch();
@@ -88,9 +99,9 @@ class ResourceHints
 		if (!empty($entries)) {
 			foreach($entries as $entry) {
 				if (
-					isset($entry['href'], $entry['as'], $entry['type'])
-					&& !empty($entry['href']) && empty($entry['as']) && empty($entry['type'])
-					&& is_string($entry['href']) && is_string($entry['as']) && is_string($entry['type'])
+					(!empty($entry['href']) && is_string($entry['href']))
+					&& (!empty($entry['as']) && is_string($entry['as']))
+					&& (!empty($entry['type']) && is_string($entry['type']))
 				) {
 					if (isset($entry['crossorigin'])) {
 						$out .= '<link rel="preload" href="'
@@ -175,7 +186,7 @@ class ResourceHints
 		if (!empty($entries)) {
 			foreach($entries as $entry) {
 				$out .= '<link rel="preconnect" href="' . $entry . '">';
-				if (isset($entry['href']) && !empty($entry['href']) && is_string($entry['href'])) {
+				if (!empty($entry['href']) && is_string($entry['href'])) {
 					if (isset($entry['crossorigin'])) {
 						$out .= '<link rel="preload" href="' . $entry['href'] . '" crossorigin>';
 					} else {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html dir="ltr" lang="{{ config('app.locale') }}">
+<html lang="{{ getLangTag(config('app.locale')) }}" dir="ltr">
 <head>
-    <meta charset="utf-8">
+    <meta charset="{{ config('larapen.core.charset', 'utf-8') }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     {{-- Tell the browser to be responsive to screen width --}}
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,7 +10,7 @@
     {{-- Favicon icon --}}
     <link rel="icon" type="image/png" sizes="16x16" href="{{ config('settings.app.favicon_url') }}">
     
-    <title>{!! isset($title) ? strip_tags($title) . ' :: Admin' : config('app.name') . ' Admin' !!}</title>
+    <title>{!! isset($title) ? strip_tags($title) . ' :: ' . config('app.name') . ' Admin' : config('app.name') . ' Admin' !!}</title>
     
     {{-- Encrypted CSRF token for Laravel, in order for Ajax requests to work --}}
     <meta name="csrf-token" content="{{ csrf_token() }}" />
@@ -22,7 +22,7 @@
     
     @yield('before_styles')
     
-    <link href="{{ url(mix('css/admin.css')) }}" rel="stylesheet">
+    <link href="{{ url(mix('dist/admin/styles.css')) }}" rel="stylesheet">
     
     @yield('after_styles')
     
@@ -36,39 +36,8 @@
             background-image: inherit;
         }
     </style>
-    <script>
-        function docReady(fn) {
-            /* see if DOM is already available */
-            if (document.readyState === "complete" || document.readyState === "interactive") {
-                /* call on next available tick */
-                setTimeout(fn, 1);
-            } else {
-                document.addEventListener("DOMContentLoaded", fn);
-            }
-        }
-        
-        function hideEl(elements) {
-            if (isEmpty(elements)) {
-                return false;
-            }
-            
-            elements = elements.length ? elements : [elements];
-            for (var index = 0; index < elements.length; index++) {
-                elements[index].style.display = 'none';
-            }
-        }
-        
-        function showEl(elements, specifiedDisplay) {
-            if (isEmpty(elements)) {
-                return false;
-            }
-            
-            elements = elements.length ? elements : [elements];
-            for (var index = 0; index < elements.length; index++) {
-                elements[index].style.display = specifiedDisplay || 'block';
-            }
-        }
-    </script>
+    
+    @include('common.js.document')
     
     {{-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries --}}
     {{-- WARNING: Respond.js doesn't work if you view the page via file:// --}}
@@ -102,7 +71,7 @@
         <footer class="footer">
             <div class="row">
                 <div class="col-md-6 text-start">
-                    {{ trans('admin.Version') }} {{ env('APP_VERSION', config('app.appVersion')) }}
+                    {{ trans('admin.Version') }} {{ env('APP_VERSION', config('version.app')) }}
                 </div>
                 @if (config('settings.footer.hide_powered_by') != '1')
                     <div class="col-md-6 text-end">
@@ -128,14 +97,14 @@
     var phoneCountry = '';
 
     {{-- Others global variables --}}
-    var refreshBtnText = "{{ t('refresh') }}";
+    {{-- ... --}}
 </script>
 
 <script src="{{ admin_url('common/js/intl-tel-input/countries.js') . getPictureVersion() }}"></script>
-<script src="{{ url(mix('js/admin.js')) }}"></script>
+<script src="{{ url(mix('dist/admin/scripts.js')) }}"></script>
 
 <script>
-    $(function () {
+    onDocumentReady((event) => {
         "use strict";
         $('#main-wrapper').AdminSettings({
             Theme: {{ config('settings.style.admin_dark_theme') == '1' ? 'true' : 'false' }},
@@ -153,25 +122,27 @@
 
 {{-- Page Script --}}
 <script type="text/javascript">
-    /* To make Pace works on Ajax calls */
-    $(document).ajaxStart(function() { Pace.restart(); });
+    onDocumentReady((event) => {
+        /* To make Pace works on Ajax calls */
+        $(document).ajaxStart(function () {
+            Pace.restart();
+        });
     
-    /* Set active state on menu element */
-    var currentUrl = "{{ url(Route::current()->uri()) }}";
-    $("#sidebarnav li a").each(function() {
-        if ($(this).attr('href').startsWith(currentUrl) || currentUrl.startsWith($(this).attr('href')))
-        {
-            $(this).parents('li').addClass('selected');
-        }
+        /* Set active state on menu element */
+        var currentUrl = "{{ url(Route::current()->uri()) }}";
+        $("#sidebarnav li a").each(function () {
+            if ($(this).attr('href').startsWith(currentUrl) || currentUrl.startsWith($(this).attr('href'))) {
+                $(this).parents('li').addClass('selected');
+            }
+        });
     });
 </script>
 <script>
-    $(document).ready(function()
-    {
+    onDocumentReady((event) => {
         {{-- Confirm Action For AJAX (Update) Request --}}
         $(document).on('click', '.ajax-request', function(e)
         {
-            e.preventDefault(); {{-- prevents the submit or reload --}}
+            e.preventDefault(); {{-- Prevents submission or reloading --}}
             
             var thisEl = this;
             
@@ -218,9 +189,9 @@
         if (isDemoDomain()) {
             return false;
         }
-    
+        
         /* Get element's icon */
-        var iconEl = null;
+        let iconEl = null;
         if ($(thisEl).is('a') && $(thisEl).hasClass('btn')) {
             iconEl = $(thisEl).find('i');
         } else {
@@ -230,31 +201,32 @@
         }
         
         /* Get database info */
-        var _token = $('input[name=_token]').val();
-        var dataTable = $(thisEl).data('table');
-        var dataField = $(thisEl).data('field');
-        var dataId = $(thisEl).data('id');
-        var dataLineId = $(thisEl).data('line-id');
-        var dataValue = $(thisEl).data('value');
+        let _token = $('input[name=_token]').val();
+        let dataTable = $(thisEl).data('table');
+        let dataField = $(thisEl).data('field');
+        let dataId = $(thisEl).data('id');
+        let dataLineId = $(thisEl).data('line-id');
+        let dataValue = $(thisEl).data('value');
         
         /* Remove dot (.) from var (referring to the PHP var) */
         dataLineId = dataLineId.split('.').join("");
         
-        var adminUri = '{{ admin_uri() }}';
+        let adminUri = '{{ admin_uri() }}';
+        let requestUrl = siteUrl + '/' + adminUri + '/ajax/' + dataTable + '/' + dataField + '';
         
         let ajax = $.ajax({
             method: 'POST',
-            url: siteUrl + '/' + adminUri + '/ajax/' + dataTable + '/' + dataField + '',
+            url: requestUrl,
             context: this,
             data: {
-                'primaryKey': dataId,
+                'dataId': dataId,
                 '_token': _token
             },
             beforeSend: function() {
-                if (dataTable == 'countries' && dataField == 'active') {
+                if (dataTable === 'countries' && dataField === 'active') {
                     /* Change the button indicator */
                     if (iconEl) {
-                        iconEl.removeClass('fas fa-download');
+                        iconEl.removeClass('fa-solid fa-download');
                         iconEl.addClass('spinner-border spinner-border-sm').css({'vertical-align': 'middle'});
                         iconEl.attr({'role': 'status', 'aria-hidden': 'true'});
                     }
@@ -262,84 +234,63 @@
             }
         });
         ajax.done(function(xhr) {
-            /* Check 'status' */
-            if (xhr.status != 1) {
+            /* Check the required xhr attributes */
+            if (
+                    typeof xhr.success === 'undefined'
+                    || typeof xhr.message === 'undefined'
+                    || typeof xhr.isToggleOn === 'undefined'
+                    || typeof xhr.table === 'undefined'
+            ) {
+                pnAlert('Error: Impossible to retrieve xhr attributes.', 'error');
                 return false;
             }
             
-            let actionPerformedSuccessfullyMessage = "{{ trans('admin.action_performed_successfully') }}";
+            let message = xhr.message;
+            
+            if (xhr.success !== true) {
+                pnAlert(message, 'notice');
+                return false;
+            }
             
             /* Decoration */
-            if (xhr.table === 'countries' && dataField === 'active')
-            {
-                if (!xhr.resImport) {
-                    let message = "{{ trans('admin.Error - You can not install this country') }}";
-                    pnAlert(message, 'error');
-    
-                    /* Reset the button indicator */
-                    if (iconEl) {
-                        iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-                        iconEl.addClass('fas fa-download').removeAttr('role aria-hidden');
-                    }
-                    
-                    return false;
-                }
-                
-                if (xhr.isDefaultCountry == 1) {
-                    let message = "{{ trans('admin.You can not disable the default country') }}";
-                    pnAlert(message, 'notice');
-    
-                    /* Reset the button indicator */
-                    if (iconEl) {
-                        iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-                        iconEl.addClass('fas fa-download').removeAttr('role aria-hidden');
-                    }
-                    
-                    return false;
-                }
-                
+            if (xhr.table === 'countries' && dataField === 'active') {
                 /* Country case */
-                if (xhr.fieldValue == 1) {
-                    $('#' + dataLineId).removeClass('fa fa-toggle-off').addClass('fa fa-toggle-on');
+                if (xhr.isToggleOn === true) {
+                    $('#' + dataLineId).removeClass('fa-solid fa-toggle-off').addClass('fa-solid fa-toggle-on');
                     $('#install' + dataId).removeClass('btn-light')
-                            .addClass('btn-success')
-                            .addClass('text-white')
-                            .empty()
-                            .html('<i class="fas fa-download"></i> <?php echo trans('admin.Installed'); ?>');
+                        .addClass('btn-success')
+                        .addClass('text-white')
+                        .empty()
+                        .html('<i class="fa-solid fa-download"></i> {{ trans('admin.Installed') }}');
                 } else {
-                    $('#' + dataLineId).removeClass('fa fa-toggle-on').addClass('fa fa-toggle-off');
+                    $('#' + dataLineId).removeClass('fa-solid fa-toggle-on').addClass('fa-solid fa-toggle-off');
                     $('#install' + dataId).removeClass('btn-success')
-                            .removeClass('text-white')
-                            .addClass('btn-light')
-                            .empty()
-                            .html('<i class="fas fa-download"></i> <?php echo trans('admin.Install'); ?>');
+                        .removeClass('text-white')
+                        .addClass('btn-light')
+                        .empty()
+                        .html('<i class="fa-solid fa-download"></i> {{ trans('admin.Install') }}');
                 }
                 
-                pnAlert(actionPerformedSuccessfullyMessage, 'success');
-    
                 /* Reset the button indicator */
                 if (iconEl) {
                     iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-                    iconEl.addClass('fas fa-download').removeAttr('role aria-hidden');
+                    iconEl.addClass('fa-solid fa-download').removeAttr('role aria-hidden');
                 }
-            }
-            else
-            {
-                /* All others cases */
-                let xhrFieldValue = (dataField.endsWith('_at')) ? !isEmpty(xhr.fieldValue) : (xhr.fieldValue == 1);
-                if (xhrFieldValue) {
-                    $('#' + dataLineId).removeClass('fa fa-toggle-off').addClass('fa fa-toggle-on').blur();
+            } else {
+                /* All other cases */
+                if (xhr.isToggleOn === true) {
+                    $('#' + dataLineId).removeClass('fa-solid fa-toggle-off').addClass('fa-solid fa-toggle-on').blur();
                 } else {
-                    $('#' + dataLineId).removeClass('fa fa-toggle-on').addClass('fa fa-toggle-off').blur();
+                    $('#' + dataLineId).removeClass('fa-solid fa-toggle-on').addClass('fa-solid fa-toggle-off').blur();
                 }
-                
-                pnAlert(actionPerformedSuccessfullyMessage, 'success');
             }
+            
+            pnAlert(message, 'success');
             
             return false;
         });
         ajax.fail(function(xhr, textStatus, errorThrown) {
-            let message = getJqueryAjaxError(xhr);
+            let message = getErrorMessageFromXhr(xhr);
             if (message !== null) {
                 pnAlert(message, 'error');
             }
@@ -347,7 +298,7 @@
             /* Reset the button indicator */
             if (iconEl) {
                 iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-                iconEl.addClass('fas fa-download').removeAttr('role aria-hidden');
+                iconEl.addClass('fa-solid fa-download').removeAttr('role aria-hidden');
             }
             
             return false;

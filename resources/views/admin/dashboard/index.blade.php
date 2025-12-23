@@ -5,7 +5,12 @@
 		<div class="col-md-5 col-12 align-self-center">
 			<h3 class="mb-0">
 				{{ trans('admin.dashboard') }}
-				<small>{{ trans('admin.first_page_you_see', ['appName' => config('app.name'), 'appVersion' => env('APP_VERSION', config('app.appVersion'))]) }}</small>
+				<small>
+					{{ trans('admin.first_page_you_see', [
+						'appName' => config('app.name'),
+						'appVersion' => env('APP_VERSION', config('version.app'))
+					]) }}
+				</small>
 			</h3>
 		</div>
 		<div class="col-md-7 col-12 align-self-center d-none d-md-flex justify-content-end">
@@ -32,7 +37,7 @@
 				{{-- Users Chart --}}
 				@includeIf('admin.dashboard.inc.charts.' . $chartsType['provider'] . '.' . $chartsType['type'] . '.latest-users')
 				
-				{{-- Latest Posts --}}
+				{{-- Latest Listings --}}
 				@include('admin.dashboard.inc.latest-posts')
 				
 				{{-- Latest Users --}}

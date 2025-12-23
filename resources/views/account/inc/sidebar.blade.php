@@ -1,29 +1,30 @@
+@php
+	$accountMenu ??= collect();
+	$accountMenu = ($accountMenu instanceof \Illuminate\Support\Collection) ? $accountMenu : collect();
+@endphp
 <aside>
 	<div class="inner-box">
 		<div class="user-panel-sidebar">
 			
-			@if (isset($userMenu) && !empty($userMenu))
-				@php
-					$userMenu = $userMenu->groupBy('group');
-				@endphp
-				@foreach($userMenu as $group => $menu)
+			@if ($accountMenu->isNotEmpty())
+				@foreach($accountMenu as $group => $menu)
 					@php
 						$boxId = str($group)->slug();
 					@endphp
 					<div class="collapse-box">
 						<h5 class="collapse-title no-border">
 							{{ $group }}&nbsp;
-							<a href="#{{ $boxId }}" data-bs-toggle="collapse" class="float-end"><i class="fa fa-angle-down"></i></a>
+							<a href="#{{ $boxId }}" data-bs-toggle="collapse" class="float-end"><i class="fa-solid fa-angle-down"></i></a>
 						</h5>
 						@foreach($menu as $key => $value)
 							<div class="panel-collapse collapse show" id="{{ $boxId }}">
 								<ul class="acc-list">
 									<li>
-										<a {!! (isset($value['isActive']) && $value['isActive']) ? 'class="active"' : '' !!} href="{{ $value['url'] }}">
+										<a {!! $value['isActive'] ? 'class="active"' : '' !!} href="{{ $value['url'] }}">
 											<i class="{{ $value['icon'] }}"></i> {{ $value['name'] }}
-											@if (isset($value['countVar']) && !empty($value['countVar']))
-												<span class="badge badge-pill{{ !empty($value['countCustomClass']) ? $value['countCustomClass'] . ' hide' : '' }}">
-													{{ \App\Helpers\Number::short(data_get($stats, $value['countVar']) ?? 0) }}
+											@if (!empty($value['countVar']))
+												<span class="badge badge-pill{{ $value['cssClass'] ?? '' }}">
+													{{ \App\Helpers\Num::short($value['countVar']) }}
 												</span>
 											@endif
 										</a>
@@ -34,7 +35,7 @@
 					</div>
 				@endforeach
 			@endif
-			
+		
 		</div>
 	</div>
 </aside>

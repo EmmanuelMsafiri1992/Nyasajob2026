@@ -2,7 +2,7 @@
 
 <li filter-name="{{ $filter->name }}"
 	filter-type="{{ $filter->type }}"
-	class="nav-item dropdown {{ request()->get($filter->name)?'active':'' }}">
+	class="nav-item dropdown {{ request()->query($filter->name)?'active':'' }}">
     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
 		{{ $filter->label }} <span class="caret"></span>
 	</a>
@@ -45,7 +45,7 @@
 
 @push('crud_list_scripts')
     <script>
-		jQuery(document).ready(function($) {
+	    onDocumentReady((event) => {
 			$("li.dropdown[filter-name={{ $filter->name }}] .dropdown-menu li a").click(function(e) {
 				e.preventDefault();
 

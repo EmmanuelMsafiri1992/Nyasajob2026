@@ -1,7 +1,7 @@
 {{-- checkbox field --}}
 <div @include('admin.panel.inc.field_wrapper_attributes') >
 	@include('admin.panel.fields.inc.translatable_icon')
-    <div class="form-check form-switch" style="margin-top: 30px;">
+    <div class="form-check form-switch mt-2">
 		<input type="hidden" name="{{ $field['name'] }}" value="0">
 		<input type="checkbox" value="1" name="{{ $field['name'] }}"
 			@if (isset($field['value']))
@@ -40,6 +40,9 @@
 		>
 		<label class="form-check-label fw-bolder">
 			{!! $field['label'] !!}
+			@if (isset($field['required']) && $field['required'])
+				<span class="text-danger">*</span>
+			@endif
 		</label>
 		
 		{{-- HINT --}}

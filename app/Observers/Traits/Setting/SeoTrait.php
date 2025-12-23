@@ -1,9 +1,23 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers\Traits\Setting;
 
 use App\Helpers\PhpArrayFile;
 use Illuminate\Support\Facades\File;
-use Prologue\Alerts\Facades\Alert;
 
 trait SeoTrait
 {
@@ -31,7 +45,7 @@ trait SeoTrait
 	 * @param $original
 	 * @return bool
 	 */
-	private function checkIfRobotsTxtFileCanBeRemoved($setting, $original)
+	private function checkIfRobotsTxtFileCanBeRemoved($setting, $original): bool
 	{
 		$canBeRemoved = false;
 		
@@ -73,7 +87,7 @@ trait SeoTrait
 	 * @param $setting
 	 * @param $original
 	 */
-	private function removeRobotsTxtFile($setting, $original)
+	private function removeRobotsTxtFile($setting, $original): void
 	{
 		$robotsFile = public_path('robots.txt');
 		if (File::exists($robotsFile)) {
@@ -86,14 +100,14 @@ trait SeoTrait
 	 * @param $original
 	 * @return bool
 	 */
-	private function checkIfDynamicRoutesFileCanBeRegenerated($setting, $original)
+	private function checkIfDynamicRoutesFileCanBeRegenerated($setting, $original): bool
 	{
 		$canBeRegenerated = false;
 		
 		if (
 			array_key_exists('listing_permalink', $setting->value)
 			|| array_key_exists('listing_permalink_ext', $setting->value)
-			|| array_key_exists('multi_countries_urls', $setting->value)
+			|| array_key_exists('multi_country_urls', $setting->value)
 		) {
 			if (
 				empty($original['value'])
@@ -117,12 +131,12 @@ trait SeoTrait
 				)
 				|| (
 					is_array($original['value'])
-					&& !isset($original['value']['multi_countries_urls'])
+					&& !isset($original['value']['multi_country_urls'])
 				)
 				|| (
 					is_array($original['value'])
-					&& isset($original['value']['multi_countries_urls'])
-					&& $setting->value['multi_countries_urls'] != $original['value']['multi_countries_urls']
+					&& isset($original['value']['multi_country_urls'])
+					&& $setting->value['multi_country_urls'] != $original['value']['multi_country_urls']
 				)
 			) {
 				$canBeRegenerated = true;
@@ -138,7 +152,7 @@ trait SeoTrait
 	 * @param null $setting
 	 * @return bool
 	 */
-	private function regenerateDynamicRoutes($setting = null)
+	private function regenerateDynamicRoutes($setting = null): bool
 	{
 		$doneSuccessfully = true;
 		
@@ -151,12 +165,12 @@ trait SeoTrait
 				if (array_key_exists('listing_permalink_ext', $setting->value)) {
 					config()->set('settings.seo.listing_permalink_ext', $setting->value['listing_permalink_ext']);
 				}
-				if (array_key_exists('multi_countries_urls', $setting->value)) {
+				if (array_key_exists('multi_country_urls', $setting->value)) {
 					// Check the Domain Mapping plugin
 					if (config('plugins.domainmapping.installed')) {
-						config()->set('settings.seo.multi_countries_urls', false);
+						config()->set('settings.seo.multi_country_urls', false);
 					} else {
-						config()->set('settings.seo.multi_countries_urls', $setting->value['multi_countries_urls']);
+						config()->set('settings.seo.multi_country_urls', $setting->value['multi_country_urls']);
 					}
 				}
 			}
@@ -168,7 +182,7 @@ trait SeoTrait
 			$filePath = config_path('routes.php');
 			PhpArrayFile::writeFile($filePath, $origRoutes);
 		} catch (\Exception $e) {
-			Alert::error($e->getMessage())->flash();
+			notification($e->getMessage(), 'error');
 			$doneSuccessfully = false;
 		}
 		

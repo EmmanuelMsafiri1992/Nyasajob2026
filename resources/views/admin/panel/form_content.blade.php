@@ -5,7 +5,7 @@
 			<h4 class="alert-heading">{{ trans('admin.please_fix') }}</h4>
 			<ul>
 				@foreach($errors->all() as $error)
-					<li>{{ $error }}</li>
+					<li>{!! $error !!}</li>
 				@endforeach
 			</ul>
 		</div>
@@ -16,6 +16,23 @@
 		<div class="row">
 			@foreach ($fields as $field)
 				@include('admin.panel.fields.' . $field['type'], ['field' => $field])
+				
+				{{--
+					The fields 'newline' element can be:
+					- true (boolean) for both of 'create' or 'update' forms
+					- 'create' (string) for create form only
+					- 'update' (string) for update form only
+				--}}
+				@if (array_key_exists('newline', $field))
+					@if (is_bool($field['newline']) && $field['newline'])
+						<div style="clear: both; margin: 0; padding: 0;"></div>
+					@endif
+					@if (isset($form))
+						@if (is_string($field['newline']) && $field['newline'] == $form)
+							<div style="clear: both; margin: 0; padding: 0;"></div>
+						@endif
+					@endif
+				@endif
 			@endforeach
 		</div>
 	</div>
@@ -38,8 +55,7 @@
     @stack('crud_fields_scripts')
 
     <script>
-        jQuery('document').ready(function($){
-	
+	    onDocumentReady((event) => {
 			// Save button has multiple actions: save and exit, save and edit, save and new
 			var saveActions = $('#saveActions'),
 				crudForm = saveActions.parents('form'),
@@ -63,10 +79,10 @@
                 return true;
             });
 
-            @if( $xPanel->autoFocusOnFirstField )
-            // Focus on first field
+            @if($xPanel->autoFocusOnFirstField)
+                // Focus on first field
             @php
-                $focusField = \Illuminate\Support\Arr::first($fields, function($field){
+                $focusField = \Illuminate\Support\Arr::first($fields, function($field) {
                     return isset($field['auto_focus']) && $field['auto_focus'] == true;
                 })
             @endphp

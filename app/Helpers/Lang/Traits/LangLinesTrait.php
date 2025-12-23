@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Lang\Traits;
 
 use App\Helpers\Arr;
@@ -34,23 +49,13 @@ trait LangLinesTrait
 				
 				foreach ($packagesMissingEntries as $namespace => $packageMissingEntries) {
 					$packageMissingEntries = Arr::dot($packageMissingEntries);
-					
-					try {
-						Lang::addLines($packageMissingEntries, $langCode, $namespace);
-					} catch (\Throwable $e) {
-						dd($e->getMessage());
-					}
+					Lang::addLines($packageMissingEntries, $langCode, $namespace);
 				}
 			}
 			
 			// Add the main languages missing lines
 			$mainMissingEntries = Arr::dot($missingEntriesFormatted);
-			
-			try {
-				Lang::addLines($mainMissingEntries, $langCode);
-			} catch (\Throwable $e) {
-				dd($e->getMessage());
-			}
+			Lang::addLines($mainMissingEntries, $langCode);
 			
 			// Get language files grouped by file name
 			$files = $this->files();

@@ -1,22 +1,32 @@
 {{-- select2 multiple --}}
+@php
+	$field ??= [];
+	
+	$entityEntries = $field['model']::all();
+	
+	$fieldValue = $field['value'] ?? ($field['default'] ?? null);
+	$fieldValue = old($field['name'], $fieldValue);
+@endphp
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+	    {!! $field['label'] !!}
+	    @if (isset($field['required']) && $field['required'])
+		    <span class="text-danger">*</span>
+	    @endif
+    </label>
     @include('admin.panel.fields.inc.translatable_icon')
-    <select
-            name="{{ $field['name'] }}[]"
-            style="width: 100%"
+    <select name="{{ $field['name'] }}[]" style="width: 100%" multiple
             @include('admin.panel.inc.field_attributes', ['default_class' =>  'form-select select2_multiple'])
-            multiple>
-        
-        @if (isset($field['model']))
-            @foreach ($field['model']::all() as $connected_entity_entry)
-                <option value="{{ $connected_entity_entry->getKey() }}"
-                        @if ( (isset($field['value']) && in_array($connected_entity_entry->getKey(), $field['value']->pluck($connected_entity_entry->getKeyName(), $connected_entity_entry->getKeyName())->toArray())) || ( old( $field["name"] ) && in_array($connected_entity_entry->getKey(), old( $field["name"])) ) )
-                        selected
-                        @endif
-                >{{ $connected_entity_entry->{$field['attribute']} }}</option>
-            @endforeach
-        @endif
+    >
+	    @foreach ($entityEntries as $entityEntry)
+			@php
+				$fieldValue = $fieldValue->pluck($entityEntry->getKeyName(), $entityEntry->getKeyName())->toArray();
+				$selectedAttr = in_array($entityEntry->getKey(), $fieldValue) ? ' selected' : '';
+			@endphp
+		    <option value="{{ $entityEntry->getKey() }}"{!! $selectedAttr !!}>
+			    {{ $entityEntry->{$field['attribute']} }}
+		    </option>
+	    @endforeach
     </select>
     
     {{-- HINT --}}
@@ -35,7 +45,7 @@
     @push('crud_fields_styles')
     {{-- include select2 css--}}
     <link href="{{ asset('assets/plugins/select2/css/select2.min.css') }}" rel="stylesheet" type="text/css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/plugins/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
     @endpush
     
     {{-- FIELD JS - will be loaded in the after_scripts section --}}
@@ -43,7 +53,7 @@
     {{-- include select2 js--}}
     <script src="{{ asset('assets/plugins/select2/js/select2.js') }}"></script>
     <script>
-		jQuery(document).ready(function($) {
+	    onDocumentReady((event) => {
 			// trigger select2 for each untriggered select2_multiple box
 			$('.select2_multiple').each(function (i, obj) {
 				if (!$(obj).hasClass("select2-hidden-accessible"))

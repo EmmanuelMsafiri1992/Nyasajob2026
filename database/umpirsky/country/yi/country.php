@@ -30,7 +30,7 @@
     'MP' => 'Northern Mariana Islands',
     'OM' => 'Oman',
     'PW' => 'Palau',
-    'PS' => 'Palestinian Territories',
+    'PS' => 'Palestine',
     'SA' => 'Saudi Arabia',
     'SX' => 'Sint Maarten',
     'GS' => 'South Georgia & South Sandwich Islands',

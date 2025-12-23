@@ -1,8 +1,22 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
 	$resume ??= [];
+	$fiTheme = config('larapen.core.fileinput.theme', 'bs5');
 @endphp
 
 @section('content')
@@ -20,7 +34,7 @@
 					
 					@if (isset($errors) && $errors->any())
 						<div class="alert alert-danger">
-							<h5><strong>{{ t('oops_an_error_has_occurred') }}</strong></h5>
+							<h5><strong>{{ t('validation_errors_title') }}</strong></h5>
 							<ul class="list list-check">
 								@foreach ($errors->all() as $error)
 									<li>{{ $error }}</li>
@@ -30,7 +44,7 @@
 					@endif
 					
 					<div class="inner-box">
-						<h2 class="title-2"><i class="fas fa-paperclip"></i> {{ t('Edit the resume') }} </h2>
+						<h2 class="title-2"><i class="fa-solid fa-paperclip"></i> {{ t('Edit the resume') }} </h2>
 						
 						<div class="mb30" style="float: right; padding-right: 5px;">
 							<a href="{{ url('account/resumes') }}">{{ t('My resumes') }}</a>
@@ -42,7 +56,9 @@
 							{{-- RESUME --}}
 							<div class="card card-default">
 								<div class="card-header">
-									<h4 class="card-title"><a href="#resumePanel" data-bs-toggle="collapse" data-parent="#accordion"> {{ t('Resume') }} </a></h4>
+									<h4 class="card-title">
+										<a href="#resumePanel" data-bs-toggle="collapse" data-parent="#accordion"> {{ t('Resume') }} </a>
+									</h4>
 								</div>
 								<div class="panel-collapse collapse show" id="resumePanel">
 									<div class="card-body">
@@ -89,9 +105,15 @@
 	@if (config('lang.direction') == 'rtl')
 		<link href="{{ url('assets/plugins/bootstrap-fileinput/css/fileinput-rtl.min.css') }}" rel="stylesheet">
 	@endif
+	@if (str_starts_with($fiTheme, 'explorer'))
+		<link href="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.min.css') }}" rel="stylesheet">
+	@endif
 	<style>
 		.krajee-default.file-preview-frame:hover:not(.file-preview-error) {
 			box-shadow: 0 0 5px 0 #666666;
+		}
+		.file-loading:before {
+			content: " {{ t('loading_wd') }}";
 		}
 	</style>
 @endsection
@@ -99,6 +121,6 @@
 @section('after_scripts')
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/plugins/sortable.min.js') }}" type="text/javascript"></script>
 	<script src="{{ url('assets/plugins/bootstrap-fileinput/js/fileinput.min.js') }}" type="text/javascript"></script>
-	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/fas/theme.js') }}" type="text/javascript"></script>
+	<script src="{{ url('assets/plugins/bootstrap-fileinput/themes/' . $fiTheme . '/theme.js') }}" type="text/javascript"></script>
 	<script src="{{ url('common/js/fileinput/locales/' . config('app.locale') . '.js') }}" type="text/javascript"></script>
 @endsection

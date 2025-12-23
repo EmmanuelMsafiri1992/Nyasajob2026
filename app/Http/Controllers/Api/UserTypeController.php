@@ -1,9 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
-use App\Http\Resources\EntityCollection;
-use App\Http\Resources\UserTypeResource;
-use App\Models\UserType;
+use App\Enums\UserType;
 
 /**
  * @group Users
@@ -17,13 +30,17 @@ class UserTypeController extends BaseController
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$userTypes = UserType::query()->get();
+		$userTypes = UserType::all();
 		
-		$resourceCollection = new EntityCollection(class_basename($this), $userTypes);
+		$message = empty($genders) ? t('no_user_types_found') : null;
 		
-		$message = ($userTypes->count() <= 0) ? t('no_user_types_found') : null;
+		$data = [
+			'success' => true,
+			'message' => $message,
+			'result'  => $userTypes,
+		];
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->json($data);
 	}
 	
 	/**
@@ -36,14 +53,15 @@ class UserTypeController extends BaseController
 	 */
 	public function show($id): \Illuminate\Http\JsonResponse
 	{
-		$userType = UserType::query()->where('id', $id);
-		
-		$userType = $userType->first();
+		$userType = UserType::find($id);
 		
 		abort_if(empty($userType), 404, t('user_type_not_found'));
 		
-		$resource = new UserTypeResource($userType);
+		$data = [
+			'success' => true,
+			'result'  => $userType,
+		];
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->json($data);
 	}
 }

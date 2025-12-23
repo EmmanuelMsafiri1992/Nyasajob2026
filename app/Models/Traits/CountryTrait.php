@@ -1,75 +1,119 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Traits;
 
-use App\Models\Country;
+use App\Helpers\Localization\Helpers\Country as CountryHelper;
+use App\Models\Language;
+use Illuminate\Support\Facades\DB;
 
 trait CountryTrait
 {
-    /*
-    |--------------------------------------------------------------------------
-    | FUNCTIONS
-    |--------------------------------------------------------------------------
-    */
-	public function getCountryHtml()
+	// ===| ADMIN PANEL METHODS |===
+	
+	public function getNameHtml(): string
 	{
-		$out = '';
+		$currentUrl = preg_replace('#/(search)$#', '', url()->current());
+		$url = $currentUrl . '/' . $this->getKey() . '/edit';
 		
-		if (empty($this->country) && empty($this->country_code)) {
-			return $out;
-		}
+		return '<a href="' . $url . '">' . $this->name . '</a>';
+	}
+	
+	public function getActiveHtml(): string
+	{
+		if (!isset($this->active)) return '';
 		
-		$countryCode = $this->country->code ?? $this->country_code;
-		$countryName = $this->country->name ?? $countryCode;
+		return installAjaxCheckboxDisplay($this->{$this->primaryKey}, $this->getTable(), 'active', $this->active);
+	}
+	
+	public function adminDivisions1Button($xPanel = false): string
+	{
+		$url = admin_url('countries/' . $this->id . '/admins1');
 		
-		$iconPath = 'images/flags/16/' . strtolower($countryCode) . '.png';
-		if (file_exists(public_path($iconPath))) {
-			$out .= '<a href="' . dmUrl($countryCode, '/', true, true) . '" target="_blank">';
-			$out .= '<img src="' . url($iconPath) . getPictureVersion() . '" data-bs-toggle="tooltip" title="' . $countryName . '">';
-			$out .= '</a>';
-		} else {
-			$out .= $countryCode;
-		}
+		$msg = trans('admin.Admin Divisions 1 of country', ['country' => $this->name]);
+		$tooltip = ' data-bs-toggle="tooltip" title="' . $msg . '"';
+		
+		$out = '<a class="btn btn-xs btn-light" href="' . $url . '"' . $tooltip . '>';
+		$out .= '<i class="fa-regular fa-eye"></i> ';
+		$out .= mb_ucfirst(trans('admin.admin divisions 1'));
+		$out .= '</a>';
 		
 		return $out;
 	}
-    
-    
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
-    public function country()
-    {
-        return $this->belongsTo(Country::class, 'country_code', 'code');
-    }
-    
-    /*
-    |--------------------------------------------------------------------------
-    | SCOPES
-    |--------------------------------------------------------------------------
-    */
-    public function scopeCurrentCountry($builder)
-    {
-        return $builder->where('country_code', config('country.code'));
-    }
-    
-    public function scopeCountryOf($builder, $countryCode)
-    {
-        return $builder->where('country_code', $countryCode);
-    }
-    
-    
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSORS
-    |--------------------------------------------------------------------------
-    */
-    
-    
-    /*
-    |--------------------------------------------------------------------------
-    | MUTATORS
-    |--------------------------------------------------------------------------
-    */
+	
+	public function citiesButton($xPanel = false): string
+	{
+		$url = admin_url('countries/' . $this->id . '/cities');
+		
+		$msg = trans('admin.Cities of country', ['country' => $this->name]);
+		$tooltip = ' data-bs-toggle="tooltip" title="' . $msg . '"';
+		
+		$out = '<a class="btn btn-xs btn-light" href="' . $url . '"' . $tooltip . '>';
+		$out .= '<i class="fa-regular fa-eye"></i> ';
+		$out .= mb_ucfirst(trans('admin.cities'));
+		$out .= '</a>';
+		
+		return $out;
+	}
+	
+	// ===| OTHER METHODS |===
+	
+	/**
+	 * Countries Batch Auto Translation
+	 *
+	 * @param bool $overwriteExistingTrans
+	 * @return void
+	 */
+	public static function autoTranslation(bool $overwriteExistingTrans = false): void
+	{
+		$tableName = (new self())->getTable();
+		
+		$languages = DB::table((new Language())->getTable())->get();
+		$oldEntries = DB::table($tableName)->get();
+		
+		if ($oldEntries->count() > 0) {
+			$transCountry = new CountryHelper();
+			foreach ($oldEntries as $oldEntry) {
+				$newNames = [];
+				
+				foreach ($languages as $language) {
+					if (isJson($oldEntry->name)) {
+						$oldNames = json_decode($oldEntry->name, true);
+					}
+					
+					$langCode = $language->code ?? ($language->abbr ?? null);
+					$translationNotFound = (empty($oldNames[$langCode]));
+					
+					if ($overwriteExistingTrans || $translationNotFound) {
+						if ($translationNotFound) {
+							$newNames[$langCode] = getColumnTranslation($oldEntry->name);
+						}
+						if ($name = $transCountry->get($oldEntry->code, $langCode)) {
+							$newNames[$langCode] = $name;
+						}
+					}
+				}
+				
+				if (!empty($newNames)) {
+					$name = json_encode($newNames, JSON_UNESCAPED_UNICODE);
+					$affected = DB::table($tableName)
+						->where('code', $oldEntry->code)
+						->update(['name' => $name]);
+				}
+			}
+		}
+	}
 }

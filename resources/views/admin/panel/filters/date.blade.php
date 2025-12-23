@@ -2,14 +2,14 @@
 <?php $filterSlug = str($filter->name)->slug(); ?>
 <li filter-name="{{ $filter->name }}"
 	filter-type="{{ $filter->type }}"
-	class="nav-item dropdown {{ request()->get($filter->name)?'active':'' }}">
+	class="nav-item dropdown {{ request()->query($filter->name)?'active':'' }}">
 	<a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
 		{{ $filter->label }} <span class="caret"></span>
 	</a>
 	<div class="dropdown-menu p-0">
 		<div class="form-group backpack-filter mb-0">
 			<div class="input-group date">
-				<span class="input-group-text"><i class="fa fa-calendar"></i></span>
+				<span class="input-group-text"><i class="fa-regular fa-calendar"></i></span>
 				<input class="form-control float-end"
 					   id="datepicker-{{ $filterSlug }}"
 					   type="text"
@@ -18,7 +18,7 @@
 						@endif
 				>
 				<span class="input-group-text datepicker{{ $filterSlug }}-clear-button">
-					<a href=""><i class="fa fa-times"></i></a>
+					<a href=""><i class="fa-solid fa-xmark"></i></a>
 				</span>
 			</div>
 		</div>
@@ -32,7 +32,7 @@
 {{-- push things in the after_styles section --}}
 
 @push('crud_list_styles')
-	<link href="{{ asset('assets/plugins/datepicker/datepicker3.css') }}" rel="stylesheet" type="text/css" />
+	<link href="{{ asset('assets/plugins/datepicker/1.9.0/datepicker3.css') }}" rel="stylesheet" type="text/css" />
 	<style>
 		.input-group.date {
 			width: 320px;
@@ -47,9 +47,9 @@
 
 @push('crud_list_scripts')
 	{{-- include select2 js--}}
-	<script type="text/javascript" src="{{ asset('assets/plugins/datepicker/bootstrap-datepicker.js') }}"></script>
+	<script type="text/javascript" src="{{ asset('assets/plugins/datepicker/1.9.0/bootstrap-datepicker.js') }}"></script>
 	<script>
-		jQuery(document).ready(function($) {
+		onDocumentReady((event) => {
 			var dateInput = $('#datepicker-{{ $filterSlug }}').datepicker({
 					autoclose: true,
 					format: 'yyyy-mm-dd',

@@ -1,15 +1,29 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\UrlGen;
 
 use App\Helpers\Arr;
 use App\Helpers\UrlGen;
-use Illuminate\Support\Facades\Route;
 
 trait ClearFiltersTrait
 {
 	/**
 	 * @param $cat
-	 * @param null $city
+	 * @param $city
 	 * @return string
 	 */
 	public static function getCategoryFilterClearLink($cat, $city = null): string
@@ -21,11 +35,11 @@ trait ClearFiltersTrait
 		if (
 			request()->filled('c')
 			|| request()->filled('sc')
-			|| str_contains(Route::currentRouteAction(), 'Search\CategoryController')
+			|| str_contains(currentRouteAction(), 'Search\CategoryController')
 		) {
 			$exceptArr = ['page', 'cf', 'minPrice', 'maxPrice'];
-			if (isset($cat) && !empty($cat)) {
-				if (isset($cat->parent) && !empty($cat->parent)) {
+			if (!empty($cat)) {
+				if (!empty($cat->parent)) {
 					$exceptArr[] = 'sc';
 				} else {
 					$exceptArr[] = 'c';
@@ -34,8 +48,8 @@ trait ClearFiltersTrait
 			$url = UrlGen::search([], $exceptArr);
 			
 			if (!empty($cat)) {
-				if (str_contains(Route::currentRouteAction(), 'Search\CategoryController')) {
-					if (isset($cat->parent) && !empty($cat->parent)) {
+				if (str_contains(currentRouteAction(), 'Search\CategoryController')) {
+					if (!empty($cat->parent)) {
 						$url = UrlGen::category($cat->parent, null, $city);
 					}
 				}
@@ -48,8 +62,8 @@ trait ClearFiltersTrait
 	}
 	
 	/**
-	 * @param null $city
-	 * @param null $cat
+	 * @param $cat
+	 * @param $city
 	 * @return string
 	 */
 	public static function getCityFilterClearLink($cat = null, $city = null): string
@@ -61,13 +75,13 @@ trait ClearFiltersTrait
 		if (
 			request()->filled('l')
 			|| request()->filled('location')
-			|| str_contains(Route::currentRouteAction(), 'Search\CityController')
+			|| str_contains(currentRouteAction(), 'Search\CityController')
 		) {
 			$exceptArr = ['page', 'l', 'location', 'distance'];
 			$url = UrlGen::search([], $exceptArr);
 			
 			if (!empty($city)) {
-				if (str_contains(Route::currentRouteAction(), 'Search\CityController')) {
+				if (str_contains(currentRouteAction(), 'Search\CityController')) {
 					$url = UrlGen::city($city, null, $cat);
 				}
 			}
@@ -92,7 +106,7 @@ trait ClearFiltersTrait
 		if (request()->filled('postedDate')) {
 			$queryArr = [];
 			if (!empty($cat) && isset($cat->id)) {
-				if (isset($cat->parent) && !empty($cat->parent)) {
+				if (!empty($cat->parent)) {
 					$queryArr['c'] = $cat->parent->id;
 					$queryArr['sc'] = $cat->id;
 				} else {
@@ -123,7 +137,7 @@ trait ClearFiltersTrait
 		if (request()->filled('minSalary')) {
 			$queryArr = [];
 			if (!empty($cat) && isset($cat->id)) {
-				if (isset($cat->parent) && !empty($cat->parent)) {
+				if (!empty($cat->parent)) {
 					$queryArr['c'] = $cat->parent->id;
 					$queryArr['sc'] = $cat->id;
 				} else {
@@ -154,7 +168,7 @@ trait ClearFiltersTrait
 		if (request()->filled('maxSalary')) {
 			$queryArr = [];
 			if (!empty($cat) && isset($cat->id)) {
-				if (isset($cat->parent) && !empty($cat->parent)) {
+				if (!empty($cat->parent)) {
 					$queryArr['c'] = $cat->parent->id;
 					$queryArr['sc'] = $cat->id;
 				} else {
@@ -185,7 +199,7 @@ trait ClearFiltersTrait
 		if (request()->filled('type')) {
 			$queryArr = [];
 			if (!empty($cat) && isset($cat->id)) {
-				if (isset($cat->parent) && !empty($cat->parent)) {
+				if (!empty($cat->parent)) {
 					$queryArr['c'] = $cat->parent->id;
 					$queryArr['sc'] = $cat->id;
 				} else {

@@ -1,15 +1,25 @@
 {{-- PAGE OR LINK field --}}
 {{-- Used in MenuCRUD --}}
-
-<?php
-    $field['options'] = ['page_link' => trans('admin.page_link'), 'internal_link' => trans('admin.internal_link'), 'external_link' => trans('admin.external_link')];
-    $field['allows_null'] = false;
+@php
+    $field ??= [];
+	
+    $field['options'] = [
+		'page_link'     => trans('admin.page_link'),
+		'internal_link' => trans('admin.internal_link'),
+		'external_link' => trans('admin.external_link')
+    ];
+    $field['allows_null'] ??= false;
+	
     $page_model = $field['page_model'];
     $active_pages = $page_model::all();
-?>
-
+@endphp
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+        {!! $field['label'] !!}
+        @if (isset($field['required']) && $field['required'])
+            <span class="text-danger">*</span>
+        @endif
+    </label>
     @include('admin.panel.fields.inc.translatable_icon')
     <div class="clearfix"></div>
 
@@ -20,11 +30,11 @@
             @include('admin.panel.inc.field_attributes')
             >
 
-            @if (isset($field['allows_null']) && $field['allows_null']==true)
+            @if ($field['allows_null'])
                 <option value="">-</option>
             @endif
 
-            @if (isset($field['options']) && !empty($field['options']))
+            @if (!empty($field['options']))
                 @foreach ($field['options'] as $key => $value)
                     <option value="{{ $key }}"
                         @if (isset($field['value']) && $key==$field['value'])
@@ -113,8 +123,8 @@
     {{-- FIELD JS - will be loaded in the after_scripts section --}}
     @push('crud_fields_scripts')
         <script>
-            jQuery(document).ready(function($) {
-
+            onDocumentReady((event) => {
+                
                 $("#page_or_link_select").change(function(e) {
                     $(".page_or_link_value input").attr('disabled', 'disabled');
                     $(".page_or_link_value select").attr('disabled', 'disabled');

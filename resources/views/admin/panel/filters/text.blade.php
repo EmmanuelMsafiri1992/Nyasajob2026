@@ -2,7 +2,7 @@
 <?php $filterSlug = str($filter->name)->slug(); ?>
 <li filter-name="{{ $filter->name }}"
 	filter-type="{{ $filter->type }}"
-	class="dropdown {{ request()->get($filter->name) ? 'active' : '' }}">
+	class="dropdown {{ request()->query($filter->name) ? 'active' : '' }}">
 	<a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ $filter->label }} <span class="caret"></span></a>
 	<div class="dropdown-menu pt-0 pb-0">
 		<div class="input-group backpack-filter mb-0">
@@ -15,7 +15,7 @@
 					   @endif
 				>
 				<span class="input-group-text">
-					<a class="text-filter-{{ $filterSlug }}-clear-button" href=""><i class="fa fa-times"></i></a>
+					<a class="text-filter-{{ $filterSlug }}-clear-button" href=""><i class="fa-solid fa-xmark"></i></a>
 				</span>
 			</div>
 		</div>
@@ -32,7 +32,7 @@
 @push('crud_list_scripts')
 	{{-- include select2 js--}}
 	<script>
-		jQuery(document).ready(function($) {
+		onDocumentReady((event) => {
 			$('#text-filter-{{ $filterSlug }}').on('change', function(e) {
 				
 				var parameter = '{{ $filter->name }}';

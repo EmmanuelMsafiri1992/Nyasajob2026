@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Notifications;
 
 use App\Helpers\Date;
@@ -6,22 +21,26 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Models\Post;
 use NotificationChannels\Twilio\TwilioChannel;
 use NotificationChannels\Twilio\TwilioSmsMessage;
 
-class PostWilBeDeleted extends Notification implements ShouldQueue
+class PostWilBeDeleted extends Notification
 {
 	use Queueable;
 	
-	protected $post;
-	protected $days;
+	protected Post $post;
+	protected int $days;
+	protected string $willBeDeletedAtFormatted;
 	
 	public function __construct(Post $post, $days)
 	{
 		$this->post = $post;
-		$this->days = $days;
+		$this->days = (int)$days;
+		
+		// Get delete date
+		$willBeDeletedAt = $this->post->archived_at->addDays($this->days);
+		$this->willBeDeletedAtFormatted = Date::format($willBeDeletedAt);
 	}
 	
 	public function via($notifiable)
@@ -77,7 +96,8 @@ class PostWilBeDeleted extends Notification implements ShouldQueue
 			]))
 			->line(trans('mail.post_will_be_deleted_content_3', ['repostUrl' => $repostUrl]))
 			->line(trans('mail.post_will_be_deleted_content_4', [
-				'dateDel' => Date::format($this->post->archived_at->addDays($this->days)),
+				'willBeDeletedAt' => $this->willBeDeletedAtFormatted,
+				'willBeDeletedAt'         => $this->willBeDeletedAtFormatted, // @note: need to be removed
 			]))
 			->line(trans('mail.post_will_be_deleted_content_5'))
 			->line('<br>')
@@ -97,6 +117,12 @@ class PostWilBeDeleted extends Notification implements ShouldQueue
 	
 	protected function smsMessage()
 	{
-		return trans('sms.post_will_be_deleted_content', ['appName' => config('app.name'), 'title' => $this->post->title, 'days' => $this->days]);
+		return trans('sms.post_will_be_deleted_content', [
+			'appName'         => config('app.name'),
+			'title'           => $this->post->title,
+			'days'            => $this->days,
+			'willBeDeletedAt' => $this->willBeDeletedAtFormatted,
+			'willBeDeletedAt'         => $this->willBeDeletedAtFormatted, // @note: need to be removed
+		]);
 	}
 }

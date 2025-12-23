@@ -35,13 +35,13 @@
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2 bg-light-inverse fw-bolder mb-1">{{ trans('admin.Verified Phone') }}</div>
                 <div class="col-lg-9 col-md-8 col-sm-6 col-6 p-2 mb-1">
-                    {!! (!empty($entry->phone_verified_at)) ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>' !!}
+                    {!! (!empty($entry->phone_verified_at)) ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>' !!}
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2 bg-light-inverse fw-bolder mb-1">{{ trans('admin.phone') }} ({{ t('Hide') }})</div>
                 <div class="col-lg-9 col-md-8 col-sm-6 col-6 p-2 mb-1">
-                    {!! ($entry->phone_hidden == 1) ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>' !!}
+                    {!! ($entry->phone_hidden == 1) ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>' !!}
                 </div>
             </div>
             <div class="row">
@@ -59,7 +59,7 @@
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2 bg-light-inverse fw-bolder mb-1">{{ trans('admin.Verified Email') }}</div>
                 <div class="col-lg-9 col-md-8 col-sm-6 col-6 p-2 mb-1">
-                    {!! (!empty($entry->email_verified_at)) ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>' !!}
+                    {!! (!empty($entry->email_verified_at)) ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>' !!}
                 </div>
             </div>
             <div class="row">
@@ -71,13 +71,13 @@
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2 bg-light-inverse fw-bolder mb-1">{{ t('terms') }}</div>
                 <div class="col-lg-9 col-md-8 col-sm-6 col-6 p-2 mb-1">
-                    {!! ($entry->accept_terms == 1) ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>' !!}
+                    {!! ($entry->accept_terms == 1) ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>' !!}
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2 bg-light-inverse fw-bolder mb-1">{{ t('accept_marketing_offers_label') }}</div>
                 <div class="col-lg-9 col-md-8 col-sm-6 col-6 p-2 mb-1">
-                    {!! ($entry->accept_marketing_offers == 1) ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>' !!}
+                    {!! ($entry->accept_marketing_offers == 1) ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>' !!}
                 </div>
             </div>
             <div class="row">

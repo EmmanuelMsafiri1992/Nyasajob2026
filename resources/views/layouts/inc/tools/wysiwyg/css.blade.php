@@ -1,10 +1,10 @@
 {{-- TinyMCE --}}
-@if (config('settings.single.wysiwyg_editor') == 'tinymce')
+@if (config('settings.listing_form.wysiwyg_editor') == 'tinymce')
     {{-- nothing --}}
 @endif
 
 {{-- CKEditor --}}
-@if (config('settings.single.wysiwyg_editor') == 'ckeditor')
+@if (config('settings.listing_form.wysiwyg_editor') == 'ckeditor')
     <style>
         /* Editor's Height */
         .ck-editor__editable_inline {
@@ -48,7 +48,7 @@
 @endif
 
 {{-- Summernote --}}
-@if (config('settings.single.wysiwyg_editor') == 'summernote')
+@if (config('settings.listing_form.wysiwyg_editor') == 'summernote')
     <link href="{{ asset('assets/plugins/summernote/summernote-bs4.css') }}" rel="stylesheet">
     <style>
         /*
@@ -89,7 +89,7 @@
 @endif
 
 {{-- Simditor --}}
-@if (config('settings.single.wysiwyg_editor') == 'simditor')
+@if (config('settings.listing_form.wysiwyg_editor') == 'simditor')
     <link media="all" rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/simditor/styles/simditor.css') }}" />
     @if (config('lang.direction') == 'rtl')
         <link media="all" rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/simditor/styles/simditor-rtl.css') }}" />

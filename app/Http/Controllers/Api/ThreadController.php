@@ -1,12 +1,27 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Helpers\Arr;
 use App\Helpers\Files\Upload;
 use App\Http\Controllers\Api\Auth\Traits\CompleteMissingAuthDataTrait;
 use App\Http\Controllers\Api\Thread\UpdateByTypeTrait;
-use App\Http\Requests\ReplyMessageRequest;
-use App\Http\Requests\SendMessageRequest;
+use App\Http\Requests\Front\ReplyMessageRequest;
+use App\Http\Requests\Front\SendMessageRequest;
 use App\Http\Resources\EntityCollection;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\ThreadResource;
@@ -48,34 +63,33 @@ class ThreadController extends BaseController
 	 * @queryParam perPage int Items per page. Can be defined globally from the admin settings. Cannot be exceeded 100. Example: 2
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$embed = explode(',', request()->input('embed'));
+		$perPage = getNumberOfItemsPerPage('threads', request()->integer('perPage'));
+		
+		$authUser = auth('sanctum')->user();
 		
 		// All threads
 		$threads = Thread::whereHas('post', function ($query) {
-			$query->currentCountry()->unarchived();
+			$query->inCountry()->unarchived();
 		});
-		
-		$embed = explode(',', request()->get('embed'));
 		
 		if (in_array('post', $embed)) {
 			$threads->with('post');
 		}
 		
-		if (request()->get('filter') == 'unread') {
+		if (request()->input('filter') == 'unread') {
 			// Get threads that have new messages or that are marked as unread
-			$threads->forUserWithNewMessages($user->id);
+			$threads->forUserWithNewMessages($authUser->getAuthIdentifier());
 		} else {
 			// Get threads that user is participating in
-			$threads->forUser($user->id)->latest('updated_at');
+			$threads->forUser($authUser->getAuthIdentifier())->latest('updated_at');
 		}
 		
 		// Get threads started by this user
-		if (request()->get('filter') == 'started') {
+		if (request()->input('filter') == 'started') {
 			$threadTable = (new Thread())->getTable();
 			$messageTable = (new ThreadMessage())->getTable();
 			
@@ -83,18 +97,18 @@ class ThreadController extends BaseController
 				$query->select('user_id')
 					->from($messageTable)
 					->whereColumn($messageTable . '.thread_id', $threadTable . '.id')
-					->orderBy($messageTable . '.created_at', 'ASC')
+					->orderBy($messageTable . '.created_at')
 					->limit(1);
-			}, $user->id);
+			}, $authUser->getAuthIdentifier());
 		}
 		
 		// Get this user's important thread
-		if (request()->get('filter') == 'important') {
+		if (request()->input('filter') == 'important') {
 			$threads->where('is_important', 1);
 		}
 		
 		// Get rows & paginate
-		$threads = $threads->paginate($this->perPage);
+		$threads = $threads->paginate($perPage);
 		
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
@@ -104,7 +118,7 @@ class ThreadController extends BaseController
 		
 		$message = ($threads->count() <= 0) ? t('no_threads_found') : null;
 		
-		return $this->respondWithCollection($collection, $message);
+		return apiResponse()->withCollection($collection, $message);
 	}
 	
 	/**
@@ -121,16 +135,14 @@ class ThreadController extends BaseController
 	 *
 	 * @param $id
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function show($id): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$embed = explode(',', request()->input('embed'));
+		
+		$authUser = auth('sanctum')->user();
 		
 		$thread = Thread::query();
-		
-		$embed = explode(',', request()->get('embed'));
 		
 		if (in_array('user', $embed)) {
 			// See the ThreadResource
@@ -150,18 +162,18 @@ class ThreadController extends BaseController
 		}
 		
 		$threadTable = (new Thread())->getTable();
-		$thread->forUser($user->id)->where($threadTable . '.id', $id);
+		$thread->forUser($authUser->getAuthIdentifier())->where($threadTable . '.id', $id);
 		
 		$thread = $thread->first();
 		
 		abort_if(empty($thread), 404, t('thread_not_found'));
 		
 		// Mark the Thread as read
-		$thread->markTheThreadAsRead($user->id);
+		$thread->markTheThreadAsRead($authUser->getAuthIdentifier());
 		
 		$resource = new ThreadResource($thread);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 	
 	/**
@@ -181,22 +193,20 @@ class ThreadController extends BaseController
 	 * @bodyParam filename file The thread attached file.
 	 * @bodyParam captcha_key string Key generated by the CAPTCHA endpoint calling (Required when the CAPTCHA verification is enabled from the Admin panel).
 	 *
-	 * @param \App\Http\Requests\SendMessageRequest $request
+	 * @param \App\Http\Requests\Front\SendMessageRequest $request
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function store(SendMessageRequest $request): \Illuminate\Http\JsonResponse
 	{
 		if (!$request->filled('post_id')) {
 			$msg = 'The "post_id" parameter is required.';
 			
-			return $this->respondError($msg);
+			return apiResponse()->error($msg);
 		}
 		
-		$user = null;
+		$authUser = null;
 		if (auth('sanctum')->check()) {
-			$user = auth('sanctum')->user();
+			$authUser = auth('sanctum')->user();
 		}
 		
 		// Get the Post
@@ -205,10 +215,12 @@ class ThreadController extends BaseController
 		// Check and complete missing auth data
 		$missingAuthDataCompleted = $this->completeMissingAuthData();
 		
-		// Get or Create Resume
-		if (!empty($user) && $request->filled('resume_id') && !empty($request->input('resume_id'))) {
-			// Get the User's Resume
-			$resume = Resume::where('id', $request->input('resume_id'))->where('user_id', $user->id)->first();
+		// Get or Create a Résumé
+		if (!empty($authUser) && $request->filled('resume_id') && !empty($request->input('resume_id'))) {
+			// Get the User's Résumé
+			$resume = Resume::where('id', $request->input('resume_id'))
+				->where('user_id', $authUser->getAuthIdentifier())
+				->first();
 		} else {
 			// Get Resume Input
 			$resumeInput = $request->input('resume');
@@ -221,16 +233,16 @@ class ThreadController extends BaseController
 			}
 			
 			// Logged Users
-			if (!empty($user)) {
+			if (!empty($authUser)) {
 				if (empty($resumeInput['user_id'])) {
-					$resumeInput['user_id'] = $user->id;
+					$resumeInput['user_id'] = $authUser->getAuthIdentifier();
 				}
 				
-				// Store the User's Resume
+				// Store the User's Résumé
 				$resume = new Resume($resumeInput);
 				$resume->save();
 				
-				// Save the Resume's file
+				// Save the Résumé's file
 				if ($request->hasFile('resume.filename')) {
 					// Upload File
 					$destPath = 'resumes/' . strtolower($resume->country_code) . '/' . $resume->user_id;
@@ -248,14 +260,14 @@ class ThreadController extends BaseController
 		if (empty($resume)) {
 			$msg = t('Please select a resume or New Resume to add one');
 			
-			return $this->respondError($msg);
+			return apiResponse()->error($msg);
 		}
 		
 		// Create Message Array
 		$messageArray = $request->all();
 		
 		// Logged User
-		if (!empty($user) && !empty($post->user)) {
+		if (!empty($authUser) && !empty($post->user)) {
 			// Thread
 			$thread = new Thread();
 			$thread->post_id = $post->id;
@@ -265,15 +277,15 @@ class ThreadController extends BaseController
 			// Message
 			$message = new ThreadMessage();
 			$message->thread_id = $thread->id;
-			$message->user_id = $user->id;
+			$message->user_id = $authUser->getAuthIdentifier();
 			$message->body = $request->input('body');
 			$message->filename = $resume->filename;
 			$message->save();
 			
 			// Update Message Array
-			$messageArray['name'] = $user->name;
-			$messageArray['email'] = $user->email;
-			$messageArray['phone'] = $user->phone;
+			$messageArray['name'] = $authUser->name ?? null;
+			$messageArray['email'] = $authUser->email ?? null;
+			$messageArray['phone'] = $authUser->phone ?? null;
 			$messageArray['country_code'] = $post->country_code ?? config('country.code');
 			if (!empty($message->filename)) {
 				$messageArray['filename'] = $message->filename;
@@ -282,7 +294,7 @@ class ThreadController extends BaseController
 			// Sender
 			$sender = new ThreadParticipant();
 			$sender->thread_id = $thread->id;
-			$sender->user_id = $user->id;
+			$sender->user_id = $authUser->getAuthIdentifier();
 			$sender->last_read = new Carbon();
 			$sender->save();
 			
@@ -315,7 +327,7 @@ class ThreadController extends BaseController
 			try {
 				$post->notify(new EmployerContacted($post, $messageArray));
 			} catch (\Throwable $e) {
-				return $this->respondInternalError($e->getMessage());
+				return apiResponse()->internalError($e->getMessage());
 			}
 		}
 		
@@ -339,7 +351,7 @@ class ThreadController extends BaseController
 		
 		$data['extra'] = $extra;
 		
-		return $this->respondCreated($data);
+		return apiResponse()->created($data);
 	}
 	
 	/**
@@ -352,26 +364,24 @@ class ThreadController extends BaseController
 	 * @bodyParam filename file The thread attached file.
 	 *
 	 * @param $id
-	 * @param \App\Http\Requests\ReplyMessageRequest $request
+	 * @param \App\Http\Requests\Front\ReplyMessageRequest $request
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function update($id, ReplyMessageRequest $request): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
 		
 		try {
 			// We use with([users => fn()]) to prevent email sending
 			// to the message sender (which is the current user)
 			$thread = Thread::with([
 				'post',
-				'users' => function ($query) use ($user) {
-					$query->where((new User())->getTable() . '.id', '!=', $user->id);
+				'users' => function ($query) use ($authUser) {
+					$query->where((new User())->getTable() . '.id', '!=', $authUser->getAuthIdentifier());
 				},
 			])->findOrFail($id);
 		} catch (ModelNotFoundException $e) {
-			return $this->respondNotFound(t('thread_not_found', ['id' => $id]));
+			return apiResponse()->notFound(t('thread_not_found', ['id' => $id]));
 		}
 		
 		// Re-activate the Thread for all participants
@@ -386,11 +396,11 @@ class ThreadController extends BaseController
 		// Message
 		$message = new ThreadMessage();
 		$message->thread_id = $thread->id;
-		$message->user_id = $user->id;
+		$message->user_id = $authUser->getAuthIdentifier();
 		$message->body = $request->input('body');
 		$message->save();
 		
-		// Save and Send user's resume
+		// Save and Send user's résumé
 		if ($request->hasFile('filename')) {
 			// Upload File
 			if (!empty($thread->post)) {
@@ -405,21 +415,21 @@ class ThreadController extends BaseController
 		// Update Message Array
 		$messageArray['country_code'] = (!empty($thread->post)) ? $thread->post->country_code : config('country.code');
 		$messageArray['post_id'] = (!empty($thread->post)) ? $thread->post->id : null;
-		$messageArray['name'] = $user->name;
-		$messageArray['email'] = $user->email;
-		$messageArray['phone'] = $user->phone;
+		$messageArray['name'] = $authUser->name ?? null;
+		$messageArray['email'] = $authUser->email ?? null;
+		$messageArray['phone'] = $authUser->phone ?? null;
 		$messageArray['subject'] = t('New message about') . ': ' . $thread->post->title;
 		if (!empty($message->filename)) {
 			$messageArray['filename'] = $message->filename;
 		}
 		
 		// Get the listing's auth field
-		$authField = $user->auth_field ?? getAuthField();
+		$authField = $authUser->auth_field ?? getAuthField();
 		$messageArray['auth_field'] = $authField;
 		$messageArray['to_auth_field'] = $authField;
 		if (
 			!empty($thread->post) && isset($thread->post->user_id)
-			&& ($user->id == $thread->post->user_id)
+			&& ($authUser->getAuthIdentifier() == $thread->post->user_id)
 			&& isset($thread->post->auth_field) && !empty($thread->post->auth_field)
 		) {
 			$messageArray['to_auth_field'] = $thread->post->auth_field;
@@ -428,7 +438,7 @@ class ThreadController extends BaseController
 		// Add replier as a participant
 		$participant = ThreadParticipant::firstOrCreate([
 			'thread_id' => $thread->id,
-			'user_id'   => $user->id,
+			'user_id'   => $authUser->getAuthIdentifier(),
 		]);
 		$participant->last_read = new Carbon();
 		$participant->save();
@@ -472,7 +482,7 @@ class ThreadController extends BaseController
 					}
 				}
 			} catch (\Throwable $e) {
-				return $this->respondInternalError($e->getMessage());
+				return apiResponse()->internalError($e->getMessage());
 			}
 		}
 		
@@ -482,7 +492,7 @@ class ThreadController extends BaseController
 			'result'  => (new ThreadResource($thread))->toArray($request),
 		];
 		
-		return $this->respondUpdated($data);
+		return apiResponse()->updated($data);
 	}
 	
 	/**
@@ -497,17 +507,15 @@ class ThreadController extends BaseController
 	 *
 	 * @param string|null $ids
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function bulkUpdate(?string $ids = null): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
 		
 		// Get Selected Entries ID (IDs separated by comma accepted)
 		$ids = explode(',', $ids);
 		
-		return $this->updateByType($ids, $user);
+		return $this->updateByType($ids, $authUser);
 	}
 	
 	/**
@@ -523,7 +531,7 @@ class ThreadController extends BaseController
 	 */
 	public function destroy(string $ids): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
 		
 		// Get Entries ID (IDs separated by comma accepted)
 		$ids = explode(',', $ids);
@@ -533,7 +541,7 @@ class ThreadController extends BaseController
 		foreach ($ids as $id) {
 			// Get the Thread
 			$thread = Thread::where((new Thread)->getTable() . '.id', $id)
-				->forUser($user->id)
+				->forUser($authUser->getAuthIdentifier())
 				->first();
 			
 			if (!empty($thread)) {
@@ -541,21 +549,21 @@ class ThreadController extends BaseController
 					// Delete the Entry for current user
 					// (by updating the 'deleted_by' column without updating the 'update_at')
 					Thread::withoutTimestamps(
-						fn () => $thread->where('id', $thread->id)->update(['deleted_by' => $user->id])
+						fn () => $thread->where('id', $thread->id)->update(['deleted_by' => $authUser->getAuthIdentifier()])
 					);
 					
 					$res = true;
 				} else {
-					// If the 2nd user delete the Entry,
+					// If the 2nd user deletes the Entry,
 					// Delete the Entry (definitely)
-					if ($thread->deleted_by != $user->id) {
+					if ($thread->deleted_by != $authUser->getAuthIdentifier()) {
 						$res = $thread->forceDelete();
 					}
 				}
 			}
 		}
 		if (!$res) {
-			return $this->respondNoContent(t('no_deletion_is_done'));
+			return apiResponse()->noContent(t('no_deletion_is_done'));
 		}
 		
 		// Confirmation
@@ -571,6 +579,6 @@ class ThreadController extends BaseController
 			]);
 		}
 		
-		return $this->respondSuccess($msg);
+		return apiResponse()->success($msg);
 	}
 }

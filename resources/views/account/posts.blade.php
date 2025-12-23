@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -9,19 +22,19 @@
 	
 	$pageTitles = [
 		'list' => [
-			'icon'  => 'fas fa-briefcase',
-			'title' => t('my_ads'),
+			'icon'  => 'fa-solid fa-briefcase',
+			'title' => t('my_listings'),
 		],
 		'archived' => [
-			'icon'  => 'fas fa-calendar-times',
+			'icon'  => 'fa-solid fa-calendar-xmark',
 			'title' => t('archived_ads'),
 		],
 		'favourite' => [
-			'icon'  => 'fas fa-bookmark',
+			'icon'  => 'fa-solid fa-bookmark',
 			'title' => t('Favourite jobs'),
 		],
 		'pending-approval' => [
-			'icon'  => 'fas fa-hourglass-half',
+			'icon'  => 'fa-solid fa-hourglass-half',
 			'title' => t('pending_approval'),
 		],
 	];
@@ -50,7 +63,8 @@
 				<div class="col-md-9 page-content">
 					<div class="inner-box">
 						<h2 class="title-2">
-							<i class="{{ $pageTitles[$pagePath]['icon'] ?? 'fas fa-bullhorn' }}"></i> {{ $pageTitles[$pagePath]['title'] ?? t('Posts') }}
+							<i class="{{ $pageTitles[$pagePath]['icon'] ?? 'fa-solid fa-bullhorn' }}"></i>
+							{{ $pageTitles[$pagePath]['title'] ?? t('Posts') }}
 						</h2>
 						
 						<div class="table-responsive">
@@ -67,7 +81,7 @@
 									</div>
 									
 									<button type="submit" class="btn btn-sm btn-default confirm-simple-action">
-										<i class="fa fa-trash"></i> {{ t('Delete') }}
+										<i class="fa-regular fa-trash-can"></i> {{ t('Delete') }}
 									</button>
 									
 									<div class="table-search float-end col-sm-7">
@@ -107,7 +121,7 @@
 												</td>
 												<td style="width:20%" class="add-img-td">
 													<a href="{{ \App\Helpers\UrlGen::post($post) }}">
-														<img class="img-thumbnail img-fluid" src="{{ data_get($post, 'logo_url.full') }}" alt="img">
+														<img class="img-thumbnail img-fluid" src="{{ data_get($post, 'logo_url.medium') }}" alt="img">
 													</a>
 												</td>
 												<td style="width:52%" class="items-details-td">
@@ -119,31 +133,31 @@
 																</a>
 															</strong>
 															@if (in_array($pagePath, ['list', 'archived', 'pending-approval']))
-																@if (!empty(data_get($post, 'latestPayment')) && !empty(data_get($post, 'latestPayment.package')))
+																@if (!empty(data_get($post, 'payment')) && !empty(data_get($post, 'payment.package')))
 																	@php
 																		if (data_get($post, 'featured') == 1) {
-																			$color = data_get($post, 'latestPayment.package.ribbon');
+																			$color = data_get($post, 'payment.package.ribbon');
 																			$packageInfo = '';
 																		} else {
 																			$color = '#ddd';
-																			$packageInfo = ' (' . t('Expired') . ')';
+																			$packageInfo = ' (' . t('expired') . ')';
 																		}
 																	@endphp
-																	<i class="fa fa-check-circle"
+																	<i class="fa-solid fa-circle-check"
 																		style="color: {{ $color }};"
 																		data-bs-placement="bottom"
 																		data-bs-toggle="tooltip"
-																		title="{{ data_get($post, 'latestPayment.package.short_name') . $packageInfo }}"
+																		title="{{ data_get($post, 'payment.package.short_name') . $packageInfo }}"
 																	></i>
 																@endif
 															@endif
 														</p>
 														<p>
-															<strong><i class="far fa-clock" title="{{ t('Posted On') }}"></i></strong>&nbsp;
+															<strong><i class="fa-regular fa-clock" title="{{ t('Posted On') }}"></i></strong>&nbsp;
 															{!! data_get($post, 'created_at_formatted') !!}
 														</p>
 														<p>
-															<strong><i class="far fa-eye" title="{{ t('Visitors') }}"></i></strong> {{ data_get($post, 'visits') ?? 0 }}
+															<strong><i class="fa-regular fa-eye" title="{{ t('Visitors') }}"></i></strong> {{ data_get($post, 'visits_formatted') ?? 0 }}
 															<strong><i class="bi bi-geo-alt" title="{{ t('Located In') }}"></i></strong> {{ data_get($post, 'city.name') ?? '-' }}
 															<img src="{{ data_get($post, 'country_flag_url') }}" data-bs-toggle="tooltip" title="{{ data_get($post, 'country.name') }}">
 														</p>
@@ -158,12 +172,12 @@
 													<div>
 														@if (
 																in_array($pagePath, ['list', 'pending-approval'])
-																&& data_get($post, 'user_id') == $user->id
+																&& data_get($post, 'user_id') == $authUser->id
 																&& empty(data_get($post, 'archived_at'))
 															)
 															<p>
 																<a class="btn btn-primary btn-sm" href="{{ \App\Helpers\UrlGen::editPost($post) }}">
-																	<i class="fa fa-edit"></i> {{ t('Edit') }}
+																	<i class="fa-regular fa-pen-to-square"></i> {{ t('Edit') }}
 																</a>
 															</p>
 														@endif
@@ -172,16 +186,20 @@
 																<a class="btn btn-warning btn-sm confirm-simple-action"
 																   href="{{ url('account/posts/'.$pagePath.'/'.data_get($post, 'id').'/offline') }}"
 																>
-																	<i class="fas fa-eye-slash"></i> {{ t('Offline') }}
+																	<i class="fa-solid fa-eye-slash"></i> {{ t('Offline') }}
 																</a>
 															</p>
 														@endif
-														@if ($pagePath == 'archived' && data_get($post, 'user_id') == $user->id && !empty(data_get($post, 'archived_at')))
+														@if (
+															$pagePath == 'archived'
+															&& data_get($post, 'user_id') == $authUser->id
+															&& !empty(data_get($post, 'archived_at'))
+														)
 															<p>
 																<a class="btn btn-info btn-sm confirm-simple-action"
 																   href="{{ url('account/posts/'.$pagePath.'/'.data_get($post, 'id').'/repost') }}"
 																>
-																	<i class="fa fa-recycle"></i> {{ t('Repost') }}
+																	<i class="fa-solid fa-recycle"></i> {{ t('Repost') }}
 																</a>
 															</p>
 														@endif
@@ -189,7 +207,7 @@
 															<a class="btn btn-danger btn-sm confirm-simple-action"
 																href="{{ url('account/posts/'.$pagePath.'/'.data_get($post, 'id').'/delete') }}"
 															>
-																<i class="fa fa-trash"></i> {{ t('Delete') }}
+																<i class="fa-regular fa-trash-can"></i> {{ t('Delete') }}
 															</a>
 														</p>
 													</div>
@@ -225,7 +243,7 @@
 	<script src="{{ url('assets/js/footable.js?v=2-0-1') }}" type="text/javascript"></script>
 	<script src="{{ url('assets/js/footable.filter.js?v=2-0-1') }}" type="text/javascript"></script>
 	<script type="text/javascript">
-		$(function () {
+		onDocumentReady((event) => {
 			$('#addManageTable').footable().bind('footable_filtering', function (e) {
 				var selected = $('.filter-status').find(':selected').text();
 				if (selected && selected.length > 0) {
@@ -233,30 +251,41 @@
 					e.clear = !e.filter;
 				}
 			});
-
-			$('.clear-filter').click(function (e) {
-				e.preventDefault();
-				$('.filter-status').val('');
+			
+			/* Clear Filter OnClick */
+			const clearFilterEl = document.querySelector(".clear-filter");
+			clearFilterEl.addEventListener("click", (event) => {
+				event.preventDefault();
+				
+				const filterStatusEl = document.querySelector(".filter-status");
+				if (filterStatusEl) {
+					filterStatusEl.value = '';
+				}
+				
 				$('table.demo').trigger('footable_clear_filter');
 			});
-
-			$('.from-check-all').click(function () {
-				checkAll(this);
-			});
+			
+			/* Check All OnClick */
+			const checkAllEl = document.querySelector(".from-check-all");
+			if (checkAllEl) {
+				checkAllEl.addEventListener("click", (event) => checkAll(event.target));
+			}
 		});
 	</script>
-	{{-- include custom script for ads table [select all checkbox]  --}}
+	{{-- include custom script for ads table [select all checkbox] --}}
 	<script>
-		function checkAll(bx) {
-			if (bx.type !== 'checkbox') {
-				bx = document.getElementById('checkAll');
-				bx.checked = !bx.checked;
+		function checkAll(checkAllEl) {
+			if (checkAllEl.type !== "checkbox") {
+				checkAllEl = document.getElementById("checkAll");
+				checkAllEl.checked = !checkAllEl.checked;
 			}
 			
-			var chkinput = document.getElementsByTagName('input');
-			for (var i = 0; i < chkinput.length; i++) {
-				if (chkinput[i].type == 'checkbox') {
-					chkinput[i].checked = bx.checked;
+			const checkboxInputs = document.getElementsByTagName("input");
+			if (checkboxInputs) {
+				for (let i = 0; i < checkboxInputs.length; i++) {
+					if (checkboxInputs[i].type === "checkbox") {
+						checkboxInputs[i].checked = checkAllEl.checked;
+					}
 				}
 			}
 		}

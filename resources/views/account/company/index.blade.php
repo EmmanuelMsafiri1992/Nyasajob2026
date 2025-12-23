@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -26,13 +39,14 @@
 				<div class="col-md-3 page-sidebar">
 					@includeFirst([config('larapen.core.customizedViewPath') . 'account.inc.sidebar', 'account.inc.sidebar'])
 				</div>
-				<!--/.page-sidebar-->
 
 				<div class="col-md-9 page-content">
 					<div class="inner-box">
-						<h2 class="title-2"><i class="far fa-building"></i> {{ t('My companies') }} </h2>
+						<h2 class="title-2"><i class="fa-regular fa-building"></i> {{ t('My companies') }} </h2>
 						<div class="mb30">
-							<a href="{{ url('account/companies/create') }}" class="btn btn-default"><i class="fas fa-plus"></i> {{ t('Create a new company') }}</a>
+							<a href="{{ url('account/companies/create') }}" class="btn btn-default">
+								<i class="fa-solid fa-plus"></i> {{ t('Create a new company') }}
+							</a>
 						</div>
 						<br>
 						
@@ -50,7 +64,7 @@
 									</div>
 									
 									<button type="submit" class="btn btn-sm btn-default confirm-simple-action">
-										<i class="fa fa-trash"></i> {{ t('Delete') }}
+										<i class="fa-regular fa-trash-can"></i> {{ t('Delete') }}
 									</button>
 									
 									<div class="table-search float-end col-sm-7">
@@ -90,7 +104,7 @@
 										</td>
 										<td style="width:20%" class="add-img-td">
 											<a href="{{ url('account/companies/' . data_get($company, 'id') . '/edit') }}">
-												<img class="img-thumbnail img-fluid" src="{{ data_get($company, 'logo_url.full') }}" alt="img">
+												<img class="img-thumbnail img-fluid" src="{{ data_get($company, 'logo_url.medium') }}" alt="img">
 											</a>
 										</td>
 										<td style="width:52%" class="items-details-td">
@@ -119,15 +133,15 @@
 										</td>
 										<td style="width:10%" class="action-td">
 											<div>
-												@if (data_get($company, 'user_id') == $user->id)
+												@if (data_get($company, 'user_id') == $authUser->id)
 													<p>
                                                         <a class="btn btn-primary btn-sm" href="{{ url('account/companies/' . data_get($company, 'id') . '/edit') }}">
-                                                            <i class="fa fa-edit"></i> {{ t('Edit') }}
+                                                            <i class="fa-regular fa-pen-to-square"></i> {{ t('Edit') }}
                                                         </a>
                                                     </p>
 													<p>
 														<a class="btn btn-danger btn-sm confirm-simple-action" href="{{ url('account/companies/' . data_get($company, 'id') . '/delete') }}">
-															<i class="fa fa-trash"></i> {{ t('Delete') }}
+															<i class="fa-regular fa-trash-can"></i> {{ t('Delete') }}
 														</a>
 													</p>
 												@endif
@@ -164,7 +178,7 @@
 	<script src="{{ url('assets/js/footable.js?v=2-0-1') }}" type="text/javascript"></script>
 	<script src="{{ url('assets/js/footable.filter.js?v=2-0-1') }}" type="text/javascript"></script>
 	<script type="text/javascript">
-		$(function () {
+		onDocumentReady((event) => {
 			$('#addManageTable').footable().bind('footable_filtering', function (e) {
 				var selected = $('.filter-status').find(':selected').text();
 				if (selected && selected.length > 0) {
@@ -172,30 +186,41 @@
 					e.clear = !e.filter;
 				}
 			});
-
-			$('.clear-filter').click(function (e) {
-				e.preventDefault();
-				$('.filter-status').val('');
+			
+			/* Clear Filter OnClick */
+			const clearFilterEl = document.querySelector(".clear-filter");
+			clearFilterEl.addEventListener("click", (event) => {
+				event.preventDefault();
+				
+				const filterStatusEl = document.querySelector(".filter-status");
+				if (filterStatusEl) {
+					filterStatusEl.value = '';
+				}
+				
 				$('table.demo').trigger('footable_clear_filter');
 			});
-
-			$('.from-check-all').click(function () {
-				checkAll(this);
-			});
+			
+			/* Check All OnClick */
+			const checkAllEl = document.querySelector(".from-check-all");
+			if (checkAllEl) {
+				checkAllEl.addEventListener("click", (event) => checkAll(event.target));
+			}
 		});
 	</script>
-	{{-- include custom script for ads table [select all checkbox]  --}}
+	{{-- include custom script for ads table [select all checkbox] --}}
 	<script>
-		function checkAll(bx) {
-			if (bx.type !== 'checkbox') {
-				bx = document.getElementById('checkAll');
-				bx.checked = !bx.checked;
+		function checkAll(checkAllEl) {
+			if (checkAllEl.type !== "checkbox") {
+				checkAllEl = document.getElementById("checkAll");
+				checkAllEl.checked = !checkAllEl.checked;
 			}
 			
-			var chkinput = document.getElementsByTagName('input');
-			for (var i = 0; i < chkinput.length; i++) {
-				if (chkinput[i].type == 'checkbox') {
-					chkinput[i].checked = bx.checked;
+			const checkboxInputs = document.getElementsByTagName("input");
+			if (checkboxInputs) {
+				for (let i = 0; i < checkboxInputs.length; i++) {
+					if (checkboxInputs[i].type === "checkbox") {
+						checkboxInputs[i].checked = checkAllEl.checked;
+					}
 				}
 			}
 		}

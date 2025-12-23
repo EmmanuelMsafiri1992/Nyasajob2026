@@ -13,10 +13,10 @@
 				<div class="ms-auto">
 					<ul class="list-inline mb-0 ms-auto text-end">
 						<li class="list-inline-item">
-							<h5><i class="fa fa-circle" style="color: #398bf7;"></i> {{ trans('admin.Activated') }}</h5>
+							<h5><i class="fa-solid fa-circle" style="color: #398bf7;"></i> {{ trans('admin.Activated') }}</h5>
 						</li>
 						<li class="list-inline-item">
-							<h5><i class="fa fa-circle" style="color: #dddddd;"></i> {{ trans('admin.Unactivated') }}</h5>
+							<h5><i class="fa-solid fa-circle" style="color: #dddddd;"></i> {{ trans('admin.Unactivated') }}</h5>
 						</li>
 					</ul>
 				</div>
@@ -31,7 +31,7 @@
 
 @push('dashboard_scripts')
     <script>
-        $(function () {
+	    onDocumentReady((event) => {
             "use strict";
 			
 			/* Ads Chart */
@@ -66,7 +66,6 @@
 					}
 				}
 			}, 200);
-			
         });
     </script>
 @endpush

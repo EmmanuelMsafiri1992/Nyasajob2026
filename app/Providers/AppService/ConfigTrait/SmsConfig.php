@@ -1,41 +1,124 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Providers\AppService\ConfigTrait;
+
+use App\Models\Permission;
+use App\Models\User;
+use App\Notifications\ExampleSms;
+use Illuminate\Support\Facades\Notification;
 
 trait SmsConfig
 {
-	/**
-	 * @param array|null $settings
-	 * @param string|null $appName
-	 * @return void
-	 */
-	private function updateSmsConfig(?array $settings = [], ?string $appName = null)
+	private function updateSmsConfig(?array $settings = [], ?string $appName = null): void
 	{
 		if (empty($settings)) {
 			return;
 		}
 		
+		// SMS
 		$driver = $settings['driver'] ?? null;
+		config()->set('settings.sms.driver', $driver);
 		
 		// Vonage
 		if ($driver == 'vonage') {
-			config()->set('vonage.api_key', $settings['vonage_key'] ?? null);
-			config()->set('vonage.api_secret', $settings['vonage_secret'] ?? null);
-			config()->set('vonage.application_id', $settings['vonage_application_id'] ?? null);
-			config()->set('vonage.sms_from', $settings['vonage_from'] ?? null);
-			config()->set('vonage.app.name', env('VONAGE_APP_NAME', $appName ?? config('app.name')));
-			config()->set('vonage.app.version', env('VONAGE_APP_VERSION', config('app.appVersion')));
+			$apiKey = $settings['vonage_key'] ?? null;
+			$apiSecret = $settings['vonage_secret'] ?? null;
+			$applicationId = $settings['vonage_application_id'] ?? null;
+			$smsFrom = $settings['vonage_from'] ?? null;
+			$appName = $appName ?? config('app.name');
+			$version = config('version.app');
+			
+			config()->set('vonage.api_key', $apiKey);
+			config()->set('vonage.api_secret', $apiSecret);
+			config()->set('vonage.application_id', $applicationId);
+			config()->set('vonage.sms_from', $smsFrom);
+			config()->set('vonage.app.name', env('VONAGE_APP_NAME', $appName));
+			config()->set('vonage.app.version', env('VONAGE_APP_VERSION', $version));
 		}
 		
 		// Twilio
 		if ($driver == 'twilio') {
-			config()->set('twilio-notification-channel.username', $settings['twilio_username'] ?? null);
-			config()->set('twilio-notification-channel.password', $settings['twilio_password'] ?? null);
-			config()->set('twilio-notification-channel.auth_token', $settings['twilio_auth_token'] ?? null);
-			config()->set('twilio-notification-channel.account_sid', $settings['twilio_account_sid'] ?? null);
-			config()->set('twilio-notification-channel.from', $settings['twilio_from'] ?? null);
-			config()->set('twilio-notification-channel.alphanumeric_sender', $settings['twilio_alpha_sender'] ?? null);
-			config()->set('twilio-notification-channel.sms_service_sid', $settings['twilio_sms_service_sid'] ?? null);
-			config()->set('twilio-notification-channel.debug_to', $settings['twilio_debug_to'] ?? null);
+			$username = $settings['twilio_username'] ?? null;
+			$password = $settings['twilio_password'] ?? null;
+			$authToken = $settings['twilio_auth_token'] ?? null;
+			$accountSid = $settings['twilio_account_sid'] ?? null;
+			$from = $settings['twilio_from'] ?? null;
+			$alphanumericSender = $settings['twilio_alpha_sender'] ?? null;
+			$smsServiceSid = $settings['twilio_sms_service_sid'] ?? null;
+			$debugTo = $settings['twilio_debug_to'] ?? null;
+			
+			config()->set('twilio-notification-channel.username', $username);
+			config()->set('twilio-notification-channel.password', $password);
+			config()->set('twilio-notification-channel.auth_token', $authToken);
+			config()->set('twilio-notification-channel.account_sid', $accountSid);
+			config()->set('twilio-notification-channel.from', $from);
+			config()->set('twilio-notification-channel.alphanumeric_sender', $alphanumericSender);
+			config()->set('twilio-notification-channel.sms_service_sid', $smsServiceSid);
+			config()->set('twilio-notification-channel.debug_to', $debugTo);
 		}
+	}
+	
+	/**
+	 * @param bool $isTestEnabled
+	 * @param string|null $smsTo
+	 * @param array|null $settings
+	 * @param bool $fallbackSmsToAdminUsers
+	 * @return string|null
+	 */
+	private function testSmsConfig(bool $isTestEnabled, ?string $smsTo, ?array $settings = [], bool $fallbackSmsToAdminUsers = false): ?string
+	{
+		if (!$isTestEnabled) {
+			return null;
+		}
+		
+		// Apply updated config
+		$this->updateSmsConfig($settings);
+		
+		// Get the test recipient
+		$smsTo = !empty($smsTo) ? $smsTo : config('settings.app.phone_number');
+		
+		/*
+		 * Send Example SMS
+		 */
+		$driver = config('settings.sms.driver');
+		$message = null;
+		try {
+			if (!empty($smsTo)) {
+				Notification::route($driver, $smsTo)->notify(new ExampleSms());
+			} else {
+				if ($fallbackSmsToAdminUsers) {
+					$admins = User::permission(Permission::getStaffPermissions())->get();
+					if ($admins->count() > 0) {
+						Notification::send($admins, new ExampleSms());
+					}
+				} else {
+					$message = trans('admin.sms_to_missing');
+				}
+			}
+		} catch (\Throwable $e) {
+			$message = $e->getMessage();
+		}
+		
+		if (!empty($message)) {
+			$exceptionMessageFormat = ' ERROR: <span class="fw-bold">%s</span>';
+			$message = sprintf($exceptionMessageFormat, $message);
+			$message = trans('admin.sms_sending_error', ['driver' => $driver]) . $message;
+		}
+		
+		return $message;
 	}
 }

@@ -1,10 +1,24 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Auth\Traits;
 
 use App\Http\Resources\PasswordResetResource;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\UserResource;
-use Illuminate\Support\Facades\Route;
 
 trait VerificationTrait
 {
@@ -13,7 +27,7 @@ trait VerificationTrait
 	public array $entitiesRefs = [
 		'users' => [
 			'slug'      => 'users',
-			'namespace' => '\\App\Models\User',
+			'namespace' => '\App\Models\User',
 			'name'      => 'name',
 			'scopes'    => [
 				\App\Models\Scopes\VerifiedScope::class,
@@ -21,7 +35,7 @@ trait VerificationTrait
 		],
 		'posts' => [
 			'slug'      => 'posts',
-			'namespace' => '\\App\Models\Post',
+			'namespace' => '\App\Models\Post',
 			'name'      => 'contact_name',
 			'scopes'    => [
 				\App\Models\Scopes\VerifiedScope::class,
@@ -30,7 +44,7 @@ trait VerificationTrait
 		],
 		'password' => [
 			'slug'      => 'password',
-			'namespace' => '\\App\Models\PasswordReset',
+			'namespace' => '\App\Models\PasswordReset',
 			'name'      => null,
 			'scopes'    => [],
 		],
@@ -49,21 +63,19 @@ trait VerificationTrait
 	 * @param $field
 	 * @param $token
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function verification($field, $token = null): \Illuminate\Http\JsonResponse
 	{
 		if (empty($token)) {
-			return $this->respondError(t('The token or code to verify is empty'));
+			return apiResponse()->error(t('The token or code to verify is empty'));
 		}
 		
-		$entitySlug = request()->get('entitySlug');
+		$entitySlug = request()->input('entitySlug');
 		
 		// Get Entity
 		$entityRef = $this->getEntityRef($entitySlug);
 		if (empty($entityRef)) {
-			return $this->respondNotFound(t('Entity ID not found'));
+			return apiResponse()->notFound(t('Entity ID not found'));
 		}
 		
 		// Get Field Label
@@ -81,10 +93,13 @@ trait VerificationTrait
 		}
 		
 		// Get Entity by Token
-		$entity = $model::withoutGlobalScopes($entityRef['scopes'])->where($field . '_token', $token)->first();
+		$entity = $model::query()
+			->withoutGlobalScopes($entityRef['scopes'])
+			->where($field . '_token', $token)
+			->first();
 		
 		if (empty($entity)) {
-			return $this->respondError(t('Your field verification has failed', ['field' => $fieldLabel]));
+			return apiResponse()->error(t('Your field verification has failed', ['field' => $fieldLabel]));
 		}
 		
 		$data = [];
@@ -112,7 +127,7 @@ trait VerificationTrait
 				$data['result'] = new PostResource($entity);
 			}
 			
-			return $this->apiResponse($data);
+			return apiResponse()->json($data);
 		}
 		
 		// Is It User Entity?
@@ -150,7 +165,7 @@ trait VerificationTrait
 			$this->findAndMatchUserToPost($entity);
 		}
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 	
 	/**
@@ -169,7 +184,7 @@ trait VerificationTrait
 		$entity = $model::where('token', $token)->first();
 		
 		if (empty($entity)) {
-			return $this->respondError(t('Your field verification has failed', ['field' => $fieldLabel]));
+			return apiResponse()->error(t('Your field verification has failed', ['field' => $fieldLabel]));
 		}
 		
 		$message = t('your_field_has_been_verified_token', ['field' => $fieldLabel]);
@@ -180,36 +195,38 @@ trait VerificationTrait
 			'result'  => new PasswordResetResource($entity),
 		];
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 	
 	/**
 	 * @param null $entityRefId
-	 * @return null
+	 * @return array|null
 	 */
-	public function getEntityRef($entityRefId = null)
+	public function getEntityRef($entityRefId = null): ?array
 	{
 		if (empty($entityRefId)) {
 			if (
-				str_contains(Route::currentRouteAction(), 'Api\Auth\RegisterController')
-				|| str_contains(Route::currentRouteAction(), 'Api\UserController')
-				|| str_contains(Route::currentRouteAction(), 'Admin\UserController')
+				str_contains(currentRouteAction(), 'Api\Auth\RegisterController')
+				|| str_contains(currentRouteAction(), 'Api\UserController')
+				|| str_contains(currentRouteAction(), 'Admin\UserController')
 			) {
 				$entityRefId = 'users';
 			}
 			
 			if (
-				str_contains(Route::currentRouteAction(), 'Api\PostController')
-				|| str_contains(Route::currentRouteAction(), 'Admin\PostController')
+				str_contains(currentRouteAction(), 'Api\PostController')
+				|| str_contains(currentRouteAction(), 'Admin\PostController')
 			) {
 				$entityRefId = 'posts';
 			}
 			
-			if (
-				str_contains(Route::currentRouteAction(), 'Api\Auth\ForgotPasswordController')
-				|| str_contains(Route::currentRouteAction(), 'Web\Auth\ForgotPasswordController')
-				|| str_contains(Route::currentRouteAction(), 'Admin\Auth\ForgotPasswordController')
-			) {
+			/*
+			 * Check the 'ForgotPasswordController' with these namespaces:
+			 * - Api\Auth\ForgotPasswordController
+			 * - Web\Public\Auth\ForgotPasswordController
+			 * - Web\Admin\Auth\ForgotPasswordController
+			 */
+			if (str_contains(currentRouteAction(), 'Auth\ForgotPasswordController')) {
 				$entityRefId = 'password';
 			}
 		}

@@ -1,12 +1,24 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Providers\AppService\ConfigTrait;
 
 trait BackupConfig
 {
-	/**
-	 * @param string $settings
-	 */
-	private function updateBackupConfig($settings = 'settings')
+	private function updateBackupConfig(?array $settings = []): void
 	{
 		config()->set('backup.backup.name', config('app.name'));
 		config()->set('backup.monitor_backups.name', config('app.name'));
@@ -23,7 +35,7 @@ trait BackupConfig
 		
 		// Flags (Depreciated)
 		config()->set('backup.backup.admin_flags', [
-			'--disable-notifications' => (config('settings.backup.disable_notifications')) ? true : false,
+			'--disable-notifications' => (bool)config('settings.backup.disable_notifications'),
 		]);
 		
 		// Notifications
@@ -60,13 +72,15 @@ trait BackupConfig
 		}
 		
 		// Monitor Backups
+		$maximumAgeInDays = ($keepAllBackupsForDays > 0) ? $keepAllBackupsForDays : 1;
+		$maximumStorageInMegabytes = ($maximumStorageInMegabytes > 0) ? $maximumStorageInMegabytes : 5000;
 		$monitorBackups = [
 			[
 				'name'          => config('app.name'),
 				'disks'         => $disks,
 				'health_checks' => [
-					\Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class          => ($keepAllBackupsForDays > 0) ? $keepAllBackupsForDays : 1,
-					\Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes::class => ($maximumStorageInMegabytes > 0) ? $maximumStorageInMegabytes : 5000,
+					\Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class          => $maximumAgeInDays,
+					\Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes::class => $maximumStorageInMegabytes,
 				],
 			],
 		];

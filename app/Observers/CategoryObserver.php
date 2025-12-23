@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Helpers\Files\Storage\StorageDisk;
@@ -63,13 +78,15 @@ class CategoryObserver
 		}
 		
 		// Don't delete the default pictures
+		$defaultPicture = 'app/default/categories/fa-folder-default.png';
 		$skin = config('settings.style.skin', 'default');
-		$defaultPicture = 'app/default/categories/fa-folder-' . $skin . '.png';
-		$defaultSkinPicture = 'app/categories/' . $skin . '/';
+		$skinPicture = 'app/default/categories/fa-folder-' . $skin . '.png';
+		$skinDirectory = 'app/categories/' . $skin . '/';
 		if (
 			!empty($category->picture)
 			&& !str_contains($category->picture, $defaultPicture)
-			&& !str_contains($category->picture, $defaultSkinPicture)
+			&& !str_contains($category->picture, $skinPicture)
+			&& !str_contains($category->picture, $skinDirectory)
 			&& $disk->exists($category->picture)
 		) {
 			$disk->delete($category->picture);
@@ -168,8 +185,9 @@ class CategoryObserver
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $category
+	 * @return void
 	 */
-	private function clearCache($category)
+	private function clearCache($category): void
 	{
 		try {
 			cache()->flush();

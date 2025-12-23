@@ -1,16 +1,38 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Models\Scopes\ActiveScope;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\LanguageTrait;
 use App\Observers\LanguageObserver;
-use Cviebrock\EloquentSluggable\Sluggable;
-use Cviebrock\EloquentSluggable\SluggableScopeHelpers;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+#[ObservedBy([LanguageObserver::class])]
+#[ScopedBy([ActiveScope::class])]
 class Language extends BaseModel
 {
-	use Crud, Sluggable, SluggableScopeHelpers;
+	use Crud, AppendsTrait, HasFactory;
+	use LanguageTrait;
 	
 	/**
 	 * The table associated with the model.
@@ -24,8 +46,18 @@ class Language extends BaseModel
 	 *
 	 * @var string
 	 */
-	protected $primaryKey = 'abbr';
+	protected $primaryKey = 'code';
+	protected $keyType = 'string';
 	public $incrementing = false;
+	
+	/**
+	 * @var array<int, string>
+	 */
+	protected $appends = [
+		'iso_locale',
+		'tag',
+		'primary', // Language ISO 639-1 Code
+	];
 	
 	/**
 	 * Indicates if the model should be timestamped.
@@ -37,22 +69,21 @@ class Language extends BaseModel
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
-		'abbr',
+		'code',
 		'locale',
 		'name',
 		'native',
 		'flag',
-		'app_name',
 		'script',
 		'direction',
 		'russian_pluralization',
@@ -68,114 +99,11 @@ class Language extends BaseModel
 		'updated_at',
 	];
 	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	// protected $dates = [];
-	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
-	{
-		parent::boot();
-		
-		Language::observe(LanguageObserver::class);
-		
-		static::addGlobalScope(new ActiveScope());
-	}
-	
-	/**
-	 * Return the sluggable configuration array for this model.
-	 *
-	 * @return array
-	 */
-	public function sluggable(): array
-	{
-		return [
-			'app_name' => [
-				'source' => ['app_name', 'name'],
-			],
-		];
-	}
-	
-	/**
-	 * @return array
-	 */
-	public static function getActiveLanguagesArray(): array
-	{
-		$cacheExpiration = config('settings.optimization.cache_expiration', 86400);
-		$activeLanguages = cache()->remember('languages.active.array', $cacheExpiration, function () {
-			return self::where('active', 1)->get();
-		});
-		
-		return collect($activeLanguages)->keyBy('abbr')->toArray();
-	}
-	
-	/**
-	 * @param bool $abbr
-	 * @return mixed
-	 */
-	public static function findByAbbr($abbr = false)
-	{
-		return self::where('abbr', $abbr)->first();
-	}
-	
-	public function syncFilesLinesBtn($xPanel = false): string
-	{
-		$url = admin_url('languages/sync_files');
-		
-		$msg = trans('admin.Fill the missing lines in all languages files from the master language');
-		$tooltip = ' data-bs-toggle="tooltip" title="' . $msg . '"';
-		
-		// Button
-		$out = '<a class="btn btn-success shadow" href="' . $url . '"' . $tooltip . '>';
-		$out .= '<i class="fas fa-exchange-alt"></i> ';
-		$out .= trans('admin.Sync Languages Files Lines');
-		$out .= '</a>';
-		
-		return $out;
-	}
-	
-	public function filesLinesEditionBtn($xPanel = false): string
-	{
-		$url = admin_url('languages/texts');
-		
-		$msg = trans('admin.site_texts');
-		$tooltip = ' data-bs-toggle="tooltip" title="' . $msg . '"';
-		
-		// Button
-		$out = '<a class="btn btn-primary shadow" href="' . $url . '"' . $tooltip . '>';
-		$out .= '<i class="fa fa-language"></i> ';
-		$out .= trans('admin.translate') . ' ' . mb_strtolower(trans('admin.site_texts'));
-		$out .= '</a>';
-		
-		return $out;
-	}
-	
-	public function getNameHtml(): string
-	{
-		$currentUrl = preg_replace('#/(search)$#', '', url()->current());
-		$url = $currentUrl . '/' . $this->getKey() . '/edit';
-		
-		return '<a href="' . $url . '">' . $this->name . '</a>';
-	}
-	
-	public function getDefaultHtml(): string
-	{
-		return checkboxDisplay($this->default);
-	}
 	
 	/*
 	|--------------------------------------------------------------------------
@@ -188,7 +116,7 @@ class Language extends BaseModel
 	| SCOPES
 	|--------------------------------------------------------------------------
 	*/
-	public function scopeActive($query)
+	public function scopeActive(Builder $query): Builder
 	{
 		return $query->where('active', 1);
 	}
@@ -201,7 +129,47 @@ class Language extends BaseModel
 	protected function id(): Attribute
 	{
 		return Attribute::make(
-			get: fn ($value) => $this->attributes['abbr'],
+			get: function () {
+				return $this->code ?? ($this->attributes['code'] ?? null);
+			},
+		);
+	}
+	
+	protected function code(): Attribute
+	{
+		return Attribute::make(
+			get: fn ($value) => removeLocaleCodeset($value),
+			set: fn ($value) => removeLocaleCodeset($value),
+		);
+	}
+	
+	protected function locale(): Attribute
+	{
+		return Attribute::make(
+			get: function ($value) {
+				$code = $this->code ?? ($this->attributes['code'] ?? null);
+				
+				return !empty($value) ? $value : $code;
+			},
+			set: function ($value) {
+				$code = $this->code ?? ($this->attributes['code'] ?? null);
+				
+				return !empty($value) ? $value : $code;
+			},
+		);
+	}
+	
+	/*
+	 * Locale without codeset|encoding
+	 */
+	protected function isoLocale(): Attribute
+	{
+		return Attribute::make(
+			get: function () {
+				$locale = $this->locale ?? ($this->attributes['locale'] ?? null);
+				
+				return removeLocaleCodeset($locale);
+			},
 		);
 	}
 	
@@ -209,10 +177,39 @@ class Language extends BaseModel
 	{
 		return Attribute::make(
 			get: function ($value) {
-				if ($value != '') {
-					return $value;
-				}
-				return $this->attributes['name'];
+				$name = $this->name ?? ($this->attributes['name'] ?? null);
+				
+				return !empty($value) ? $value : $name;
+			},
+			set: function ($value) {
+				$name = $this->name ?? ($this->attributes['name'] ?? null);
+				
+				return !empty($value) ? $value : $name;
+			},
+		);
+	}
+	
+	protected function tag(): Attribute
+	{
+		return Attribute::make(
+			get: function () {
+				$code = $this->code ?? ($this->attributes['code'] ?? null);
+				
+				return getLangTag($code);
+			},
+		);
+	}
+	
+	/*
+	 * Language ISO 639-1 Code
+	 */
+	protected function primary(): Attribute
+	{
+		return Attribute::make(
+			get: function () {
+				$code = $this->code ?? ($this->attributes['code'] ?? null);
+				
+				return getPrimaryLocaleCode($code);
 			},
 		);
 	}

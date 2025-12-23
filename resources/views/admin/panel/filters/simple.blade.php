@@ -1,6 +1,6 @@
 {{-- Simple CRUD filter --}}
 
-<li filter-name="{{ $filter->name }}" filter-type="{{ $filter->type }}" class="{{ request()->get($filter->name)?'active':'' }}">
+<li filter-name="{{ $filter->name }}" filter-type="{{ $filter->type }}" class="{{ request()->query($filter->name)?'active':'' }}">
 	<a href="" parameter="{{ $filter->name }}">{{ $filter->label }}</a>
 </li>
 
@@ -21,7 +21,7 @@
 
 @push('crud_list_scripts')
     <script>
-		jQuery(document).ready(function($) {
+	    onDocumentReady((event) => {
 			$("li[filter-name={{ $filter->name }}] a").click(function(e) {
 				e.preventDefault();
 

@@ -175,7 +175,7 @@
     'QO' => 'Outlying Oceania',
     'PK' => 'Pakistan',
     'PW' => 'Palau',
-    'PS' => 'Palestinian Territories',
+    'PS' => 'Palestine',
     'PA' => 'Panama',
     'PG' => 'Papua New Guinea',
     'PY' => 'Paraguay',

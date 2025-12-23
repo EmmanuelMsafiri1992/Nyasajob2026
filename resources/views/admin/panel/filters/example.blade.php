@@ -2,7 +2,7 @@
 
 <li filter-name="{{ $filter->name }}"
 	filter-type="{{ $filter->type }}"
-	class="dropdown {{ request()->get($filter->name) ? 'active' : '' }}">
+	class="dropdown {{ request()->query($filter->name) ? 'active' : '' }}">
     <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ $filter->label }} <span class="caret"></span></a>
     <div class="dropdown-menu padding-10">
 
@@ -39,7 +39,7 @@ END OF FILTER JAVSCRIPT CHECKLIST --}}
 
 @push('crud_list_scripts')
     <script>
-		jQuery(document).ready(function($) {
+	    onDocumentReady((event) => {
 			$("li[filter-name={{ $filter->name }}] a").click(function(e) {
 				e.preventDefault();
 

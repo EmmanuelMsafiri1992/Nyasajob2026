@@ -10,7 +10,7 @@
 			</div>
 			
 			<div class="col-sm-2 col-12 ps-sm-1 px-0 mt-sm-0 mt-1">
-				<button class="btn btn-block btn-primary"><i class="fa fa-search"></i></button>
+				<button class="btn btn-block btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
 			</div>
 			{!! csrf_field() !!}
 		</div>

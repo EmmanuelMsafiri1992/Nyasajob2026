@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @section('content')
@@ -36,7 +49,7 @@
 						</div>
 					</div>
 				@endif
-					
+				
 				<div class="col-xl-12">
 					<div class="alert alert-info">
 						{{ getTokenMessage() }}:
@@ -55,12 +68,15 @@
 						<div class="card-body">
 							<form id="tokenForm" role="form" method="POST" action="{{ url(getRequestPath('.*/verify/.*')) }}">
 								{!! csrf_field() !!}
+								@honeypot
 								
 								{{-- code --}}
-								<?php $codeError = (isset($errors) && $errors->has('code')) ? ' is-invalid' : ''; ?>
+								@php
+									$codeError = (isset($errors) && $errors->has('code')) ? ' is-invalid' : '';
+								@endphp
 								<div class="mb-3">
 									<label for="code" class="col-form-label">{{ getTokenLabel() }}:</label>
-									<div class="input-group">
+									<div class="input-group required">
 										<span class="input-group-text">
 											<i class="bi bi-envelope-exclamation"></i>
 										</span>
@@ -75,7 +91,7 @@
 								</div>
 								
 								<div class="mb-3">
-									<button id="tokenBtn" type="submit" class="btn btn-primary btn-lg btn-block">{{ t('submit') }}</button>
+									<button type="submit" id="tokenBtn" class="btn btn-primary btn-lg btn-block">{{ t('submit') }}</button>
 								</div>
 							</form>
 						</div>
@@ -92,11 +108,9 @@
 
 @section('after_scripts')
 	<script>
-		$(document).ready(function () {
-			$("#tokenBtn").click(function () {
-				$("#tokenForm").submit();
-				return false;
-			});
+		onDocumentReady((event) => {
+			{{-- Validate & Submit Form --}}
+			formValidate('#tokenForm', formValidateOptions);
 		});
 	</script>
 @endsection

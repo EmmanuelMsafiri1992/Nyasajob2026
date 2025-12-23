@@ -1,42 +1,59 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Rules;
 
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Routing\Router;
-use Illuminate\Config\Repository;
-use Illuminate\Contracts\Validation\Rule;
 
-class UsernameIsAllowedRule implements Rule
+class UsernameIsAllowedRule implements ValidationRule
 {
 	/**
 	 * The router instance used to check the username against application routes.
 	 *
 	 * @var \Illuminate\Routing\Router
 	 */
-	private $router;
+	private Router $router;
 	
 	/**
 	 * The filesystem class used to retrieve public files and directories.
 	 *
 	 * @var \Illuminate\Filesystem\Filesystem
 	 */
-	private $files;
-	
-	/**
-	 * The config repository used to retrieve reserved usernames.
-	 *
-	 * @var \Illuminate\Config\Repository
-	 */
-	private $config;
+	private Filesystem $files;
 	
 	/**
 	 * Create a new allowed username validator instance.
 	 */
 	public function __construct()
 	{
-		$this->config = app(Repository::class);
 		$this->router = app(Router::class);
 		$this->files = app(Filesystem::class);
+	}
+	
+	/**
+	 * Run the validation rule.
+	 */
+	public function validate(string $attribute, mixed $value, Closure $fail): void
+	{
+		if (!$this->passes($attribute, $value)) {
+			$fail(trans('validation.username_is_allowed_rule'));
+		}
 	}
 	
 	/**
@@ -46,8 +63,9 @@ class UsernameIsAllowedRule implements Rule
 	 * @param mixed $value
 	 * @return bool
 	 */
-	public function passes($attribute, $value)
+	public function passes(string $attribute, mixed $value): bool
 	{
+		$value = getAsString($value);
 		$value = trim(strtolower($value));
 		
 		if ($this->isReservedUsername($value)) {
@@ -65,39 +83,22 @@ class UsernameIsAllowedRule implements Rule
 		return true;
 	}
 	
-	/**
-	 * Get the validation error message.
-	 *
-	 * @return string
-	 */
-	public function message()
-	{
-		return trans('validation.username_is_allowed_rule');
-	}
-	
 	/* PRIVATES */
 	
 	/**
 	 * Determine whether the given username is in the reserved usernames list.
 	 *
-	 * @param string $value
+	 * @param string|null $value
 	 * @return bool
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
-	private function isReservedUsername($value)
+	private function isReservedUsername(?string $value): bool
 	{
-		$reservedUsernames = $this->config->get('larapen.core.reservedUsernames');
-		
-		if (is_string($reservedUsernames)) {
-			$reservedUsernames = preg_split('/[,;\s]+/ui', $reservedUsernames);
-			$reservedUsernames = array_map('trim', $reservedUsernames);
-		}
-		
-		// Pass if unable to check
-		if (!is_array($reservedUsernames)) {
+		if (is_null($value)) {
 			return false;
 		}
+		
+		$reservedUsernames = getReservedUsernameRefList();
+		$reservedUsernames = array_map('trim', $reservedUsernames);
 		
 		return in_array($value, $reservedUsernames);
 	}
@@ -105,10 +106,10 @@ class UsernameIsAllowedRule implements Rule
 	/**
 	 * Determine whether the given username matches an application route.
 	 *
-	 * @param string $value
+	 * @param string|null $value
 	 * @return bool
 	 */
-	private function matchesRoute($value)
+	private function matchesRoute(?string $value): bool
 	{
 		foreach ($this->router->getRoutes() as $route) {
 			if (strtolower($route->uri) === $value) {
@@ -122,10 +123,10 @@ class UsernameIsAllowedRule implements Rule
 	/**
 	 * Determine whether the given username matches a public file or directory.
 	 *
-	 * @param string $value
+	 * @param string|null $value
 	 * @return bool
 	 */
-	private function matchesPublicFileOrDirectory($value)
+	private function matchesPublicFileOrDirectory(?string $value): bool
 	{
 		foreach ($this->files->glob(public_path() . DIRECTORY_SEPARATOR . '*') as $path) {
 			if (strtolower(basename($path)) === $value) {

@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\EntityCollection;
@@ -23,35 +38,34 @@ class SavedPostController extends BaseController
 	 * @queryParam perPage int Items per page. Can be defined globally from the admin settings. Cannot be exceeded 100. Example: 2
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
 		
-		$countryCode = request()->get('country_code', config('country.code'));
+		$perPage = getNumberOfItemsPerPage('saved_posts', request()->integer('perPage'));
+		$countryCode = request()->input('country_code', config('country.code'));
 		
 		$savedPosts = SavedPost::query()
 			->whereHas('post', function ($query) use ($countryCode) {
-				$query->countryOf($countryCode);
+				$query->inCountry($countryCode);
 			})
-			->where('user_id', $user->id);
+			->where('user_id', $authUser->getAuthIdentifier());
 		
-		$embed = explode(',', request()->get('embed'));
+		$embed = explode(',', request()->input('embed'));
 		
 		if (in_array('user', $embed)) {
-			$savedPosts->with('user');
+			$savedPosts->with(['user', 'user.permissions']);
 		}
 		
 		if (in_array('post', $embed)) {
-			$savedPosts->with('post')->with(['post.pictures', 'post.city', 'post.user']);
+			$savedPosts->with('post')->with(['post.pictures', 'post.city', 'post.user', 'post.user.permissions']);
 		}
 		
 		// Sorting
 		$savedPosts = $this->applySorting($savedPosts, ['created_at']);
 		
-		$savedPosts = $savedPosts->paginate($this->perPage);
+		$savedPosts = $savedPosts->paginate($perPage);
 		
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
@@ -61,7 +75,7 @@ class SavedPostController extends BaseController
 		
 		$message = ($savedPosts->count() <= 0) ? t('no_saved_posts_found') : null;
 		
-		return $this->respondWithCollection($collection, $message);
+		return apiResponse()->withCollection($collection, $message);
 	}
 	
 	/**
@@ -81,7 +95,7 @@ class SavedPostController extends BaseController
 	{
 		$guard = 'sanctum';
 		if (!auth($guard)->check()) {
-			return $this->respondUnAuthorized();
+			return apiResponse()->unauthorized();
 		}
 		
 		$data = [
@@ -94,14 +108,14 @@ class SavedPostController extends BaseController
 		if (empty($postId)) {
 			$data['message'] = 'The "post_id" field need to be filled.';
 			
-			return $this->apiResponse($data, 400);
+			return apiResponse()->json($data, 400);
 		}
 		
 		$data['success'] = true;
 		
-		$user = auth($guard)->user();
+		$authUser = auth($guard)->user();
 		
-		$savedPost = SavedPost::where('user_id', $user->id)->where('post_id', $postId);
+		$savedPost = SavedPost::where('user_id', $authUser->getAuthIdentifier())->where('post_id', $postId);
 		if ($savedPost->count() > 0) {
 			// Delete SavedPost
 			$savedPost->delete();
@@ -110,7 +124,7 @@ class SavedPostController extends BaseController
 		} else {
 			// Store SavedPost
 			$savedPostArray = [
-				'user_id' => $user->id,
+				'user_id' => $authUser->getAuthIdentifier(),
 				'post_id' => $postId,
 			];
 			$savedPost = new SavedPost($savedPostArray);
@@ -122,7 +136,7 @@ class SavedPostController extends BaseController
 			$data['result'] = $resource;
 		}
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 	
 	/**
@@ -138,7 +152,7 @@ class SavedPostController extends BaseController
 	 */
 	public function destroy(string $ids): \Illuminate\Http\JsonResponse
 	{
-		$user = auth('sanctum')->user();
+		$authUser = auth('sanctum')->user();
 		
 		$data = [
 			'success' => false,
@@ -153,7 +167,7 @@ class SavedPostController extends BaseController
 		$res = false;
 		foreach ($ids as $postId) {
 			$savedPost = SavedPost::query()
-				->where('user_id', $user->id)
+				->where('user_id', $authUser->getAuthIdentifier())
 				->where('post_id', $postId)
 				->first();
 			
@@ -174,6 +188,6 @@ class SavedPostController extends BaseController
 			}
 		}
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 }

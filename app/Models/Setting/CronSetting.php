@@ -1,7 +1,26 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Setting;
 
-use App\Http\Controllers\Web\Install\Traits\Install\PhpTrait;
+use App\Helpers\Traits\PhpTrait;
+
+/*
+ * settings.cron.option
+ */
 
 class CronSetting
 {
@@ -11,24 +30,24 @@ class CronSetting
 	{
 		if (empty($value)) {
 			
-			$value['unactivated_posts_expiration'] = '30';
-			$value['activated_posts_expiration'] = '30';
-			$value['archived_posts_expiration'] = '7';
-			$value['manually_archived_posts_expiration'] = '90';
+			$value['unactivated_listings_expiration'] = '30';
+			$value['activated_listings_expiration'] = '30';
+			$value['archived_listings_expiration'] = '7';
+			$value['manually_archived_listings_expiration'] = '90';
 			
 		} else {
 			
-			if (!array_key_exists('unactivated_posts_expiration', $value)) {
-				$value['unactivated_posts_expiration'] = '30';
+			if (!array_key_exists('unactivated_listings_expiration', $value)) {
+				$value['unactivated_listings_expiration'] = '30';
 			}
-			if (!array_key_exists('activated_posts_expiration', $value)) {
-				$value['activated_posts_expiration'] = '30';
+			if (!array_key_exists('activated_listings_expiration', $value)) {
+				$value['activated_listings_expiration'] = '30';
 			}
-			if (!array_key_exists('archived_posts_expiration', $value)) {
-				$value['archived_posts_expiration'] = '7';
+			if (!array_key_exists('archived_listings_expiration', $value)) {
+				$value['archived_listings_expiration'] = '7';
 			}
-			if (!array_key_exists('manually_archived_posts_expiration', $value)) {
-				$value['manually_archived_posts_expiration'] = '90';
+			if (!array_key_exists('manually_archived_listings_expiration', $value)) {
+				$value['manually_archived_listings_expiration'] = '90';
 			}
 			
 		}
@@ -47,7 +66,8 @@ class CronSetting
 		
 		$phpBinaryDefaultPath = '/path/to/php';
 		$phpBinaryPath = null;
-		if (view()->exists('elements._cron_jobs')) {
+		$cronJobInfoView = 'elements._cron_jobs';
+		if (view()->exists($cronJobInfoView)) {
 			$phpTrait = new self();
 			$phpBinaryPath = $phpTrait->getPhpBinaryPath();
 			$requiredPhpVersion = $phpTrait->getComposerRequiredPhpVersion();
@@ -56,7 +76,7 @@ class CronSetting
 				'requiredPhpVersion' => $requiredPhpVersion,
 				'basePath'           => relativeAppPath(base_path()),
 			];
-			$cronJobInfo = view('elements._cron_jobs', $data)->render();
+			$cronJobInfo = view($cronJobInfoView, $data)->render();
 			$fields[] = [
 				'name'  => 'cron_php_binary_info',
 				'type'  => 'custom_html',
@@ -92,37 +112,37 @@ class CronSetting
 					: trans('admin.cron_ads_clear_info_value'),
 			],
 			[
-				'name'              => 'unactivated_posts_expiration',
-				'label'             => trans('admin.unactivated_posts_expiration_label'),
+				'name'              => 'unactivated_listings_expiration',
+				'label'             => trans('admin.unactivated_listings_expiration_label'),
 				'type'              => 'number',
-				'hint'              => trans('admin.unactivated_posts_expiration_hint'),
+				'hint'              => trans('admin.unactivated_listings_expiration_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'              => 'activated_posts_expiration',
-				'label'             => trans('admin.activated_posts_expiration_label'),
+				'name'              => 'activated_listings_expiration',
+				'label'             => trans('admin.activated_listings_expiration_label'),
 				'type'              => 'number',
-				'hint'              => trans('admin.activated_posts_expiration_hint'),
+				'hint'              => trans('admin.activated_listings_expiration_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'              => 'archived_posts_expiration',
-				'label'             => trans('admin.archived_posts_expiration_label'),
+				'name'              => 'archived_listings_expiration',
+				'label'             => trans('admin.archived_listings_expiration_label'),
 				'type'              => 'number',
-				'hint'              => trans('admin.archived_posts_expiration_hint'),
+				'hint'              => trans('admin.archived_listings_expiration_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],
 			],
 			[
-				'name'              => 'manually_archived_posts_expiration',
-				'label'             => trans('admin.manually_archived_posts_expiration_label'),
+				'name'              => 'manually_archived_listings_expiration',
+				'label'             => trans('admin.manually_archived_listings_expiration_label'),
 				'type'              => 'number',
-				'hint'              => trans('admin.manually_archived_posts_expiration_hint'),
+				'hint'              => trans('admin.manually_archived_listings_expiration_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],

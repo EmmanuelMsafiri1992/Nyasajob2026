@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers;
 
 use Illuminate\Support\Carbon;
@@ -8,7 +23,7 @@ class SystemLocale
 	/**
 	 * Set locale for the system (Override the PHP setlocale() function)
 	 *
-	 * USAGE: Call this method in Laravel 'AppServiceProvider'
+	 * USAGE: Call this method as soon as the app\'s locale is retrieved
 	 *
 	 * IMPORTANT: Prevent issue in Laravel Blade
 	 * The Blade @if(...) statement doesn't convert to <?php if(...): ?> in Turkish language (for example).
@@ -30,16 +45,17 @@ class SystemLocale
 	 * LC_TIME for date and time formatting with strftime()
 	 * LC_MESSAGES for system responses (available if PHP was compiled with libintl)
 	 *
-	 * @param $locale
+	 * @param string|null $locale
 	 * @param int|null $category
-	 * @return mixed|string
+	 * @return string|null
 	 */
-	public static function setLocale($locale, int $category = null)
+	public static function setLocale(?string $locale, int $category = null): ?string
 	{
-		$categories = [LC_ALL, LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, LC_TIME];
-		if (defined('LC_MESSAGES')) {
-			$categories[] = LC_MESSAGES;
+		if (empty($locale)) {
+			return null;
 		}
+		
+		$categories = array_keys(self::getCategories());
 		if (empty($category) || !in_array($category, $categories)) {
 			$category = LC_ALL;
 		}
@@ -59,16 +75,10 @@ class SystemLocale
 		$localeFound = false;
 		
 		// Get available locales from the server
-		try {
-			exec('locale -a', $locales);
-		} catch (\Throwable $e) {
-		}
+		// $localeList = getLocales();
+		$localeList = getLocales('installed');
 		
-		if (empty($locales)) {
-			$locales = array_keys((array)config('locales'));
-		}
-		
-		if (is_array($locales) && in_array($locale, $locales)) {
+		if (in_array($locale, $localeList)) {
 			$definedLocales = setlocale($category, $locale);
 			if ($definedLocales !== false) {
 				Carbon::setLocale($locale);
@@ -78,63 +88,56 @@ class SystemLocale
 		
 		// If not found, try to use locale with codeset (If it exists)
 		if (!$localeFound) {
-			if (is_array($locales)) {
-				foreach ($locales as $sysLocale) {
-					/*
-					 * Check if $locale exists on the server with a codeset (locale.codeset)
-					 * e.g. tr_TR.UTF-8, ru_RU.UTF-8, ru_RU.ISO8859-5, fr_CH.ISO8859-15, ...
-					 * More Info: https://stackoverflow.com/a/24355529
-					 */
-					$pattern = '#' . $locale . '\.#i';
-					if (preg_match($pattern, $sysLocale)) {
-						$definedLocales = setlocale($category, $locale);
+			foreach ($localeList as $sysLocale) {
+				/*
+				 * Check if $locale exists on the server with a codeset (locale.codeset)
+				 * e.g. tr_TR.UTF-8, ru_RU.UTF-8, ru_RU.ISO8859-5, fr_CH.ISO8859-15, ...
+				 * More Info: https://stackoverflow.com/a/24355529
+				 */
+				$locale = removeLocaleCodeset($locale);
+				if (str_starts_with($sysLocale, $locale)) {
+					$definedLocales = setlocale($category, $sysLocale);
+					if ($definedLocales !== false) {
+						Carbon::setLocale($sysLocale);
+						$localeFound = true;
+						$locale = $sysLocale;
+					}
+				}
+				
+				if (!$localeFound) {
+					$regionalLocale = getRegionalLocaleCode(getPrimaryLocaleCode($locale));
+					if (empty($regionalLocale)) {
+						continue;
+					}
+					
+					if (in_array($regionalLocale, $localeList)) {
+						$definedLocales = setlocale($category, $regionalLocale);
 						if ($definedLocales !== false) {
-							Carbon::setLocale($locale);
+							Carbon::setLocale($regionalLocale);
 							$localeFound = true;
+							$locale = $regionalLocale;
 						}
 					}
 					
 					if (!$localeFound) {
-						$countryCode = config('country.code');
-						if (!str_contains($locale, '_') && !empty($countryCode)) {
-							$countryLocale = $locale . '_' . strtoupper($countryCode);
-							
-							if (is_array($locales) && in_array($countryLocale, $locales)) {
-								$definedLocales = setlocale($category, $countryLocale);
-								if ($definedLocales !== false) {
-									Carbon::setLocale($countryLocale);
-									$localeFound = true;
-								}
-							}
-							
-							if (!$localeFound) {
-								$pattern = '#' . $countryLocale . '\.#i';
-								if (preg_match($pattern, $sysLocale)) {
-									$definedLocales = setlocale($category, $countryLocale);
-									if ($definedLocales !== false) {
-										Carbon::setLocale($countryLocale);
-										$localeFound = true;
-									}
-								}
+						if (str_starts_with($sysLocale, $regionalLocale)) {
+							$definedLocales = setlocale($category, $regionalLocale);
+							if ($definedLocales !== false) {
+								Carbon::setLocale($regionalLocale);
+								$localeFound = true;
+								$locale = $sysLocale;
 							}
 						}
 					}
 				}
 			}
-			
-			// If not found, force to use a fixed locale
-			if (!$localeFound) {
-				$locale = 'en_US';
-				setlocale($category, $locale);
-				Carbon::setLocale($locale);
-			}
 		}
 		
 		// Reset the decimal separator
 		if ($category == LC_ALL) {
-			$definedNumericLocales = setlocale(LC_NUMERIC, 0);
-			if ($definedNumericLocales !== false) {
-				if (!in_array($definedNumericLocales, ['C', 'en_US'])) {
+			$definedNumericLocale = self::getLocale(LC_NUMERIC);
+			if ($definedNumericLocale !== false) {
+				if (!in_array($definedNumericLocale, ['C', 'en_US'])) {
 					self::resetLcNumeric();
 				}
 			} else {
@@ -143,6 +146,53 @@ class SystemLocale
 		}
 		
 		return $locale;
+	}
+	
+	/**
+	 * Get the defined locale related to a category
+	 *
+	 * Example:
+	 * echo systemLocale()->getLocale(LC_ALL);
+	 * LC_CTYPE=en_US.UTF-8;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=C;LC_PAPER=C;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=C;LC_IDENTIFICATION=C
+	 *
+	 * echo systemLocale()->getLocale(LC_CTYPE);
+	 * en_US.UTF-8
+	 *
+	 * setlocale(LC_ALL, "en_US.UTF-8");
+	 * echo getLocale(LC_ALL);
+	 * en_US.UTF-8
+	 *
+	 * @param int $category
+	 * @return string|null
+	 */
+	public static function getLocale(int $category): ?string
+	{
+		$currentLocales = setlocale($category, 0);
+		
+		return ($currentLocales !== false) ? $currentLocales : null;
+	}
+	
+	/**
+	 * Get all the available categories
+	 *
+	 * @return array
+	 */
+	public static function getCategories(): array
+	{
+		$categories = [
+			LC_ALL      => 'for all of the below',
+			LC_COLLATE  => 'for string comparison, see strcoll()',
+			LC_CTYPE    => 'for character classification and conversion, for example ctype_alpha()',
+			LC_MONETARY => 'for localeconv()',
+			LC_NUMERIC  => 'for decimal separator (See also localeconv())',
+			LC_TIME     => 'for date and time formatting with strftime()',
+		];
+		
+		if (defined('LC_MESSAGES')) {
+			$categories[LC_MESSAGES] = 'for system responses (available if PHP was compiled with libintl)';
+		}
+		
+		return $categories;
 	}
 	
 	/**
@@ -160,10 +210,10 @@ class SystemLocale
 	 *
 	 * @return void
 	 */
-	public static function resetLcNumeric()
+	public static function resetLcNumeric(): void
 	{
-		$definedLocales = setlocale(LC_NUMERIC, 'C');
-		if ($definedLocales === false) {
+		$definedLocale = setlocale(LC_NUMERIC, 'C');
+		if ($definedLocale === false) {
 			setlocale(LC_NUMERIC, 'en_US');
 		}
 	}

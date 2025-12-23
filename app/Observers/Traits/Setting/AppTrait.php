@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers\Traits\Setting;
 
 use App\Helpers\Files\Storage\StorageDisk;
@@ -54,21 +69,17 @@ trait AppTrait
 	 * @param $original
 	 * @param $disk
 	 */
-	private function removeOldLogoFile($setting, $original, $disk)
+	private function removeOldLogoFile($setting, $original, $disk): void
 	{
 		if (array_key_exists('logo', $setting->value)) {
 			if (
 				is_array($original['value'])
-				&& isset($original['value']['logo'])
 				&& !empty($original['value']['logo'])
 				&& $setting->value['logo'] != $original['value']['logo']
+				&& !str_contains($original['value']['logo'], config('larapen.media.logo'))
+				&& $disk->exists($original['value']['logo'])
 			) {
-				if (
-					!str_contains($original['value']['logo'], config('larapen.core.logo'))
-					&& $disk->exists($original['value']['logo'])
-				) {
-					$disk->delete($original['value']['logo']);
-				}
+				$disk->delete($original['value']['logo']);
 			}
 		}
 	}
@@ -80,21 +91,17 @@ trait AppTrait
 	 * @param $original
 	 * @param $disk
 	 */
-	private function removeOldFaviconFile($setting, $original, $disk)
+	private function removeOldFaviconFile($setting, $original, $disk): void
 	{
 		if (array_key_exists('favicon', $setting->value)) {
 			if (
 				is_array($original['value'])
-				&& isset($original['value']['favicon'])
 				&& !empty($original['value']['favicon'])
 				&& $setting->value['favicon'] != $original['value']['favicon']
+				&& !str_contains($original['value']['favicon'], config('larapen.media.favicon'))
+				&& $disk->exists($original['value']['favicon'])
 			) {
-				if (
-					!str_contains($original['value']['favicon'], config('larapen.core.favicon'))
-					&& $disk->exists($original['value']['favicon'])
-				) {
-					$disk->delete($original['value']['favicon']);
-				}
+				$disk->delete($original['value']['favicon']);
 			}
 		}
 	}
@@ -105,7 +112,7 @@ trait AppTrait
 	 * @param $setting
 	 * @param $original
 	 */
-	private function removeAutoLanguageDetectedSession($setting, $original)
+	private function removeAutoLanguageDetectedSession($setting, $original): void
 	{
 		if (array_key_exists('auto_detect_language', $setting->value)) {
 			if (
@@ -144,7 +151,7 @@ trait AppTrait
 	 *
 	 * @param $setting
 	 */
-	private function clearOldDateFormats($setting)
+	private function clearOldDateFormats($setting): void
 	{
 		if (request()->has('formatTypeFieldWasChanged') && request()->input('formatTypeFieldWasChanged') == 1) {
 			$settingTable = (new Setting)->getTable();
@@ -164,7 +171,7 @@ trait AppTrait
 				]);
 			}
 			
-			$languages = Language::withoutGlobalScopes([ActiveScope::class])->get();
+			$languages = Language::query()->withoutGlobalScopes([ActiveScope::class])->get();
 			if ($languages->count() > 0) {
 				foreach($languages as $language) {
 					$language->date_format = null;
@@ -173,7 +180,7 @@ trait AppTrait
 				}
 			}
 			
-			$countries = Country::withoutGlobalScopes([ActiveScope::class, LocalizedScope::class])->get();
+			$countries = Country::query()->withoutGlobalScopes([ActiveScope::class, LocalizedScope::class])->get();
 			if ($countries->count() > 0) {
 				foreach($countries as $country) {
 					$country->date_format = null;

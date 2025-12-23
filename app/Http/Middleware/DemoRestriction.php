@@ -1,11 +1,24 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Middleware;
 
 use App\Models\Permission;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use Prologue\Alerts\Facades\Alert;
 
 class DemoRestriction
 {
@@ -37,7 +50,7 @@ class DemoRestriction
 			return response()->json($result, 401, [], JSON_UNESCAPED_UNICODE);
 			
 		} else {
-			if ($request->ajax()) {
+			if (isFromAjax($request)) {
 				$result = [
 					'success' => false,
 					'msg'     => $message,
@@ -45,11 +58,7 @@ class DemoRestriction
 				
 				return response()->json($result, 200, [], JSON_UNESCAPED_UNICODE);
 			} else {
-				if (isAdminPanel()) {
-					Alert::info($message)->flash();
-				} else {
-					flash($message)->info();
-				}
+				notification($message, 'info');
 				
 				return redirect()->back();
 			}
@@ -65,16 +74,17 @@ class DemoRestriction
 		
 		$frontRoutesRestricted = $this->frontRoutesRestricted();
 		foreach ($frontRoutesRestricted as $route) {
-			if (str_contains(Route::currentRouteAction(), $route)) {
+			if (str_contains(currentRouteAction(), $route)) {
 				$isRestricted = true;
 				break;
 			}
 		}
 		
 		if (auth()->check()) {
+			$authUser = auth()->user();
 			if (
-				auth()->user()->can(Permission::getStaffPermissions())
-				&& md5(auth()->user()->id) == 'c4ca4238a0b923820dcc509a6f75849b'
+				doesUserHavePermission($authUser, Permission::getStaffPermissions())
+				&& md5($authUser->id) == 'c4ca4238a0b923820dcc509a6f75849b'
 			) {
 				return false;
 			}
@@ -84,12 +94,12 @@ class DemoRestriction
 				if (
 					(
 						str_starts_with($route, '@')
-						&& str_contains(Route::currentRouteAction(), 'Admin\\')
-						&& str_contains(Route::currentRouteAction(), $route)
+						&& str_contains(currentRouteAction(), 'Admin\\')
+						&& str_contains(currentRouteAction(), $route)
 					)
 					|| (
 						!str_starts_with($route, '@')
-						&& str_contains(Route::currentRouteAction(), $route)
+						&& str_contains(currentRouteAction(), $route)
 					)
 				) {
 					$isRestricted = true;
@@ -100,7 +110,7 @@ class DemoRestriction
 			if (in_array(auth()->user()->id, [2, 3])) {
 				$demoUsersRoutesRestricted = $this->demoUsersRoutesRestricted();
 				foreach ($demoUsersRoutesRestricted as $route) {
-					if (str_contains(Route::currentRouteAction(), $route)) {
+					if (str_contains(currentRouteAction(), $route)) {
 						$isRestricted = true;
 						break;
 					}
@@ -123,9 +133,9 @@ class DemoRestriction
 			//'Api\ThreadController@store',
 			
 			// web
-			'Web\PageController@contactPost',
-			'Web\Post\ReportController@contactPost',
-			//'Web\Account\MessagesController@store',
+			'Web\Public\PageController@contactPost',
+			'Web\Public\Post\ReportController@contactPost',
+			//'Web\Public\Account\MessagesController@store',
 		];
 	}
 	
@@ -166,13 +176,13 @@ class DemoRestriction
 			'Larapen\Impersonate\Controllers\ImpersonateController',
 			
 			// plugins:domainmapping
-			'domainmapping\app\Http\Controllers\Admin\DomainController@createBulkCountriesSubDomain',
-			'domainmapping\app\Http\Controllers\Admin\DomainHomeSectionController@generate',
-			'domainmapping\app\Http\Controllers\Admin\DomainHomeSectionController@reset',
-			'domainmapping\app\Http\Controllers\Admin\DomainMetaTagController@generate',
-			'domainmapping\app\Http\Controllers\Admin\DomainMetaTagController@reset',
-			'domainmapping\app\Http\Controllers\Admin\DomainSettingController@generate',
-			'domainmapping\app\Http\Controllers\Admin\DomainSettingController@reset',
+			'domainmapping\app\Http\Controllers\Web\Admin\DomainController@createBulkCountriesSubDomain',
+			'domainmapping\app\Http\Controllers\Web\Admin\DomainHomeSectionController@generate',
+			'domainmapping\app\Http\Controllers\Web\Admin\DomainHomeSectionController@reset',
+			'domainmapping\app\Http\Controllers\Web\Admin\DomainMetaTagController@generate',
+			'domainmapping\app\Http\Controllers\Web\Admin\DomainMetaTagController@reset',
+			'domainmapping\app\Http\Controllers\Web\Admin\DomainSettingController@generate',
+			'domainmapping\app\Http\Controllers\Web\Admin\DomainSettingController@reset',
 		];
 	}
 	
@@ -188,10 +198,10 @@ class DemoRestriction
 			'Api\PostController@destroy',
 			
 			// web
-			'Web\Account\EditController@updateDetails',
-			'Web\Account\EditController@updatePhoto',
-			'Web\Account\CloseController@submit',
-			'Web\Account\PostsController@destroy',
+			'Account\EditController@updateDetails',
+			'Account\EditController@updatePhoto',
+			'Account\CloseController@submit',
+			'Account\PostsController@destroy',
 		];
 	}
 }

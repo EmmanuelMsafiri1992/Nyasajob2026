@@ -1,11 +1,26 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Search\Traits\Filters;
 
 use App\Models\Category;
 
 trait CategoryFilter
 {
-	protected function applyCategoryFilter()
+	protected function applyCategoryFilter(): void
 	{
 		if (!isset($this->posts)) {
 			return;
@@ -17,10 +32,11 @@ trait CategoryFilter
 		
 		$catChildrenIds = $this->getCategoryChildrenIds($this->cat, $this->cat->id);
 		
-		// Category
-		if (!empty($catChildrenIds)) {
-			$this->posts->whereIn('category_id', $catChildrenIds);
+		if (empty($catChildrenIds)) {
+			return;
 		}
+		
+		$this->posts->whereIn('category_id', $catChildrenIds);
 	}
 	
 	/**
@@ -31,7 +47,7 @@ trait CategoryFilter
 	 * @param array $idsArr
 	 * @return array
 	 */
-	private function getCategoryChildrenIds($cat, $catId = null, &$idsArr = [])
+	private function getCategoryChildrenIds($cat, $catId = null, array &$idsArr = []): array
 	{
 		if (!empty($catId)) {
 			$idsArr[] = $catId;

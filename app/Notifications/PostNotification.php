@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Notifications;
 
 use App\Helpers\Date;
@@ -6,18 +21,25 @@ use App\Helpers\UrlGen;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Carbon;
 
-class PostNotification extends Notification implements ShouldQueue
+class PostNotification extends Notification
 {
 	use Queueable;
 	
 	protected $post;
+	protected string $todayDateFormatted;
+	protected string $todayTimeFormatted;
 	
 	public function __construct($post)
 	{
 		$this->post = $post;
+		
+		// Get timezone
+		$tz = Date::getAppTimeZone();
+		
+		// Get today date & time
+		$this->todayDateFormatted = Date::format(now($tz));
+		$this->todayTimeFormatted = now($tz)->format('H:i');
 	}
 	
 	public function via($notifiable)
@@ -36,8 +58,8 @@ class PostNotification extends Notification implements ShouldQueue
 			->line(trans('mail.post_notification_content_3', [
 				'postUrl' => $postUrl,
 				'title'   => $this->post->title,
-				'now'     => Date::format(Carbon::now(Date::getAppTimeZone())),
-				'time'    => Carbon::now(Date::getAppTimeZone())->format('H:i'),
+				'now'     => $this->todayDateFormatted,
+				'time'    => $this->todayTimeFormatted,
 			]))
 			->salutation(trans('mail.footer_salutation', ['appName' => config('app.name')]));
 	}

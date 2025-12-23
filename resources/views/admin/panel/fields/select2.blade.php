@@ -1,43 +1,51 @@
 {{-- select2 --}}
 @php
-	$current_value = old($field['name']) ? old($field['name']) : (isset($field['value']) ? $field['value'] : (isset($field['default']) ? $field['default'] : '' ));
+	$field ??= [];
+	
+	$field['fake'] ??= false;
+	$field['allows_null'] ??= false;
+	
+	$entityModel = !empty($xPanel) ? $xPanel->model : null;
+	$isNullAllowed = is_null($entityModel) || $entityModel::isColumnNullable($field['name']);
+	
+	$entityEntries = $field['model']::all();
+	
+	$fieldValue = $field['value'] ?? ($field['default'] ?? null);
+	$fieldValue = old($field['name'], $fieldValue);
 @endphp
-
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-	<label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+	<label class="form-label fw-bolder">
+		{!! $field['label'] !!}
+		@if (isset($field['required']) && $field['required'])
+			<span class="text-danger">*</span>
+		@endif
+	</label>
 	@include('admin.panel.fields.inc.translatable_icon')
-    <?php $entity_model = $xPanel->model; ?>
-	<select
-			name="{{ $field['name'] }}"
-			style="width: 100%"
-			@include('admin.panel.inc.field_attributes', ['default_class' =>  'form-select select2_field'])
+ 
+	<select name="{{ $field['name'] }}" style="width: 100%"
+			@include('admin.panel.inc.field_attributes', ['default_class' => 'form-select select2_field'])
 	>
 		
-		@if (!(isset($field['fake']) and $field['fake']))
-			@if ($entity_model::isColumnNullable($field['name']))
+		@if (!$field['fake'])
+			@if ($isNullAllowed)
 				<option value="">-</option>
 			@endif
 		@else
-			@if (isset($field['allows_null']) && $field['allows_null']==true)
+			@if ($field['allows_null'])
 				<option value="">-</option>
 			@endif
 		@endif
 		
-		@if (isset($field['model']))
-			@foreach ($field['model']::all() as $connected_entity_entry)
-				<?php
-					$connectedEntityEntryKey = $connected_entity_entry->getKey();
-					if (isset($field['key']) && isset($connected_entity_entry->{$field['key']})) {
-						$connectedEntityEntryKey = $connected_entity_entry->{$field['key']};
-					}
-				?>
-				@if($current_value == $connectedEntityEntryKey)
-					<option value="{{ $connectedEntityEntryKey }}" selected>{{ $connected_entity_entry->{$field['attribute']} }}</option>
-				@else
-					<option value="{{ $connectedEntityEntryKey }}">{{ $connected_entity_entry->{$field['attribute']} }}</option>
-				@endif
-			@endforeach
-		@endif
+		@foreach ($entityEntries as $entityEntry)
+			@php
+				$entityEntryKey = $entityEntry->getKey();
+				if (!empty($field['key']) && isset($entityEntry->{$field['key']})) {
+					$entityEntryKey = $entityEntry->{$field['key']};
+				}
+				$selectedAttr = ($fieldValue == $entityEntryKey) ? ' selected' : '';
+			@endphp
+			<option value="{{ $entityEntryKey }}"{!! $selectedAttr !!}>{{ $entityEntry->{$field['attribute']} }}</option>
+		@endforeach
 	</select>
 	
 	{{-- HINT --}}
@@ -55,7 +63,7 @@
 	@push('crud_fields_styles')
 		{{-- include select2 css--}}
 		<link href="{{ asset('assets/plugins/select2/css/select2.min.css') }}" rel="stylesheet" type="text/css" />
-		<link href="https://cdnjs.cloudflare.com/ajax/libs/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css" rel="stylesheet" type="text/css" />
+		<link href="{{ asset('assets/plugins/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
 	@endpush
 	
 	{{-- FIELD JS - will be loaded in the after_scripts section --}}
@@ -63,7 +71,7 @@
 	{{-- include select2 js--}}
 	<script src="{{ asset('assets/plugins/select2/js/select2.js') }}"></script>
 	<script>
-		jQuery(document).ready(function($) {
+		onDocumentReady((event) => {
 			// trigger select2 for each untriggered select2 box
 			$('.select2_field').each(function (i, obj) {
 				if (!$(obj).hasClass("select2-hidden-accessible"))

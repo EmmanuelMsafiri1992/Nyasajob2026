@@ -18,8 +18,8 @@ class PaymentMethodSeeder extends Seeder
 		$entries = [
 			[
 				'name'              => 'paypal',
-				'display_name'      => 'Paypal',
-				'description'       => 'Payment with Paypal',
+				'display_name'      => 'PayPal',
+				'description'       => 'Payment with PayPal',
 				'has_ccbox'         => '0',
 				'is_compatible_api' => '0',
 				'countries'         => null,

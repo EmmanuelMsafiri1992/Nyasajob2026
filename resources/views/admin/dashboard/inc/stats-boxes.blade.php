@@ -22,7 +22,7 @@
 					<div class="col-4 d-flex align-items-center justify-content-end">
 						<span class="text-white display-6">
 							<a href="{{ admin_url('posts?active=0') }}" class="text-white">
-							<i class="fa fa-edit"></i>
+							<i class="fa-regular fa-pen-to-square"></i>
 							</a>
 						</span>
 					</div>
@@ -56,7 +56,7 @@
 					<div class="col-4 d-flex align-items-center justify-content-end">
 						<span class="text-white display-6">
 							<a href="{{ admin_url('posts?active=1') }}" class="text-white">
-							<i class="far fa-check-circle"></i>
+							<i class="fa-regular fa-circle-check"></i>
 							</a>
 						</span>
 					</div>
@@ -90,7 +90,7 @@
 					<div class="col-4 d-flex align-items-center justify-content-end">
 						<span class="text-white display-6">
 							<a href="{{ admin_url('users') }}" class="text-white">
-							<i class="far fa-user-circle"></i>
+							<i class="fa-regular fa-circle-user"></i>
 							</a>
 						</span>
 					</div>
@@ -124,7 +124,7 @@
 									  type="button"
 									  title="{!! trans('admin.launch_your_website_for_several_countries') . ' ' . trans('admin.disabling_or_removing_a_country_info') !!}"
 								>
-									{{ trans('admin.Help') }} <i class="far fa-life-ring"></i>
+									{{ trans('admin.Help') }} <i class="fa-regular fa-life-ring"></i>
 								</span>
 							</h6>
 						</div>
@@ -132,7 +132,7 @@
 					<div class="col-4 d-flex align-items-center justify-content-end">
 						<span class="text-white display-6">
 							<a href="{{ admin_url('countries') }}" class="text-white">
-							<i class="fa fa-globe"></i>
+							<i class="fa-solid fa-globe"></i>
 							</a>
 						</span>
 					</div>

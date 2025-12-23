@@ -1,20 +1,43 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models;
 
 use App\Helpers\Date;
 use App\Helpers\Files\Storage\StorageDisk;
 use App\Helpers\RemoveFromString;
-use App\Helpers\UrlGen;
 use App\Models\Scopes\LocalizedScope;
+use App\Models\Traits\Common\AppendsTrait;
+use App\Models\Traits\CompanyTrait;
 use App\Observers\CompanyObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use App\Http\Controllers\Admin\Panel\Library\Traits\Models\Crud;
+use App\Http\Controllers\Web\Admin\Panel\Library\Traits\Models\Crud;
 
+#[ObservedBy([CompanyObserver::class])]
+#[ScopedBy([LocalizedScope::class])]
 class Company extends BaseModel
 {
-	use Crud, HasFactory;
+	use Crud, AppendsTrait, HasFactory;
+	use CompanyTrait;
 	
 	/**
 	 * The table associated with the model.
@@ -24,12 +47,9 @@ class Company extends BaseModel
 	protected $table = 'companies';
 	
 	/**
-	 * The primary key for the model.
-	 *
-	 * @var string
+	 * @var array<int, string>
 	 */
-	// protected $primaryKey = 'id';
-	protected $appends = ['logo_url', 'logo_url_small', 'logo_url_big', 'country_flag_url'];
+	protected $appends = ['logo_url', 'logo_url_small', 'logo_url_medium', 'logo_url_large', 'country_flag_url'];
 	
 	/**
 	 * Indicates if the model should be timestamped.
@@ -41,14 +61,14 @@ class Company extends BaseModel
 	/**
 	 * The attributes that aren't mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $guarded = ['id'];
 	
 	/**
 	 * The attributes that are mass assignable.
 	 *
-	 * @var array
+	 * @var array<int, string>
 	 */
 	protected $fillable = [
 		'user_id',
@@ -68,98 +88,22 @@ class Company extends BaseModel
 		'pinterest',
 	];
 	
-	/**
-	 * The attributes that should be hidden for arrays
-	 *
-	 * @var array
-	 */
-	// protected $hidden = [];
-	
-	/**
-	 * The attributes that should be mutated to dates.
-	 *
-	 * @var array
-	 */
-	protected $dates = ['created_at', 'updated_at'];
-	
 	/*
 	|--------------------------------------------------------------------------
 	| FUNCTIONS
 	|--------------------------------------------------------------------------
 	*/
-	protected static function boot()
+	/**
+	 * Get the attributes that should be cast.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function casts(): array
 	{
-		parent::boot();
-		
-		Company::observe(CompanyObserver::class);
-		static::addGlobalScope(new LocalizedScope());
-	}
-	
-	public static function getLogo($value)
-	{
-		if (empty($value)) {
-			return $value;
-		}
-		
-		$disk = StorageDisk::getDisk();
-		
-		// OLD PATH
-		$oldBase = 'pictures/';
-		$newBase = 'files/';
-		if (str_contains($value, $oldBase)) {
-			$value = $newBase . last(explode($oldBase, $value));
-		}
-		
-		// NEW PATH
-		if (str_ends_with($value, '/')) {
-			return $value;
-		}
-		
-		if (empty($value) || !$disk->exists($value)) {
-			$value = config('larapen.core.picture.default');
-		}
-		
-		return $value;
-	}
-	
-	public function getNameHtml(): string
-	{
-		$company = self::find($this->id);
-		
-		$out = '';
-		if (!empty($company)) {
-			$out .= '<a href="' . UrlGen::company(null, $company->id) . '" target="_blank">';
-			$out .= $company->name;
-			$out .= '</a>';
-			$out .= ' <span class="label label-default">' . $company->posts()->count() . ' ' . trans('admin.jobs') . '</span>';
-		} else {
-			$out .= '--';
-		}
-		
-		return $out;
-	}
-	
-	public function getLogoHtml(): string
-	{
-		$style = ' style="width:auto; max-height:90px;"';
-		
-		// Get logo
-		$out = '<img src="' . imgUrl($this->logo, 'small') . '" data-bs-toggle="tooltip" title="' . $this->name . '"' . $style . '>';
-		
-		// Add link to the Ad
-		$url = UrlGen::company(null, $this->id);
-		
-		return '<a href="' . $url . '" target="_blank">' . $out . '</a>';
-	}
-	
-	public function getCountryHtml()
-	{
-		$iconPath = 'images/flags/16/' . strtolower($this->country_code) . '.png';
-		if (file_exists(public_path($iconPath))) {
-			return '<img src="' . url($iconPath) . getPictureVersion() . '" data-bs-toggle="tooltip" title="' . $this->country_code . '">';
-		} else {
-			return $this->country_code;
-		}
+		return [
+			'created_at' => 'datetime',
+			'updated_at' => 'datetime',
+		];
 	}
 	
 	/*
@@ -167,17 +111,17 @@ class Company extends BaseModel
 	| RELATIONS
 	|--------------------------------------------------------------------------
 	*/
-	public function posts()
+	public function posts(): HasMany
 	{
 		return $this->hasMany(Post::class, 'company_id');
 	}
 	
-	public function user()
+	public function user(): BelongsTo
 	{
 		return $this->belongsTo(User::class, 'user_id');
 	}
 	
-	public function city()
+	public function city(): BelongsTo
 	{
 		return $this->belongsTo(City::class, 'city_id');
 	}
@@ -228,7 +172,7 @@ class Company extends BaseModel
 					) {
 						if (auth()->check()) {
 							if (auth()->user()->getAuthIdentifier() != 1) {
-								$value = hidePartOfEmail($value);
+								$value = emailPrefixMask($value);
 							}
 						}
 						
@@ -246,7 +190,7 @@ class Company extends BaseModel
 		return Attribute::make(
 			get: function ($value) {
 				$countryCode = config('country.code');
-				if (isset($this->country_code) && !empty($this->country_code)) {
+				if (!empty($this->country_code)) {
 					$countryCode = $this->country_code;
 				}
 				
@@ -306,7 +250,7 @@ class Company extends BaseModel
 				// NEW PATH
 				$disk = StorageDisk::getDisk();
 				if (empty($value) || !$disk->exists($value)) {
-					$value = config('larapen.core.picture.default');
+					$value = config('larapen.media.picture');
 				}
 				
 				return $value;
@@ -318,7 +262,7 @@ class Company extends BaseModel
 	{
 		return Attribute::make(
 			get: function ($value) {
-				return imgUrl(self::getLogo($this->logo), 'medium');
+				return imgUrl(self::getLogo($this->logo), 'picture-md');
 			},
 		);
 	}
@@ -327,16 +271,25 @@ class Company extends BaseModel
 	{
 		return Attribute::make(
 			get: function ($value) {
-				return imgUrl(self::getLogo($this->logo), 'small');
+				return imgUrl(self::getLogo($this->logo), 'picture-sm');
 			},
 		);
 	}
 	
-	protected function logoUrlBig(): Attribute
+	protected function logoUrlMedium(): Attribute
 	{
 		return Attribute::make(
 			get: function ($value) {
-				return imgUrl(self::getLogo($this->logo), 'big');
+				return imgUrl(self::getLogo($this->logo), 'picture-md');
+			},
+		);
+	}
+	
+	protected function logoUrlLarge(): Attribute
+	{
+		return Attribute::make(
+			get: function ($value) {
+				return imgUrl(self::getLogo($this->logo), 'picture-lg');
 			},
 		);
 	}
@@ -344,15 +297,8 @@ class Company extends BaseModel
 	protected function countryFlagUrl(): Attribute
 	{
 		return Attribute::make(
-			get: function ($value) {
-				$flagUrl = null;
-				
-				$flagPath = 'images/flags/16/' . strtolower($this->country_code) . '.png';
-				if (file_exists(public_path($flagPath))) {
-					$flagUrl = url($flagPath);
-				}
-				
-				return $flagUrl;
+			get: function () {
+				return getCountryFlagUrl($this->country_code);
 			},
 		);
 	}

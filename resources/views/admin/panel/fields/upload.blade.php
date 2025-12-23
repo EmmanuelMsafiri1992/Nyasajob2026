@@ -1,13 +1,18 @@
 {{-- text input --}}
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+	    {!! $field['label'] !!}
+	    @if (isset($field['required']) && $field['required'])
+		    <span class="text-danger">*</span>
+	    @endif
+    </label>
 	@include('admin.panel.fields.inc.translatable_icon')
 
 	{{-- Show the file name and a "Clear" button on EDIT form. --}}
     @if (isset($field['value']) && $field['value']!=null)
     <div class="well well-sm">
     	<a target="_blank" href="{{ isset($field['disk'])?asset(\Storage::disk($field['disk'])->url($field['value'])):asset(\Storage::url($field['value'])) }}">{{ $field['value'] }}</a>
-    	<a id="{{ $field['name'] }}_file_clear_button" href="#" class="btn btn-secondary btn-xs float-end" title="Clear file"><i class="fa fa-remove"></i></a>
+    	<a id="{{ $field['name'] }}_file_clear_button" href="#" class="btn btn-secondary btn-xs float-end" title="Clear file"><i class="fa-solid fa-xmark"></i></a>
     	<div class="clearfix"></div>
     </div>
     @endif

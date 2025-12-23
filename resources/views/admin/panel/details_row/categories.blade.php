@@ -44,13 +44,13 @@
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2 bg-light-inverse fw-bolder mb-1">{{ trans('admin.for_permanent_listings') }}</div>
                 <div class="col-lg-9 col-md-8 col-sm-6 col-6 p-2 mb-1">
-                    {!! ($entry->is_for_permanent == 1) ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>' !!}
+                    {!! ($entry->is_for_permanent == 1) ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>' !!}
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2 bg-light-inverse fw-bolder">{{ trans('admin.active') }}</div>
                 <div class="col-lg-9 col-md-8 col-sm-6 col-6 p-2">
-                    {!! ($entry->active == 1) ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>' !!}
+                    {!! ($entry->active == 1) ? '<i class="fa-regular fa-square-check"></i>' : '<i class="fa-regular fa-square"></i>' !!}
                 </div>
             </div>
             

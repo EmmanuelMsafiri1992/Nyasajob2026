@@ -1,4 +1,17 @@
-
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 if (typeof defaultAdminType === 'undefined') {
 	var defaultAdminType = 0;
@@ -6,11 +19,8 @@ if (typeof defaultAdminType === 'undefined') {
 if (typeof defaultAdminCode === 'undefined') {
 	var defaultAdminCode = 0;
 }
-if (typeof loadingWd === 'undefined') {
-	var loadingWd = 'Loading...';
-}
 
-$(document).ready(function () {
+onDocumentReady((event) => {
 	
 	$(document).on('change', '#countryCode', function (e) {
 		countryCode = changeCountry(countryCode, this);
@@ -22,7 +32,7 @@ $(document).ready(function () {
 		browseLocations(params);
 	});
 	$(document).on('click submit', '#modalQuerySearchBtn', function (e) {
-		e.preventDefault(); /* prevents submit or reload */
+		e.preventDefault(); /* Prevents submission or reloading */
 		
 		let params = getLocationsBrowsingParameters(countryCode, this);
 		browseLocations(params);
@@ -98,7 +108,7 @@ function getLocationsBrowsingParameters(countryCode, jsThis = null, adminType = 
 		&& isDefined(thisElClass)
 		&& thisElTagName != null
 		&& thisElClass != null
-		&& thisElTagName == 'a'
+		&& thisElTagName === 'a'
 		&& thisElClass.indexOf('is-admin') !== -1
 		&& thisElClass.indexOf('go-base-url') !== -1
 	);
@@ -127,7 +137,7 @@ function getLocationsBrowsingParameters(countryCode, jsThis = null, adminType = 
 		urlEl.val(url);
 		queryEl.val('');
 	} else {
-		if (thisElTagName == 'select') {
+		if (thisElTagName === 'select') {
 			adminCode = !isEmpty(adminCode) ? adminCode : adminCodeEl.val();
 			adminCode = !isEmpty(adminCode) ? adminCode : 0;
 		}
@@ -138,11 +148,11 @@ function getLocationsBrowsingParameters(countryCode, jsThis = null, adminType = 
 				adminCode = dataAdminCode;
 			}
 			
-			if (thisElTagName == 'select') {
+			if (thisElTagName === 'select') {
 				$('#modalTriggerName').val(thisElTagName);
 			}
 			
-			if (thisElTagName == 'a') {
+			if (thisElTagName === 'a') {
 				$('.tooltip.show.modal-tooltip').hide();
 				if (thisElClass.indexOf('is-admin') !== -1) {
 					queryEl.val('');
@@ -150,11 +160,11 @@ function getLocationsBrowsingParameters(countryCode, jsThis = null, adminType = 
 			}
 			
 			if (!isDefined(adminCode) || isEmpty(adminCode)) {
-				if (thisElTagName == 'a') {
+				if (thisElTagName === 'a') {
 					if ((thisElClass.indexOf('is-admin') !== -1) || (thisElClass.indexOf('page-link') !== -1)) {
 						url = thisEl.data('url');
 						if (!isEmpty(url)) {
-							let urlToSave = removeURLParameter(url, 'page');
+							let urlToSave = removeURLParameter('page', url);
 							urlEl.val(urlToSave);
 							
 							let urlArr = url.split('/');
@@ -174,18 +184,18 @@ function getLocationsBrowsingParameters(countryCode, jsThis = null, adminType = 
 					adminCode = adminCodeEl.val();
 				}
 			}
-			if (thisElTagName == 'button' || thisElTagName == 'a') {
+			if (thisElTagName === 'button' || thisElTagName === 'a') {
 				query = queryEl.val();
-				if (thisElTagName == 'button') {
-					url = removeURLParameter(url, 'page');
+				if (thisElTagName === 'button') {
+					url = removeURLParameter('page', url);
 				}
 			}
-			if (thisElTagName == 'input' && thisEl.attr('type') == 'text') {
+			if (thisElTagName === 'input' && thisEl.attr('type') === 'text') {
 				query = thisEl.val();
 			}
 			
 			/* Get the (eventual) current city's ID from bootstrap modal link */
-			if (thisEl.attr('href') == '#browseLocations') {
+			if (thisEl.attr('href') === '#browseLocations') {
 				cityId = thisEl.data('cityId');
 			}
 		}
@@ -267,7 +277,7 @@ function browseLocations(params) {
 		beforeSend: function () {
 			/*
 			let spinner = '<div class="d-flex align-items-center">\n' +
-				'  <strong>' + loadingWd + '</strong>\n' +
+				'  <strong>' + langLayout.loading + '</strong>\n' +
 				'  <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>\n' +
 				'</div>';
 			locationsListEl.html(spinner);
@@ -275,7 +285,7 @@ function browseLocations(params) {
 			
 			locationsListEl.empty().addClass('py-4').busyLoad('hide');
 			locationsListEl.busyLoad('show', {
-				text: loadingWd,
+				text: langLayout.loading,
 				custom: createCustomSpinnerEl(),
 				background: '#fff',
 				containerItemClass: 'm-5',
@@ -307,7 +317,7 @@ function browseLocations(params) {
 	ajax.fail(function (xhr) {
 		locationsListEl.empty();
 		
-		let message = getJqueryAjaxError(xhr);
+		let message = getErrorMessageFromXhr(xhr);
 		if (message !== null) {
 			jsAlert(message, 'error', false, true);
 			

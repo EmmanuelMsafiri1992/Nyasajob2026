@@ -52,3 +52,9 @@ Thumbs.db
 /extras
 /.scribe
 /.claude
+
+# Nested repositories
+/laragonwwwnyasa_v14
+
+# Windows reserved names
+nul

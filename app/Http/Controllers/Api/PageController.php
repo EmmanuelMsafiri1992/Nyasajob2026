@@ -1,7 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Page\PageBySlug;
+use App\Http\Controllers\Api\Page\PageBy;
 use App\Models\Page;
 use App\Http\Resources\EntityCollection;
 use App\Http\Resources\PageResource;
@@ -11,7 +26,7 @@ use App\Http\Resources\PageResource;
  */
 class PageController extends BaseController
 {
-	use PageBySlug;
+	use PageBy;
 	
 	/**
 	 * List pages
@@ -21,21 +36,34 @@ class PageController extends BaseController
 	 * @queryParam perPage int Items per page. Can be defined globally from the admin settings. Cannot be exceeded 100. Example: 2
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
-		$pages = Page::query();
+		$locale = config('app.locale');
+		$embed = explode(',', request()->input('embed'));
+		$excludedFromFooter = (request()->filled('excludedFromFooter') && request()->integer('excludedFromFooter') == 1);
+		$perPage = getNumberOfItemsPerPage('pages', request()->integer('perPage'));
+		$page = request()->integer('page');
 		
-		if (request()->get('excludedFromFooter') == 1) {
-			$pages->columnIsEmpty('excluded_from_footer');
-		}
+		// Cache ID
+		$excludedFromFooterId = '.excludedFromFooter.' . (int)$excludedFromFooter;
+		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
+		$cachePageId = '.page.' . $page . '.of.' . $perPage;
+		$cacheId = 'pages.' . $excludedFromFooterId . $cacheEmbedId . $cachePageId . $locale;
 		
-		// Sorting
-		$pages = $this->applySorting($pages, ['lft', 'created_at']);
-		
-		$pages = $pages->paginate($this->perPage);
+		// Cached Query
+		$pages = cache()->remember($cacheId, $this->cacheExpiration, function () use ($perPage, $excludedFromFooter) {
+			$pages = Page::query();
+			
+			if ($excludedFromFooter) {
+				$pages->columnIsEmpty('excluded_from_footer');
+			}
+			
+			// Sorting
+			$pages = $this->applySorting($pages, ['lft', 'created_at']);
+			
+			return $pages->paginate($perPage);
+		});
 		
 		// If the request is made from the app's Web environment,
 		// use the Web URL as the pagination's base URL
@@ -45,7 +73,7 @@ class PageController extends BaseController
 		
 		$message = ($pages->count() <= 0) ? t('no_pages_found') : null;
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -68,6 +96,6 @@ class PageController extends BaseController
 		
 		$resource = new PageResource($page);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

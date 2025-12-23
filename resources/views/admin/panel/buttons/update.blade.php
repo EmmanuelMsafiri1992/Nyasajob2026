@@ -3,7 +3,7 @@
 		
 		{{-- Single edit button --}}
 		<a href="{{ url($xPanel->route . '/' . $entry->getKey() . '/edit') }}" class="btn btn-xs btn-primary">
-			<i class="far fa-edit"></i> {{ trans('admin.edit') }}
+			<i class="fa-regular fa-pen-to-square"></i> {{ trans('admin.edit') }}
 		</a>
 	
 	@else
@@ -11,7 +11,7 @@
 		{{-- Edit button group --}}
 		<div class="btn-group">
 			<a href="{{ url($xPanel->route . '/' . $entry->getKey() . '/edit') }}" class="btn btn-xs btn-primary">
-				<i class="far fa-edit"></i> {{ trans('admin.edit') }}
+				<i class="fa-regular fa-pen-to-square"></i> {{ trans('admin.edit') }}
 			</a>
 			<a class="btn btn-xs btn-primary dropdown-toggle dropdown-toggle-split text-white" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 				<span class="sr-only">Toggle</span>

@@ -52,7 +52,7 @@ return [
 	
 	
 	// post_archived
-	'post_archived_content'           => ':appName - Your job ad ":title" has been archived, and will be deleted on :dateDel.',
+	'post_archived_content'           => ':appName - Your job ad ":title" has been archived, and will be deleted on :willBeDeletedAt.',
 	
 	
 	// post_will_be_deleted
@@ -63,8 +63,16 @@ return [
 	'payment_sent_content'            => ':appName - We have received your payment for the job ad ":title". Thank you!',
 	
 	
-	// payment_approved (new)
+	// payment_approved
 	'payment_approved_content'        => ':appName - Your payment for the job ad ":title" has been approved. Thank you!',
+	
+	
+	// subscription_purchased
+	'subscription_purchased_content'          => ':appName - We have received your payment for the ":packageName" subscription. Thank you!',
+	
+	
+	// subscription_approved
+	'subscription_approved_content'      => ':appName - Your ":packageName" subscription has been approved. Thank you!',
 	
 	
 	// post_seller_contacted
@@ -72,7 +80,7 @@ return [
 	
 	
 	// generated_password
-	'generated_password_content'      => ':appName - You account has been created. Your password is: :randomPassword. Verify your phone number. The verification code is: :token. The verification URL is: :tokenUrl',
+	'generated_password_content'      => ':appName - Your account has been created. Your password is: :randomPassword. Verify your phone number. The verification code is: :token. The verification URL is: :tokenUrl',
 
 
 ];

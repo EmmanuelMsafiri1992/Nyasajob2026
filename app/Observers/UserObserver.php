@@ -1,14 +1,32 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Observers;
 
 use App\Helpers\Files\Storage\StorageDisk;
 use App\Models\Company;
+use App\Models\Payment;
 use App\Models\Permission;
 use App\Models\Post;
 use App\Models\Resume;
 use App\Models\SavedPost;
 use App\Models\SavedSearch;
 use App\Models\Scopes\ReviewedScope;
+use App\Models\Scopes\StrictActiveScope;
+use App\Models\Scopes\ValidPeriodScope;
 use App\Models\Scopes\VerifiedScope;
 use App\Models\ThreadMessage;
 use App\Models\ThreadParticipant;
@@ -30,10 +48,8 @@ class UserObserver
 		// Send Admin Notification Email
 		if (config('settings.mail.admin_notification') == '1') {
 			try {
-				// Get only info@nyasajob.com for admin notifications
-				$admins = User::permission(Permission::getStaffPermissions())
-					->where('email', 'info@nyasajob.com')
-					->get();
+				// Get all admin users
+				$admins = User::permission(Permission::getStaffPermissions())->get();
 				if ($admins->count() > 0) {
 					Notification::send($admins, new UserNotification($user));
 				}
@@ -50,11 +66,17 @@ class UserObserver
 	 */
 	public function deleting(User $user)
 	{
+		// Revoke all the user's tokens
+		try {
+			$user->tokens()->delete();
+		} catch (\Throwable $e) {
+		}
+		
 		// Storage Disk Init.
 		$disk = StorageDisk::getDisk();
 		
 		// Delete the user's photo
-		if (isset($user->photo) && !empty($user->photo)) {
+		if (!empty($user->photo)) {
 			if ($disk->exists($user->photo)) {
 				$disk->delete($user->photo);
 			}
@@ -69,7 +91,9 @@ class UserObserver
 		}
 		
 		// Delete all user's Posts
-		$posts = Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])->where('user_id', $user->id);
+		$posts = Post::query()
+			->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
+			->where('user_id', $user->id);
 		if ($posts->count() > 0) {
 			foreach ($posts->cursor() as $post) {
 				$post->delete();
@@ -105,6 +129,17 @@ class UserObserver
 		if ($savedSearches->count() > 0) {
 			foreach ($savedSearches->cursor() as $savedSearch) {
 				$savedSearch->delete();
+			}
+		}
+		
+		// Delete the Payment(s) of this User
+		$payments = Payment::query()
+			->withoutGlobalScopes([ValidPeriodScope::class, StrictActiveScope::class])
+			->whereMorphedTo('payable', $user)
+			->get();
+		if ($payments->count() > 0) {
+			foreach ($payments as $payment) {
+				$payment->delete();
 			}
 		}
 		
@@ -185,8 +220,9 @@ class UserObserver
 	 * Removing the Entity's Entries from the Cache
 	 *
 	 * @param $user
+	 * @return void
 	 */
-	private function clearCache($user)
+	private function clearCache($user): void
 	{
 		try {
 			cache()->forget('count.users');

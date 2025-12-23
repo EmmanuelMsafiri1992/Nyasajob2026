@@ -1,4 +1,8 @@
 @php
+	$authUser = auth()->check() ? auth()->user() : null;
+	$authUserId = !empty($authUser) ? $authUser->getAuthIdentifier() : 0;
+	$authUserTypeId = (!empty($authUser) && !empty($authUser->user_type_id)) ? $authUser->user_type_id : 0;
+	
 	$post ??= [];
 	$user ??= [];
 	$countPackages ??= 0;
@@ -13,10 +17,10 @@
 					<div class="company-logo-thumb mb20">
 						@if (!empty(data_get($post, 'company')))
 							<a href="{{ \App\Helpers\UrlGen::company(null, data_get($post, 'company.id')) }}">
-								<img alt="Logo {{ data_get($post, 'company_name') }}" class="img-fluid" src="{{ data_get($post, 'logo_url.full') }}">
+								<img alt="Logo {{ data_get($post, 'company_name') }}" class="img-fluid" src="{{ data_get($post, 'logo_url.medium') }}">
 							</a>
 						@else
-							<img alt="Logo {{ data_get($post, 'company_name') }}" class="img-fluid" src="{{ data_get($post, 'logo_url.full') }}">
+							<img alt="Logo {{ data_get($post, 'company_name') }}" class="img-fluid" src="{{ data_get($post, 'logo_url.medium') }}">
 						@endif
 					</div>
 					@if (!empty(data_get($post, 'company')))
@@ -36,7 +40,7 @@
 							</a>
 						</strong>
 					</p>
-					@if (!config('settings.single.hide_dates'))
+					@if (!config('settings.listing_page.hide_date'))
 						@if (!empty($user) && !empty(data_get($user, 'created_at_formatted')))
 							<p>{{ t('Joined') }}: <strong>{!! data_get($user, 'created_at_formatted') !!}</strong></p>
 						@endif
@@ -47,7 +51,7 @@
 								{{ t('Web') }}:
 								<strong>
 									<a href="{{ data_get($post, 'company.website') }}" target="_blank" rel="nofollow">
-										{{ getHostByUrl(data_get($post, 'company.website')) }}
+										{{ getUrlHost(data_get($post, 'company.website')) }}
 									</a>
 								</strong>
 							</p>
@@ -55,37 +59,41 @@
 					@endif
 				</div>
 				<div class="user-posts-action">
-					@if (auth()->check())
-						@if (auth()->user()->id == data_get($post, 'user_id'))
+					@if (!empty($authUser))
+						@if ($authUserId == data_get($post, 'user_id'))
 							<a href="{{ \App\Helpers\UrlGen::editPost($post) }}" class="btn btn-default btn-block">
-								<i class="far fa-edit"></i> {{ t('Update the details') }}
+								<i class="fa-regular fa-pen-to-square"></i> {{ t('Update the details') }}
 							</a>
-							@if (config('settings.single.publication_form_type') == '1')
+							@if (config('settings.listing_form.publication_form_type') == '1')
 								@if ($countPackages > 0 && $countPaymentMethods > 0)
 									<a href="{{ url('posts/' . data_get($post, 'id') . '/payment') }}" class="btn btn-success btn-block">
-										<i class="far fa-check-circle"></i> {{ t('Make It Premium') }}
+										<i class="fa-regular fa-circle-check"></i> {{ t('Make It Premium') }}
 									</a>
 								@endif
 							@endif
 							@if (empty(data_get($post, 'archived_at')) && isVerifiedPost($post))
-								<a href="{{ url('account/posts/list/' . data_get($post, 'id') . '/offline') }}" class="btn btn-warning btn-block confirm-simple-action">
-									<i class="fas fa-eye-slash"></i> {{ t('put_it_offline') }}
+								<a href="{{ url('account/posts/list/' . data_get($post, 'id') . '/offline') }}"
+								   class="btn btn-warning btn-block confirm-simple-action"
+								>
+									<i class="fa-solid fa-eye-slash"></i> {{ t('put_it_offline') }}
 								</a>
 							@endif
 							@if (!empty(data_get($post, 'archived_at')))
-								<a href="{{ url('account/posts/archived/' . data_get($post, 'id') . '/repost') }}" class="btn btn-info btn-block confirm-simple-action">
-									<i class="fa fa-recycle"></i> {{ t('re_post_it') }}
+								<a href="{{ url('account/posts/archived/' . data_get($post, 'id') . '/repost') }}"
+								   class="btn btn-info btn-block confirm-simple-action"
+								>
+									<i class="fa-solid fa-recycle"></i> {{ t('re_post_it') }}
 								</a>
 							@endif
 						@else
-							@if (in_array(auth()->user()->user_type_id, [2]))
+							@if ($authUserTypeId == 2)
 								{!! genEmailContactBtn($post, true) !!}
 							@endif
 							{!! genPhoneNumberBtn($post, true) !!}
 						@endif
 						@php
 							try {
-								if (auth()->user()->can(\App\Models\Permission::getStaffPermissions())) {
+								if (doesUserHavePermission($authUser, \App\Models\Permission::getStaffPermissions())) {
 									$btnUrl = admin_url('blacklists/add') . '?';
 									$btnQs = (!empty(data_get($post, 'email'))) ? 'email=' . data_get($post, 'email') : '';
 									$btnQs = (!empty($btnQs)) ? $btnQs . '&' : $btnQs;
@@ -128,7 +136,7 @@
 		</div>
 	</div>
 	
-	@if (config('settings.single.show_listing_on_googlemap'))
+	@if (config('settings.listing_page.show_listing_on_googlemap'))
 		@php
 			$mapHeight = 250;
 			$mapPlace = (!empty(data_get($post, 'city')))
@@ -149,7 +157,10 @@
 	@endif
 	
 	@if (isVerifiedPost($post))
-		@includeFirst([config('larapen.core.customizedViewPath') . 'layouts.inc.social.horizontal', 'layouts.inc.social.horizontal'])
+		@includeFirst([
+			config('larapen.core.customizedViewPath') . 'layouts.inc.social.horizontal',
+			'layouts.inc.social.horizontal'
+		])
 	@endif
 	
 	<div class="card sidebar-card">
@@ -167,7 +178,7 @@
 				@if (!str_contains($tipsLinkAttributes, 'href="#"') && !str_contains($tipsLinkAttributes, 'href=""'))
 					<p>
 						<a class="float-end" {!! $tipsLinkAttributes !!}>
-							{{ t('Know more') }} <i class="fa fa-angle-double-right"></i>
+							{{ t('Know more') }} <i class="fa-solid fa-angles-right"></i>
 						</a>
 					</p>
 				@endif

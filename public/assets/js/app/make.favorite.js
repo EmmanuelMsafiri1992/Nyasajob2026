@@ -1,32 +1,55 @@
-
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
 
 if (typeof isLogged === 'undefined') {
 	var isLogged = false;
 }
 
-$(document).ready(function () {
+onDocumentReady((event) => {
 	
 	/* Save the Post */
-	$('.make-favorite, .save-job, a.saved-job').click(function () {
-		if (isLogged !== true) {
-			openLoginModal();
-			
-			return false;
-		}
-		
-		savePost(this);
-	});
+	const makeFavoriteEls = document.querySelectorAll('.make-favorite, .save-job, a.saved-job');
+	if (makeFavoriteEls.length > 0) {
+		makeFavoriteEls.forEach((element) => {
+			element.addEventListener('click', (event) => {
+				event.preventDefault(); /* Prevents submission or reloading */
+				
+				if (isLogged !== true) {
+					openLoginModal();
+					return false;
+				}
+				
+				savePost(event.target);
+			});
+		});
+	}
 	
 	/* Save the Search */
-	$('#saveSearch').click(function () {
-		if (isLogged !== true) {
-			openLoginModal();
+	const saveSearchEl = document.getElementById('saveSearch');
+	if (saveSearchEl) {
+		saveSearchEl.addEventListener('click', (event) => {
+			event.preventDefault(); /* Prevents submission or reloading */
 			
-			return false;
-		}
-		
-		saveSearch(this);
-	});
+			if (isLogged !== true) {
+				openLoginModal();
+				return false;
+			}
+			
+			saveSearch(event.target);
+		});
+	}
 	
 });
 
@@ -35,110 +58,130 @@ $(document).ready(function () {
  * @param el
  * @returns {boolean}
  */
-function savePost(el) {
-	/* Get element's icon */
-	var iconEl = null;
-	if ($(el).is('a')) {
-		iconEl = $(el).find('span');
-		if (!iconEl || iconEl.length <= 0) {
-			iconEl = $(el).find('i');
-		}
+async function savePost(el) {
+	if (el.tagName.toLowerCase() === 'span') {
+		el = el.parentElement;
 	}
 	
-	var postId = $(el).closest('li').attr('id');
-	let url = siteUrl + '/ajax/save/post';
+	/* Get element's icon */
+	let iconEl = null;
+	if (el.tagName.toLowerCase() === 'a') {
+		iconEl = el.querySelector('span') || el.querySelector('i');
+	}
 	
-	let ajax = $.ajax({
-		method: 'POST',
-		url: url,
-		data: {
-			'post_id': postId,
-			'_token': $('input[name=_token]').val()
-		},
-		beforeSend: function() {
-			/* Change the button indicator */
+	const postId = el.closest('li').id;
+	const url = siteUrl + '/ajax/save/post';
+	const _tokenEl = document.querySelector('input[name=_token]');
+	const data = {
+		'post_id': postId,
+		'_token': _tokenEl.value ?? null
+	};
+	
+	if (iconEl) {
+		iconEl.classList.remove('fa-regular', 'fa-bookmark');
+		iconEl.classList.add('spinner-border', 'spinner-border-sm');
+		iconEl.style.verticalAlign = 'middle';
+		iconEl.setAttribute('role', 'status');
+		iconEl.setAttribute('aria-hidden', 'true');
+	}
+	
+	try {
+		const json = await httpRequest('POST', url, data);
+		
+		if (json.isLogged === undefined) {
 			if (iconEl) {
-				iconEl.removeClass('far fa-bookmark');
-				iconEl.addClass('spinner-border spinner-border-sm').css({'vertical-align': 'middle'});
-				iconEl.attr({'role': 'status', 'aria-hidden': 'true'});
+				iconEl.classList.remove('spinner-border', 'spinner-border-sm');
+				iconEl.style.verticalAlign = '';
+				iconEl.classList.add('fa-regular', 'fa-bookmark');
+				iconEl.removeAttribute('role');
+				iconEl.removeAttribute('aria-hidden');
 			}
-		}
-	});
-	ajax.done(function (xhr) {
-		/* console.log(xhr); */
-		if (typeof xhr.isLogged === 'undefined') {
-			/* Reset the button indicator */
-			if (iconEl) {
-				iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-				iconEl.addClass('far fa-bookmark').removeAttr('role aria-hidden');
-			}
-			
 			return false;
 		}
 		
-		if (xhr.isLogged !== true) {
+		const isNotLogged = (json.isLogged !== true);
+		const isUnauthorized = (json.status && (json.status === 401 || json.status === 419));
+		
+		if (isNotLogged || isUnauthorized) {
+			/* Reset the button indicator */
+			if (iconEl) {
+				iconEl.classList.remove('spinner-border', 'spinner-border-sm');
+				iconEl.style.verticalAlign = '';
+				iconEl.classList.add('fa-regular', 'fa-bookmark');
+				iconEl.removeAttribute('role');
+				iconEl.removeAttribute('aria-hidden');
+			}
+			
 			openLoginModal();
 			
-			/* Reset the button indicator */
-			if (iconEl) {
-				iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-				iconEl.addClass('far fa-bookmark').removeAttr('role aria-hidden');
+			if (json.message) {
+				jsAlert(json.message, 'error', false);
 			}
 			
 			return false;
 		}
 		
-		/* Logged Users - Notification */
-		if (xhr.isSaved === true) {
-			if ($(el).hasClass('btn')) {
-				$('#' + xhr.postId).removeClass('saved-job').addClass('saved-job');
-				$('#' + xhr.postId + ' a').removeClass('save-job').addClass('saved-job');
+		if (json.isSaved === true) {
+			if (el.classList.contains('btn')) {
+				const saveBtnEl = document.getElementById(json.postId);
+				saveBtnEl.classList.add('saved-job');
+				
+				const saveBtnLinkEl = document.querySelector(`#${json.postId} a`);
+				saveBtnLinkEl.classList.add('saved-job');
 			} else {
-				$(el).html('<span class="fas fa-bookmark"></span> ' + lang.labelSavePostRemove);
+				el.innerHTML = `<span class="fa-solid fa-bookmark"></span> ${lang.labelSavePostRemove}`;
 			}
-			
-			jsAlert(xhr.message, 'success');
+			jsAlert(json.message, 'success');
 		} else {
-			if ($(el).hasClass('btn')) {
-				$('#' + xhr.postId).removeClass('save-job').addClass('save-job');
-				$('#' + xhr.postId + ' a').removeClass('saved-job').addClass('save-job');
+			if (el.classList.contains('btn')) {
+				const saveBtnEl = document.getElementById(json.postId);
+				saveBtnEl.classList.remove('saved-job');
+				
+				const saveBtnLinkEl = document.querySelector(`#${json.postId} a`);
+				saveBtnLinkEl.classList.remove('saved-job');
 			} else {
-				$(el).html('<span class="far fa-bookmark"></span> ' + lang.labelSavePostSave);
+				el.innerHTML = `<span class="fa-regular fa-bookmark"></span> ${lang.labelSavePostSave}`;
 			}
-			
-			jsAlert(xhr.message, 'success');
+			jsAlert(json.message, 'success');
 		}
 		
-		/* Reset the button indicator */
 		if (iconEl) {
-			iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-			iconEl.addClass('far fa-bookmark').removeAttr('role aria-hidden');
+			iconEl.classList.remove('spinner-border', 'spinner-border-sm');
+			iconEl.style.verticalAlign = '';
+			iconEl.classList.add('fa-regular', 'fa-bookmark');
+			iconEl.removeAttribute('role');
+			iconEl.removeAttribute('aria-hidden');
 		}
 		
-		return false;
-	});
-	ajax.fail(function (xhr, textStatus, errorThrown) {
-		/* Reset the button indicator */
+	} catch (error) {
 		if (iconEl) {
-			iconEl.removeClass('spinner-border spinner-border-sm').css({'vertical-align': ''});
-			iconEl.addClass('far fa-bookmark').removeAttr('role aria-hidden');
+			iconEl.classList.remove('spinner-border', 'spinner-border-sm');
+			iconEl.style.verticalAlign = '';
+			iconEl.classList.add('fa-regular', 'fa-bookmark');
+			iconEl.removeAttribute('role');
+			iconEl.removeAttribute('aria-hidden');
 		}
 		
-		if (typeof xhr.status !== 'undefined') {
-			if (xhr.status === 401) {
+		if (error.response && error.response.status) {
+			const response = error.response;
+			if (response.status === 401 || response.status === 419) {
+				/*
+				 * Since the modal login code is injected only for guests,
+				 * the line below can be fired only for guests (i.e. when user is not logged in)
+				 */
 				openLoginModal();
 				
-				if (isLogged !== true) {
+				if (!isLogged) {
 					return false;
 				}
 			}
 		}
 		
-		let message = getJqueryAjaxError(xhr);
+		const message = getErrorMessage(error);
 		if (message !== null) {
 			jsAlert(message, 'error', false);
 		}
-	});
+	}
 	
 	return false;
 }
@@ -148,52 +191,55 @@ function savePost(el) {
  * @param el
  * @returns {boolean}
  */
-function saveSearch(el) {
-	let searchUrl = $(el).data('name');
-	let countPosts = $(el).data('count');
+async function saveSearch(el) {
+	if (el.tagName.toLowerCase() === 'i') {
+		el = el.parentElement;
+	}
+	
+	let searchUrl = el.dataset.searchUrl;
+	let resultsCount = el.dataset.resultsCount;
+	
+	if (!searchUrl) {
+		console.error("Search URL not found.");
+		return false;
+	}
 	
 	let url = siteUrl + '/ajax/save/search';
+	const _tokenEl = document.querySelector('input[name=_token]');
+	const data = {
+		'url': searchUrl,
+		'results_count': resultsCount,
+		'_token': _tokenEl.value ?? null
+	};
 	
-	let ajax = $.ajax({
-		method: 'POST',
-		url: url,
-		data: {
-			'url': searchUrl,
-			'count_posts': countPosts,
-			'_token': $('input[name=_token]').val()
-		}
-	});
-	ajax.done(function (xhr) {
-		/* console.log(xhr); */
-		if (typeof xhr.isLogged === 'undefined') {
+	try {
+		const json = await httpRequest('POST', url, data);
+		
+		if (typeof json.isLogged === 'undefined') {
 			return false;
 		}
 		
-		if (xhr.isLogged !== true) {
+		if (json.isLogged !== true) {
 			openLoginModal();
-			
 			return false;
 		}
 		
 		/* Logged Users - Notification */
-		jsAlert(xhr.message, 'success');
-		
-		return false;
-	});
-	ajax.fail(function (xhr, textStatus, errorThrown) {
-		if (typeof xhr.status !== 'undefined') {
-			if (xhr.status === 401) {
+		jsAlert(json.message, 'success');
+	} catch (error) {
+		if (error.response && error.response.status) {
+			const response = error.response;
+			if (response.status === 401 || response.status === 419) {
 				openLoginModal();
-				
 				return false;
 			}
 		}
 		
-		let message = getJqueryAjaxError(xhr);
+		const message = getErrorMessage(error);
 		if (message !== null) {
 			jsAlert(message, 'error', false);
 		}
-	});
+	}
 	
 	return false;
 }

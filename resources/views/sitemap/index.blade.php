@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @section('search')
@@ -36,11 +49,9 @@
 						<div class="content-box">
 							<div class="row row-featured-category">
 								<div class="col-12 box-title">
-									<div class="inner">
-										<h2 class="px-3">
-											<span class="title-3 fw-bold">{{ t('List of Categories and Sub-categories') }}</span>
-										</h2>
-									</div>
+									<h2 class="px-3">
+										<span class="title-3 fw-bold">{{ t('List of Categories and Sub-categories') }}</span>
+									</h2>
 								</div>
 								
 								<div class="col-12">
@@ -49,18 +60,16 @@
 											@foreach ($cats as $key => $col)
 												<div class="col-md-4 col-sm-4{{ (count($cats) == $key+1) ? ' last-column' : '' }}">
 													@foreach ($col as $iCat)
-														
-														<?php
+														@php
 															$randomId = '-' . substr(uniqid(rand(), true), 5, 5);
-														?>
-													
+														@endphp
 														<div class="cat-list">
 															<h3 class="cat-title rounded">
 																<a href="{{ \App\Helpers\UrlGen::category($iCat) }}">
 																	<i class="{{ $iCat->icon_class ?? 'icon-ok' }}"></i>
 																	{{ $iCat->name }} <span class="count"></span>
 																</a>
-																@if (isset($subCats) && $subCats->has($iCat->id))
+																@if (isset($iCat->children) && $iCat->children->count() > 0)
 																	<span class="btn-cat-collapsed collapsed"
 																		  data-bs-toggle="collapse"
 																		  data-bs-target=".cat-id-{{ $iCat->id . $randomId }}"
@@ -71,8 +80,8 @@
 																@endif
 															</h3>
 															<ul class="cat-collapse collapse show cat-id-{{ $iCat->id . $randomId }} long-list-home">
-																@if (isset($subCats) && $subCats->has($iCat->id))
-																	@foreach ($subCats->get($iCat->id) as $iSubCat)
+																@if (isset($iCat->children) && $iCat->children->count() > 0)
+																	@foreach ($iCat->children as $iSubCat)
 																		<li>
 																			<a href="{{ \App\Helpers\UrlGen::category($iSubCat) }}">
 																				{{ $iSubCat->name }}
@@ -101,7 +110,7 @@
 										<div class="inner">
 											<h2 class="px-3">
 												<span class="title-3 fw-bold">
-													<i class="fas fa-map-marker-alt"></i> {{ t('List of Cities in') }} {{ config('country.name') }}
+													<i class="fa-solid fa-location-dot"></i> {{ t('List of Cities in') }} {{ config('country.name') }}
 												</span>
 											</h2>
 										</div>

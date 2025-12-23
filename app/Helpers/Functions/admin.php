@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 use App\Helpers\Arr;
 use App\Helpers\UrlGen;
 
@@ -33,17 +48,20 @@ function admin_url(?string $path = ''): string
  * Checkbox Display
  *
  * @param $fieldValue
+ * @param $id
  * @return string
  */
-function checkboxDisplay($fieldValue): string
+function checkboxDisplay($fieldValue, $id = null): string
 {
+	$attrId = !empty($id) ? 'id="' . $id . '"' : '';
+	
 	// fa-square-o | fa-check-square-o
 	// fa-toggle-off | fa-toggle-on
-    if (!empty($fieldValue)) {
-        return '<i class="admin-single-icon fa fa-toggle-on" aria-hidden="true"></i>';
-    } else {
-        return '<i class="admin-single-icon fa fa-toggle-off" aria-hidden="true"></i>';
-    }
+	if (!empty($fieldValue)) {
+		return '<i ' . $attrId . ' class="admin-single-icon fa-solid fa-toggle-on" aria-hidden="true"></i>';
+	} else {
+		return '<i ' . $attrId . ' class="admin-single-icon fa-solid fa-toggle-off" aria-hidden="true"></i>';
+	}
 }
 
 /**
@@ -57,20 +75,16 @@ function checkboxDisplay($fieldValue): string
  */
 function ajaxCheckboxDisplay($id, $table, $field, $fieldValue = null): string
 {
-    $lineId = $field.$id;
-    $lineId = str_replace('.', '', $lineId); // fix JS bug (in admin layout)
-    $data = 'data-table="' . $table . '" 
-			data-field="'.$field.'" 
-			data-line-id="' . $lineId . '" 
-			data-id="' . $id . '" 
+	$lineId = $field . $id;
+	$lineId = str_replace('.', '', $lineId); // fix JS bug (in admin layout)
+	$data = 'data-table="' . $table . '"
+			data-field="' . $field . '"
+			data-line-id="' . $lineId . '"
+			data-id="' . $id . '"
 			data-value="' . $fieldValue . '"';
-
-    // Decoration
-    if (isset($fieldValue) && !empty($fieldValue)) {
-        $html = '<i id="' . $lineId . '" class="admin-single-icon fa fa-toggle-on" aria-hidden="true"></i>';
-    } else {
-        $html = '<i id="' . $lineId . '" class="admin-single-icon fa fa-toggle-off" aria-hidden="true"></i>';
-    }
+	
+	// Decoration
+	$html = checkboxDisplay($fieldValue, $lineId);
 	
 	return '<a href="" class="ajax-request" ' . $data . '>' . $html . '</a>';
 }
@@ -86,35 +100,31 @@ function ajaxCheckboxDisplay($id, $table, $field, $fieldValue = null): string
  */
 function installAjaxCheckboxDisplay($id, $table, $field, $fieldValue = null): string
 {
-    $lineId = $field.$id;
-    $lineId = str_replace('.', '', $lineId); // fix JS bug (in admin layout)
-    $data = 'data-table="' . $table . '" 
-			data-field="'.$field.'" 
-			data-line-id="' . $lineId . '" 
-			data-id="' . $id . '" 
+	$lineId = $field . $id;
+	$lineId = str_replace('.', '', $lineId); // fix JS bug (in admin layout)
+	$data = 'data-table="' . $table . '"
+			data-field="' . $field . '"
+			data-line-id="' . $lineId . '"
+			data-id="' . $id . '"
 			data-value="' . $fieldValue . '"';
-
-    // Decoration
-    if ($fieldValue == 1) {
-        $html = '<i id="' . $lineId . '" class="admin-single-icon fa fa-toggle-on" aria-hidden="true"></i>';
-    } else {
-        $html = '<i id="' . $lineId . '" class="admin-single-icon fa fa-toggle-off" aria-hidden="true"></i>';
-    }
-    $html = '<a href="" class="ajax-request" ' . $data . '>' . $html . '</a>';
-
-    // Install country's decoration
-    $html .= ' &nbsp;';
-    if ($fieldValue == 1) {
-        $html .= '<a href="" id="install' . $id . '" class="ajax-request btn btn-xs btn-success" ' . $data . '>';
-		$html .= '<i class="fa fa-download"></i> ' . trans('admin.Installed');
+	
+	// Decoration
+	$html = checkboxDisplay($fieldValue, $lineId);
+	$html = '<a href="" class="ajax-request" ' . $data . '>' . $html . '</a>';
+	
+	// Install country's decoration
+	$html .= ' &nbsp;';
+	if ($fieldValue == 1) {
+		$html .= '<a href="" id="install' . $id . '" class="ajax-request btn btn-xs btn-success" ' . $data . '>';
+		$html .= '<i class="fa-solid fa-download"></i> ' . trans('admin.Installed');
 		$html .= '</a>';
-    } else {
-        $html .= '<a href="" id="install' . $id . '" class="ajax-request btn btn-xs btn-light" ' . $data . '>';
-		$html .= '<i class="fa fa-download"></i> ' . trans('admin.Install');
+	} else {
+		$html .= '<a href="" id="install' . $id . '" class="ajax-request btn btn-xs btn-light" ' . $data . '>';
+		$html .= '<i class="fa-solid fa-download"></i> ' . trans('admin.Install');
 		$html .= '</a>';
-    }
-
-    return $html;
+	}
+	
+	return $html;
 }
 
 /**
@@ -125,33 +135,28 @@ function installAjaxCheckboxDisplay($id, $table, $field, $fieldValue = null): st
  */
 function getPostUrl($post): string
 {
-    $out = '';
-	
-	if (isset($post->latestPayment) && !empty($post->latestPayment)) {
-		if (isset($post->latestPayment->package) && !empty($post->latestPayment->package)) {
-			$info = '';
-			if ($post->featured == 1) {
-                $class = 'text-success';
-            } else {
-                $class = 'text-danger';
-                $info = ' (' . trans('admin.Expired') . ')';
-            }
-            $out = ' <i class="fa fa-check-circle ' . $class . '"
+	// Get the listing's possible payment info
+	$paymentInfo = '';
+	if (!empty($post->payment)) {
+		$info = ' (' . $post->payment->expiry_info . ')';
+		$class = 'text-' . $post->payment->css_class_variant;
+		$packageName = $post->payment->package?->short_name ?? t('unknown_package');
+		
+		$paymentInfo = ' <i class="fa-solid fa-circle-check ' . $class . '"
                     data-bs-placement="bottom" data-bs-toggle="tooltip"
-                    type="button" title="' . $post->latestPayment->package->short_name . $info . '">
+                    type="button" title="' . $packageName . $info . '">
                 </i>';
-        }
-    }
+	}
 	
-    // Get URL
+	// Get the listing link
 	if (!is_null($post) && isset($post->country_code, $post->title)) {
-    	$url = dmUrl($post->country_code, UrlGen::postPath($post));
-    	$out = linkStrLimit($url, $post->title, 35, 'target="_blank"') . $out;
+		$url = dmUrl($post->country_code, UrlGen::postPath($post));
+		$out = linkStrLimit($url, $post->title, 35, 'target="_blank"') . $paymentInfo;
 	} else {
 		$out = '--';
 	}
 	
-    return $out;
+	return $out;
 }
 
 /**
@@ -167,7 +172,7 @@ function getCountryFlag($entry, bool $withLink = false): string
 		$countryName = (isset($entry->country) && isset($entry->country->name)) ? $entry->country->name : null;
 		$countryName = (!empty($countryName)) ? $countryName : $entry->country_code;
 		
-		$iconPath = 'images/flags/16/' . strtolower($entry->country_code) . '.png';
+		$iconPath = 'images/flags/rectangle/16/' . strtolower($entry->country_code) . '.png';
 		if (file_exists(public_path($iconPath))) {
 			$out = ($withLink) ? '<a href="' . dmUrl($entry->country_code, '/', true, true) . '" target="_blank">' : '';
 			$out .= '<img src="' . url($iconPath) . getPictureVersion() . '" data-bs-toggle="tooltip" title="' . $countryName . '">';
@@ -191,17 +196,21 @@ function isVerifiedPost($post): bool
 {
 	$post = (is_array($post)) ? Arr::toObject($post) : $post;
 	
-    if (!isset($post->email_verified_at) || !isset($post->phone_verified_at) || !isset($post->reviewed_at)) {
-        return false;
-    }
-    
-    if (config('settings.single.listings_review_activation')) {
-        $verified = (!empty($post->email_verified_at) && !empty($post->phone_verified_at) && !empty($post->reviewed_at));
-    } else {
-        $verified = (!empty($post->email_verified_at) && !empty($post->phone_verified_at));
-    }
-    
-    return $verified;
+	if (
+		!Arr::keyExists('email_verified_at', $post)
+		|| !Arr::keyExists('phone_verified_at', $post)
+		|| !Arr::keyExists('reviewed_at', $post)
+	) {
+		return false;
+	}
+	
+	if (config('settings.listing_form.listings_review_activation')) {
+		$verified = (!empty($post->email_verified_at) && !empty($post->phone_verified_at) && !empty($post->reviewed_at));
+	} else {
+		$verified = (!empty($post->email_verified_at) && !empty($post->phone_verified_at));
+	}
+	
+	return $verified;
 }
 
 /**
@@ -214,11 +223,11 @@ function isVerifiedUser($user): bool
 {
 	$user = (is_array($user)) ? Arr::toObject($user) : $user;
 	
-    if (!isset($user->email_verified_at) || !isset($user->phone_verified_at)) {
-        return false;
-    }
-    
-    return (!empty($user->email_verified_at) && !empty($user->phone_verified_at));
+	if (!isset($user->email_verified_at) || !isset($user->phone_verified_at)) {
+		return false;
+	}
+	
+	return (!empty($user->email_verified_at) && !empty($user->phone_verified_at));
 }
 
 /**
@@ -235,7 +244,7 @@ function userHasSuperAdminPermissions(): bool
 		})->toArray();
 		
 		// Check if user has the super admin permissions
-		if (auth()->user()->can($permissions)) {
+		if (doesUserHavePermission(auth()->user(), $permissions)) {
 			return true;
 		}
 	}

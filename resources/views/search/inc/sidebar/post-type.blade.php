@@ -1,20 +1,19 @@
-<?php
-// Clear Filter Button
-$clearFilterBtn = \App\Helpers\UrlGen::getTypeFilterClearLink($cat ?? null, $city ?? null);
-?>
-<?php
-$inputPostType = [];
-if (request()->filled('type')) {
-	$types = request()->get('type');
-	if (is_array($types)) {
-		foreach ($types as $type) {
-			$inputPostType[] = $type;
+@php
+	// Clear Filter Button
+	$clearFilterBtn = \App\Helpers\UrlGen::getTypeFilterClearLink($cat ?? null, $city ?? null);
+	
+	$inputPostType = [];
+	if (request()->filled('type')) {
+		$types = request()->query('type');
+		if (is_array($types)) {
+			foreach ($types as $type) {
+				$inputPostType[] = $type;
+			}
+		} else {
+			$inputPostType[] = $types;
 		}
-	} else {
-		$inputPostType[] = $types;
 	}
-}
-?>
+@endphp
 {{-- PostType --}}
 <div class="list-filter">
 	<h5 class="list-title">
@@ -45,28 +44,44 @@ if (request()->filled('type')) {
 
 @section('after_scripts')
 	@parent
-	
 	<script>
-		$(document).ready(function ()
-		{
-			$('#blocPostType input[type=checkbox]').click(function() {
-				var postTypeQueryString = $('#postTypeQueryString').val();
-				
-				if (postTypeQueryString != '') {
-					postTypeQueryString = postTypeQueryString + '&';
-				}
-				var tmpQString = '';
-				$('#blocPostType input[type=checkbox]:checked').each(function(){
-					if (tmpQString != '') {
-						tmpQString = tmpQString + '&';
-					}
-					tmpQString = tmpQString + 'type[]=' + $(this).val();
+		onDocumentReady((event) => {
+			const postTypeEls = document.querySelectorAll('#blocPostType input[type=checkbox]');
+			if (postTypeEls.length > 0) {
+				postTypeEls.forEach((element) => {
+					element.addEventListener('change', (e) => {
+						e.preventDefault();
+						
+						const queryStringEl = document.getElementById('postTypeQueryString');
+						if (!queryStringEl) {
+							return false;
+						}
+						
+						let queryString = queryStringEl.value;
+						
+						if (queryString !== '') {
+							queryString += '&';
+						}
+						
+						let tmpQString = '';
+						const checkedPostTypeEls = document.querySelectorAll('#blocPostType input[type=checkbox]:checked');
+						if (checkedPostTypeEls.length > 0) {
+							checkedPostTypeEls.forEach((checkedElement) => {
+								if (tmpQString !== '') {
+									tmpQString += '&';
+								}
+								tmpQString += 'type[]=' + checkedElement.value;
+							});
+						}
+						
+						queryString += tmpQString;
+						
+						let searchUrl = baseUrl + '?' + queryString;
+						redirect(searchUrl);
+					});
 				});
-				postTypeQueryString = postTypeQueryString + tmpQString;
-				
-				var searchUrl = baseUrl + '?' + postTypeQueryString;
-				redirect(searchUrl);
-			});
+			}
+			
 		});
 	</script>
 @endsection

@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Models\Post;
 
 use App\Models\Post;
@@ -44,9 +59,9 @@ trait SimilarByLocation
 			'phone_verified_at',
 			'reviewed_at',
 			$postsTable . '.created_at',
-			$postsTable . '.archived_at'
+			$postsTable . '.archived_at',
 		];
-		if (isFromApi() && !isFromTheAppsWebEnvironment()) {
+		if (isFromApi() && !doesRequestIsFromWebApp()) {
 			$select[] = $postsTable . '.description';
 			$select[] = 'user_id';
 			$select[] = 'contact_name';
@@ -65,20 +80,20 @@ trait SimilarByLocation
 		}
 		
 		// Default Filters
-		$posts->currentCountry()->verified()->unarchived();
-		if (config('settings.single.listings_review_activation')) {
+		$posts->inCountry()->verified()->unarchived();
+		if (config('settings.listing_form.listings_review_activation')) {
 			$posts->reviewed();
 		}
 		
 		// Use the Cities Extended Searches
-		config()->set('distance.functions.default', config('settings.list.distance_calculation_formula'));
+		config()->set('distance.functions.default', config('settings.listings_list.distance_calculation_formula'));
 		config()->set('distance.countryCode', config('country.code'));
 		
-		if (isset($this->city) && !empty($this->city)) {
-			if (config('settings.list.cities_extended_searches')) {
+		if (!empty($this->city)) {
+			if (config('settings.listings_list.cities_extended_searches')) {
 				
 				// Use the Cities Extended Searches
-				config()->set('distance.functions.default', config('settings.list.distance_calculation_formula'));
+				config()->set('distance.functions.default', config('settings.listings_list.distance_calculation_formula'));
 				config()->set('distance.countryCode', config('country.code'));
 				
 				$sql = Distance::select('lon', 'lat', $this->city->longitude, $this->city->latitude);
@@ -99,12 +114,24 @@ trait SimilarByLocation
 		}
 		
 		// Relations
-		$posts->with('postType')->has('postType');
-		$posts->with('category', fn ($query) => $query->with('parent'))->has('category');
-		$posts->with('salaryType')->has('salaryType');
-		$posts->with('city')->has('city');
+		$posts->has('postType');
+		if (!config('settings.listings_list.hide_post_type')) {
+			$posts->with('postType');
+		}
+		$posts->has('category');
+		if (!config('settings.listings_list.hide_category')) {
+			$posts->with('category', fn ($query) => $query->with('parent'));
+		}
+		$posts->has('salaryType');
+		if (!config('settings.listings_list.hide_salary')) {
+			$posts->with('salaryType');
+		}
+		$posts->has('city');
+		if (!config('settings.listings_list.hide_location')) {
+			$posts->with('city');
+		}
 		$posts->with('savedByLoggedUser');
-		$posts->with('latestPayment', fn ($query) => $query->with('package'));
+		$posts->with('payment', fn($query) => $query->with('package'));
 		$posts->with('user');
 		$posts->with('user.permissions');
 		

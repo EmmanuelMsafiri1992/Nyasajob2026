@@ -1,28 +1,29 @@
 {{-- icon picker input --}}
-
-<?php
+@php
     // Supported Icons Fonts
     $iconSetArray = [
-            'bootstrapicons',
-            'elusiveicons',
-            'flagicon',
-            'fontawesome4',
-            'fontawesome5',
-            'glyphicon', // Bootstrap 3
-            'ionicons',
-            'mapicons',
-            'materialdesign',
-            'octicons',
-            'typicons',
-            'weathericons',
+        'bootstrapfontawesome',
+        'bootstrapicons',
+        'elusiveicons',
+        'flagicon',
+        'fontawesome4',
+        'fontawesome5',
+        'fontawesome6',
+        'glyphicon', // Bootstrap 3
+        'ionicons',
+        'mapicons',
+        'materialdesign',
+        'octicons',
+        'typicons',
+        'weathericons',
     ];
     
     // If no iconset was provided, set the default iconset to Font-Awesome
     if (!isset($field['iconset'])) {
-        $field['iconset'] = 'fontawesome';
+        $field['iconset'] = 'fontawesome6';
     } else {
         if (!in_array($field['iconset'], $iconSetArray)) {
-            $field['iconset'] = 'fontawesome';
+            $field['iconset'] = 'fontawesome6';
         }
     }
     if (!isset($field['version'])) {
@@ -35,10 +36,15 @@
     if (!isset($field['search'])) {
         $field['search'] = 'Search icon';
     }
-?>
+@endphp
 
 <div @include('admin.panel.inc.field_wrapper_attributes') >
-    <label class="form-label fw-bolder">{!! $field['label'] !!}</label>
+    <label class="form-label fw-bolder">
+        {!! $field['label'] !!}
+        @if (isset($field['required']) && $field['required'])
+            <span class="text-danger">*</span>
+        @endif
+    </label>
     @include('admin.panel.fields.inc.translatable_icon')
 
     <div>
@@ -61,17 +67,29 @@
 
 @if ($xPanel->checkIfFieldIsFirstOfItsType($field, $fields))
     
-    @if($field['iconset'] == 'bootstrapicons')
+    @if ($field['iconset'] == 'bootstrapfontawesome')
         @push('crud_fields_styles')
             {{-- Bootstrap Icons --}}
-            <link rel="stylesheet" href="{{ asset('assets/fonts/bootstrapicons/1.9.1/css/bootstrap-icons.css') }}"/>
+            <link rel="stylesheet" href="{{ asset('assets/fonts/bootstrapicons/1.11.3/css/bootstrap-icons.css') }}"/>
+            {{-- Font Awesome Free 6 --}}
+            <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome6/6.5.2/css/all.min.css') }}"/>
+        @endpush
+        
+        @push('crud_fields_scripts')
+            <!-- Iconpicker Iconset for Bootstrap & Font Awesome 6 -->
+            <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-bootstrapfontawesome-all.js') }}"></script>
+        @endpush
+    @elseif ($field['iconset'] == 'bootstrapicons')
+        @push('crud_fields_styles')
+            {{-- Bootstrap Icons --}}
+            <link rel="stylesheet" href="{{ asset('assets/fonts/bootstrapicons/1.11.3/css/bootstrap-icons.css') }}"/>
         @endpush
         
         @push('crud_fields_scripts')
             <!-- Iconpicker Iconset for Bootstrap Icons -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-bootstrapicons-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'elusiveicons')
+    @elseif ($field['iconset'] == 'elusiveicons')
         @push('crud_fields_styles')
             {{-- Elusive Icons --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/elusiveicons/2.0.0/css/elusive-icons.min.css') }}"/>
@@ -81,7 +99,7 @@
             <!-- Iconpicker Iconset for Elusive Icons -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-elusiveicons-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'flagicon')
+    @elseif ($field['iconset'] == 'flagicon')
         @push('crud_fields_styles')
             <!-- Flag Icons CDN -->
             <link rel="stylesheet" href="{{ asset('assets/fonts/flagicon/3.5.0/css/flag-icon.min.css') }}"/>
@@ -91,32 +109,42 @@
             <!-- Iconpicker Iconset for Elusive Icons -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-flagicon-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'fontawesome4')
+    @elseif ($field['iconset'] == 'fontawesome4')
         @push('crud_fields_styles')
-            {{-- Font Awesome 4 --}}
+            {{-- Font Awesome Free 4 --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome4/4.7.0/css/font-awesome.min.css') }}"/>
         @endpush
         
         @push('crud_fields_scripts')
-            <!-- Iconpicker Iconset for Font Awesome -->
+            <!-- Iconpicker Iconset for Font Awesome Free 4 -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-fontawesome4-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'fontawesome5')
+    @elseif ($field['iconset'] == 'fontawesome5')
         @push('crud_fields_styles')
-            {{-- Font Awesome 5 --}}
+            {{-- Font Awesome Free 5 --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome5/5.15.4/css/all.min.css') }}"/>
         @endpush
-    
+        
         @push('crud_fields_scripts')
-            <!-- Iconpicker Iconset for Font Awesome -->
+            <!-- Iconpicker Iconset for Font Awesome Free 5 -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-fontawesome5-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'glyphicon')
+    @elseif ($field['iconset'] == 'fontawesome6')
+        @push('crud_fields_styles')
+            {{-- Font Awesome Free 6 --}}
+            <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome6/6.5.2/css/all.min.css') }}"/>
+        @endpush
+        
+        @push('crud_fields_scripts')
+            <!-- Iconpicker Iconset for Font Awesome Free 6 -->
+            <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-fontawesome6-all.js') }}"></script>
+        @endpush
+    @elseif ($field['iconset'] == 'glyphicon')
         @push('crud_fields_scripts')
             <!-- Iconpicker Bundle -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-glyphicon-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'ionicons')
+    @elseif ($field['iconset'] == 'ionicons')
         @push('crud_fields_styles')
             {{-- Ionicons --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/ionicons/2.0.1/css/ionicons.min.css') }}"/>
@@ -126,7 +154,7 @@
             <!-- Iconpicker Iconset for Ionicons -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-ionicons-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'mapicons')
+    @elseif ($field['iconset'] == 'mapicons')
         @push('crud_fields_styles')
             {{-- Map Icons --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/mapicons/2.1.0/css/map-icons.min.css') }}"/>
@@ -136,7 +164,7 @@
             <!-- Iconpicker Iconset for Map Icons -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-mapicons-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'materialdesign')
+    @elseif ($field['iconset'] == 'materialdesign')
         @push('crud_fields_styles')
             {{-- Material Icons --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/materialdesign/2.2.0/css/material-design-iconic-font.min.css') }}"/>
@@ -146,7 +174,7 @@
             <!-- Iconpicker Iconset for Material Design -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-materialdesign-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'octicons')
+    @elseif ($field['iconset'] == 'octicons')
         @push('crud_fields_styles')
             {{-- Octicons --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/octicons/4.4.0/css/octicons.min.css') }}"/>
@@ -156,7 +184,7 @@
             <!-- Iconpicker Iconset for Octicons -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-octicons-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'typicons')
+    @elseif ($field['iconset'] == 'typicons')
         @push('crud_fields_styles')
             {{-- Typicons --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/typicons/2.0.9/css/typicons.min.css') }}"/>
@@ -166,7 +194,7 @@
             <!-- Iconpicker Iconset for Typicons -->
             <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-typicons-all.js') }}"></script>
         @endpush
-    @elseif($field['iconset'] == 'weathericons')
+    @elseif ($field['iconset'] == 'weathericons')
         @push('crud_fields_styles')
             {{-- Weather Icons --}}
             <link rel="stylesheet" href="{{ asset('assets/fonts/weathericons/2.0.10/css/weather-icons.min.css') }}"/>
@@ -178,13 +206,13 @@
         @endpush
     @else
         @push('crud_fields_styles')
-            {{-- Font Awesome 5 --}}
-            <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome5/5.15.4/css/all.min.css') }}"/>
+            {{-- Font Awesome Free 6 --}}
+            <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome6/6.5.2/css/all.min.css') }}"/>
         @endpush
         
         @push('crud_fields_scripts')
-            <!-- Iconpicker Iconset for Font Awesome -->
-            <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-fontawesome5-all.js') }}"></script>
+            <!-- Iconpicker Iconset for Font Awesome Free 6 -->
+            <script type="text/javascript" src="{{ asset('assets/plugins/bootstrap-iconpicker/js/iconset/iconset-fontawesome6-all.js') }}"></script>
         @endpush
     @endif
     
@@ -202,7 +230,7 @@
         
         {{-- Iconpicker - set hidden input value --}}
         <script>
-            jQuery(document).ready(function($) {
+            onDocumentReady((event) => {
                 $('button[role=iconpicker]').on('change', function(e) {
                     $(this).siblings('input[type=hidden]').val(e.icon);
                 });

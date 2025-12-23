@@ -20,21 +20,25 @@
 
 @section('content')
     <div class="flex-row d-flex justify-content-center">
-        <?php
-        $colMd = config('settings.style.admin_boxed_layout') == '1' ? ' col-md-12' : ' col-md-9';
-        ?>
+        @php
+            $colMd = config('settings.style.admin_boxed_layout') == '1' ? ' col-md-12' : ' col-md-9';
+        @endphp
         <div class="col-sm-12{{ $colMd }}">
             
             {{-- Default box --}}
             @if ($xPanel->hasAccess('list'))
                 <a href="{{ url($xPanel->route) }}" class="btn btn-primary shadow">
-                    <i class="fa fa-angle-double-left"></i> {{ trans('admin.back_to_all') }}
+                    <i class="fa-solid fa-angles-left"></i> {{ trans('admin.back_to_all') }}
                     <span class="text-lowercase">{!! $xPanel->entityNamePlural !!}</span>
                 </a>
                 <br><br>
             @endif
             
-            {!! Form::open(array('url' => $xPanel->route, 'method' => 'post', 'files' => $xPanel->hasUploadFields('create'))) !!}
+            @if ($xPanel->hasUploadFields('create'))
+                {{ html()->form('POST', url($xPanel->route))->acceptsFiles()->open() }}
+            @else
+                {{ html()->form('POST', url($xPanel->route))->open() }}
+            @endif
             <div class="card border-top border-primary">
                 
                 <div class="card-header">
@@ -42,12 +46,24 @@
                 </div>
                 <div class="card-body">
                     {{-- load the view from the application if it exists, otherwise load the one in the package --}}
-                    @if(view()->exists('vendor.admin.panel.' . $xPanel->entityName . '.form_content'))
-                        @include('vendor.admin.panel.' . $xPanel->entityName . '.form_content', ['fields' => $xPanel->getFields('create')])
-                    @elseif(view()->exists('vendor.admin.panel.form_content'))
-                        @include('vendor.admin.panel.form_content', ['fields' => $xPanel->getFields('create')])
+                    @php
+                        $form = 'create';
+                    @endphp
+                    @if (view()->exists('vendor.admin.panel.' . $xPanel->entityName . '.form_content'))
+                        @include('vendor.admin.panel.' . $xPanel->entityName . '.form_content', [
+			                'form'   => $form,
+			                'fields' => $xPanel->getFields($form)
+                        ])
+                    @elseif (view()->exists('vendor.admin.panel.form_content'))
+                        @include('vendor.admin.panel.form_content', [
+							'form'   => $form,
+							'fields' => $xPanel->getFields($form)
+                        ])
                     @else
-                        @include('admin.panel.form_content', ['fields' => $xPanel->getFields('create')])
+                        @include('admin.panel.form_content', [
+							'form'   => $form,
+							'fields' => $xPanel->getFields($form)
+                        ])
                     @endif
                 </div>
                 <div class="card-footer">
@@ -55,7 +71,7 @@
                 </div>
                 
             </div>
-            {!! Form::close() !!}
+            {{ html()->form()->close() }}
         </div>
     </div>
 

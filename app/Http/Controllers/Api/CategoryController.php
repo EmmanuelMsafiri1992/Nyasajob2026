@@ -1,7 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Category\CategoryBySlug;
+use App\Http\Controllers\Api\Category\CategoryBy;
 use App\Models\Category;
 use App\Http\Resources\EntityCollection;
 use App\Http\Resources\CategoryResource;
@@ -11,7 +26,7 @@ use App\Http\Resources\CategoryResource;
  */
 class CategoryController extends BaseController
 {
-	use CategoryBySlug;
+	use CategoryBy;
 	
 	/**
 	 * List categories
@@ -24,8 +39,6 @@ class CategoryController extends BaseController
 	 * @queryParam page int Items page number. From 1 to ("total items" divided by "items per page value - perPage"). Example: 1
 	 *
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function index(): \Illuminate\Http\JsonResponse
 	{
@@ -33,19 +46,22 @@ class CategoryController extends BaseController
 		$parentId = request()->integer('parentId');
 		$areNestedEntriesIncluded = (request()->filled('nestedIncluded') && request()->integer('nestedIncluded') == 1);
 		$locale = config('app.locale');
+		$perPage = getNumberOfItemsPerPage('categories', request()->integer('perPage'));
 		$page = request()->integer('page');
 		
-		$embed = explode(',', request()->get('embed'));
+		$embed = explode(',', request()->input('embed'));
 		
 		// Cache ID
 		$cacheNestedId = '.nestedIncluded.' . (int)$areNestedEntriesIncluded;
-		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->get('embed') : '';
-		$cachePageId = '.page.' . $page . '.of.' . $this->perPage;
+		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
+		$cachePageId = '.page.' . $page . '.of.' . $perPage;
 		$cacheId = 'cats.' . $parentId . $cacheNestedId . $cacheEmbedId . $cachePageId . '.' . $locale;
 		$cacheId = md5($cacheId);
 		
 		// Cached Query
-		$categories = cache()->remember($cacheId, $cacheExpiration, function () use ($parentId, $embed, $areNestedEntriesIncluded) {
+		$categories = cache()->remember($cacheId, $cacheExpiration, function () use (
+			$perPage, $parentId, $embed, $areNestedEntriesIncluded
+		) {
 			$categories = Category::query();
 			
 			if (!empty($parentId)) {
@@ -77,7 +93,7 @@ class CategoryController extends BaseController
 				return $categories;
 			}
 			
-			return $categories->paginate($this->perPage);
+			return $categories->paginate($perPage);
 		});
 		
 		// If the request is made from the app's Web environment,
@@ -90,7 +106,7 @@ class CategoryController extends BaseController
 		
 		$message = ($categories->count() <= 0) ? t('no_categories_found') : null;
 		
-		return $this->respondWithCollection($resourceCollection, $message);
+		return apiResponse()->withCollection($resourceCollection, $message);
 	}
 	
 	/**
@@ -104,15 +120,13 @@ class CategoryController extends BaseController
 	 *
 	 * @param int|string $slugOrId
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function show(int|string $slugOrId): \Illuminate\Http\JsonResponse
 	{
 		if (is_numeric($slugOrId)) {
 			$category = $this->getCategoryById($slugOrId);
 		} else {
-			$parentCatSlug = request()->get('parentCatSlug') ?? null;
+			$parentCatSlug = request()->input('parentCatSlug') ?? null;
 			$category = $this->getCategoryBySlug($slugOrId, $parentCatSlug);
 		}
 		
@@ -120,6 +134,6 @@ class CategoryController extends BaseController
 		
 		$resource = new CategoryResource($category);
 		
-		return $this->respondWithResource($resource);
+		return apiResponse()->withResource($resource);
 	}
 }

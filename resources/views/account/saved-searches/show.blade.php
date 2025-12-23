@@ -1,4 +1,17 @@
-
+{{--
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+--}}
 @extends('layouts.master')
 
 @php
@@ -35,7 +48,7 @@
 
 				<div class="col-md-9 page-content">
 					<div class="inner-box">
-						<h2 class="title-2"><i class="fas fa-bell"></i> {{ t('Saved search') }} #{{ data_get($savedSearch, 'id') }} </h2>
+						<h2 class="title-2"><i class="fa-solid fa-bell"></i> {{ t('Saved search') }} #{{ data_get($savedSearch, 'id') }} </h2>
 						
 						<div class="mb30" style="float: right; padding-right: 5px;">
 							&laquo; <a href="{{ url('account/saved-searches') }}">{{ t('Saved searches') }}</a>
@@ -61,10 +74,10 @@
 													<div class="col-md-2 no-padding photobox">
 														<div class="add-image">
 															<span class="photo-count">
-																<i class="fa fa-camera"></i>
+																<i class="fa-solid fa-camera"></i>
 															</span>
 															<a href="{{ \App\Helpers\UrlGen::post($post) }}">
-																<img class="img-thumbnail no-margin" src="{{ data_get($post, 'logo_url.full') }}" alt="img">
+																<img class="img-thumbnail no-margin" src="{{ data_get($post, 'logo_url.medium') }}" alt="img">
 															</a>
 														</div>
 													</div>
@@ -86,7 +99,7 @@
 																	</span>
 																@endif
 																<span class="date">
-																	<i class="far fa-clock"></i> {!! data_get($post, 'created_at_formatted') !!}
+																	<i class="fa-regular fa-clock"></i> {!! data_get($post, 'created_at_formatted') !!}
 																</span>
 																@if (!empty(data_get($post, 'category')))
 																	&nbsp;<span class="category">

@@ -1,97 +1,132 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Post;
 
 use App\Events\PostWasVisited;
+use App\Http\Controllers\Api\Post\Show\DetailedTrait;
 use App\Http\Resources\PostResource;
-use App\Models\Permission;
 use App\Models\Post;
 use App\Models\Scopes\ReviewedScope;
+use App\Models\Scopes\StrictActiveScope;
 use App\Models\Scopes\VerifiedScope;
 use Illuminate\Support\Facades\Event;
 
 trait ShowTrait
 {
+	use DetailedTrait;
+	
 	/**
 	 * @param $id
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
-	public function showPost($id)
+	public function showPost($id): \Illuminate\Http\JsonResponse
 	{
-		// Lazy Loading Array
-		$lazyLoadingArray = [
-			'category',
-			'category.parent',
-			'postType',
-			'city',
-			'pictures',
-			'latestPayment',
-			'latestPayment.package',
-			'savedByLoggedUser',
-		];
+		$embed = explode(',', request()->input('embed'));
+		$countryCode = request()->input('countryCode');
+		$isUnactivatedIncluded = (request()->filled('unactivatedIncluded') && request()->integer('unactivatedIncluded') == 1);
+		$isBelongLoggedUser = (request()->filled('belongLoggedUser') && request()->integer('belongLoggedUser') == 1);
 		
-		$guard = 'sanctum';
-		if (auth($guard)->check()) {
-			$user = auth($guard)->user();
+		// Cache control
+		$this->updateCachingParameters();
+		
+		// Cache ID
+		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
+		$cacheFiltersId = '.filters' . '.unactivatedIncluded:' . (int)$isUnactivatedIncluded . '.auth:' . (int)$isBelongLoggedUser;
+		$cacheId = 'post' . $cacheEmbedId . $cacheFiltersId . '.id:' . $id . '.' . config('app.locale');
+		$cacheId = md5($cacheId);
+		
+		// Cached Query
+		$post = cache()->remember($cacheId, $this->cacheExpiration, function () use (
+			$countryCode,
+			$isUnactivatedIncluded,
+			$id,
+			$embed,
+			$isBelongLoggedUser
+		) {
+			$post = Post::query();
 			
-			// Get post's details even if it's not activated, not reviewed or archived
-			$cacheId = 'post.withoutGlobalScopes.with.lazyLoading.' . $id . '.' . config('app.locale');
-			$post = cache()->remember($cacheId, $this->cacheExpiration, function () use ($id, $lazyLoadingArray) {
-				return Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
-					->withCountryFix()
-					->where('id', $id)
-					->with($lazyLoadingArray)
-					->first();
-			});
+			if ($isUnactivatedIncluded) {
+				$post->withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class]);
+			}
 			
-			// If the logged user is not an admin user...
-			if (!auth($guard)->user()->can(Permission::getStaffPermissions())) {
-				// Then don't get post that are not from the user
-				if (!empty($post) && $post->user_id != $user->id) {
-					$cacheId = 'post.with.lazyLoading.' . $id . '.' . config('app.locale');
-					$post = cache()->remember($cacheId, $this->cacheExpiration, function () use ($id, $lazyLoadingArray) {
-						return Post::withCountryFix()
-							->unarchived()
-							->where('id', $id)
-							->with($lazyLoadingArray)
-							->first();
-					});
+			if (in_array('country', $embed)) {
+				$post->with('country');
+			}
+			if (in_array('user', $embed)) {
+				$post->with('user');
+			}
+			if (in_array('category', $embed)) {
+				$post->with('category');
+			}
+			if (in_array('postType', $embed)) {
+				$post->with('postType');
+			}
+			if (in_array('city', $embed)) {
+				$post->with('city');
+				if (in_array('subAdmin1', $embed)) {
+					$post->with('city.subAdmin1');
+				}
+				if (in_array('subAdmin2', $embed)) {
+					$post->with('city.subAdmin2');
 				}
 			}
-		} else {
-			$cacheId = 'post.with.lazyLoading.' . $id . '.' . config('app.locale');
-			$post = cache()->remember($cacheId, $this->cacheExpiration, function () use ($id, $lazyLoadingArray) {
-				return Post::withCountryFix()
-					->unarchived()
-					->where('id', $id)
-					->with($lazyLoadingArray)
-					->first();
-			});
-		}
-		// Preview Post after activation
-		if (request()->filled('preview') && request()->get('preview') == 1) {
-			// Get post's details even if it's not activated and reviewed
-			$post = Post::withoutGlobalScopes([VerifiedScope::class, ReviewedScope::class])
-				->withCountryFix()
-				->where('id', $id)
-				->with($lazyLoadingArray)
-				->first();
-		}
+			if (in_array('payment', $embed)) {
+				$post->with(['payment' => function ($query) {
+					$query->withoutGlobalScope(StrictActiveScope::class);
+				}]);
+				if (in_array('package', $embed)) {
+					$post->with('payment.package');
+				}
+			}
+			if (in_array('possiblePayment', $embed)) {
+				$post->with(['possiblePayment']);
+				if (in_array('package', $embed)) {
+					$post->with('possiblePayment.package');
+				}
+			}
+			if (in_array('savedByLoggedUser', $embed)) {
+				$post->with('savedByLoggedUser');
+			}
+			if (in_array('company', $embed)) {
+				$post->with('company');
+			}
+			
+			if (!empty($countryCode)) {
+				$post->inCountry($countryCode)->has('country');
+			}
+			if ($isBelongLoggedUser) {
+				$guard = 'sanctum';
+				$userId = (auth($guard)->check()) ? auth($guard)->user()->getAuthIdentifier() : '-1';
+				$post->where('user_id', $userId);
+			}
+			
+			return $post->where('id', $id)->first();
+		});
 		
-		// Post not found
-		if (empty($post) || empty($post->category) || empty($post->city)) {
-			abort(404, t('post_not_found'));
-		}
+		// Reset caching parameters
+		$this->resetCachingParameters();
+		
+		abort_if(empty($post), 404, t('post_not_found'));
 		
 		// Increment the Listing's visits counter
 		Event::dispatch(new PostWasVisited($post));
 		
-		$data = [
-			'success' => true,
-			'result'  => new PostResource($post),
-		];
+		$resource = new PostResource($post);
 		
-		return $this->apiResponse($data);
+		return apiResponse()->withResource($resource);
 	}
 }

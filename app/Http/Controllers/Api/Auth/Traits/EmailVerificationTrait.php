@@ -1,4 +1,19 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Http\Controllers\Api\Auth\Traits;
 
 use App\Notifications\EmailVerification;
@@ -34,8 +49,8 @@ trait EmailVerificationTrait
 		// Send Confirmation Email
 		try {
 			if (request()->filled('locale')) {
-				$locale = (array_key_exists(request()->get('locale'), getSupportedLanguages()))
-					? request()->get('locale')
+				$locale = (array_key_exists(request()->input('locale'), getSupportedLanguages()))
+					? request()->input('locale')
 					: null;
 				
 				if (!empty($locale)) {
@@ -78,13 +93,11 @@ trait EmailVerificationTrait
 	 *
 	 * @param $entityId
 	 * @return \Illuminate\Http\JsonResponse
-	 * @throws \Psr\Container\ContainerExceptionInterface
-	 * @throws \Psr\Container\NotFoundExceptionInterface
 	 */
 	public function reSendEmailVerification($entityId): \Illuminate\Http\JsonResponse
 	{
 		// Get Entity Reference ID
-		$entitySlug = request()->get('entitySlug');
+		$entitySlug = request()->input('entitySlug');
 		
 		$data = [];
 		$data['success'] = true;
@@ -95,14 +108,14 @@ trait EmailVerificationTrait
 		// Get Entity
 		$entityRef = $this->getEntityRef($entitySlug);
 		if (empty($entityRef)) {
-			return $this->respondNotFound(t('Entity ID not found'));
+			return apiResponse()->notFound(t('Entity ID not found'));
 		}
 		
 		// Get Entity by ID
 		$model = $entityRef['namespace'];
-		$entity = $model::withoutGlobalScopes($entityRef['scopes'])->where('id', $entityId)->first();
+		$entity = $model::query()->withoutGlobalScopes($entityRef['scopes'])->where('id', $entityId)->first();
 		if (empty($entity)) {
-			return $this->respondNotFound(t('Entity ID not found'));
+			return apiResponse()->notFound(t('Entity ID not found'));
 		}
 		
 		// Check if the Email is already verified
@@ -135,6 +148,6 @@ trait EmailVerificationTrait
 		
 		$data['extra'] = $extra;
 		
-		return $this->apiResponse($data);
+		return apiResponse()->json($data);
 	}
 }

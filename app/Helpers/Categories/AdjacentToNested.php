@@ -1,6 +1,22 @@
 <?php
+/*
+ * JobClass - Job Board Web Application
+ * Copyright (c) BeDigit. All Rights Reserved
+ *
+ * Website: https://laraclassifier.com/jobclass
+ * Author: BeDigit | https://bedigit.com
+ *
+ * LICENSE
+ * -------
+ * This software is furnished under a license and may be used and copied
+ * only in accordance with the terms of such license and with the inclusion
+ * of the above copyright notice. If you Purchased from CodeCanyon,
+ * Please read the full License from here - https://codecanyon.net/licenses/standard
+ */
+
 namespace App\Helpers\Categories;
 
+use App\Exceptions\Custom\CustomException;
 use App\Helpers\Arr;
 use App\Helpers\Categories\Traits\DepthTrait;
 use App\Helpers\Categories\Traits\IndexesTrait;
@@ -15,15 +31,15 @@ class AdjacentToNested
 {
 	use DepthTrait, IndexesTrait;
 	
-	public $adjacentTable = 'adjacent';
-	public $nestedTable = 'nested';
-	public $colPrimaryKey = 'id';
-	public $colParentId = 'parent_id';
+	public string $adjacentTable = 'adjacent';
+	public string $nestedTable = 'nested';
+	public string $colPrimaryKey = 'id';
+	public string $colParentId = 'parent_id';
 	
-	public $ordered = false;
+	public bool $ordered = false;
 	
-	private $iCount;
-	private $adjacentItemsIdsArray;
+	private int $iCount;
+	private array $adjacentItemsIdsArray;
 	
 	/**
 	 * AdjacentToNestedMultiLang constructor.
@@ -50,6 +66,7 @@ class AdjacentToNested
 	 * Get & Set the adjacent table items IDs
 	 *
 	 * @return array
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
 	public function getAndSetAdjacentItemsIds(): array
 	{
@@ -92,16 +109,17 @@ class AdjacentToNested
 	/**
 	 * @param $adjacentItemsIdsArray
 	 * @return void
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	public function setAdjacentItemsIds($adjacentItemsIdsArray)
+	public function setAdjacentItemsIds($adjacentItemsIdsArray): void
 	{
 		if (!is_array($adjacentItemsIdsArray)) {
 			$msg = "First parameter should be an array. Instead, it was type '" . gettype($adjacentItemsIdsArray) . "'";
-			dd($msg);
+			throw new CustomException($msg);
 		}
 		
 		$this->iCount = 1;
-		if (is_array($adjacentItemsIdsArray) && !empty($adjacentItemsIdsArray)) {
+		if (!empty($adjacentItemsIdsArray)) {
 			$this->adjacentItemsIdsArray = $adjacentItemsIdsArray;
 		}
 	}
@@ -110,6 +128,7 @@ class AdjacentToNested
 	 * Convert the adjacent items to nested set model into the nested table
 	 *
 	 * @param $parentId
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
 	public function convertChildrenRecursively($parentId)
 	{
@@ -140,7 +159,7 @@ class AdjacentToNested
 	 */
 	private function getChildren($currentId)
 	{
-		if (!is_array($this->adjacentItemsIdsArray) || !isset($this->adjacentItemsIdsArray[$currentId])) {
+		if (!isset($this->adjacentItemsIdsArray[$currentId])) {
 			return [];
 		}
 		
@@ -152,6 +171,7 @@ class AdjacentToNested
 	 * @param $iRgt
 	 * @param $currentId
 	 * @return bool
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
 	private function updateItem($iLft, $iRgt, $currentId): bool
 	{
@@ -220,35 +240,38 @@ class AdjacentToNested
 	
 	/**
 	 * Check the Tables and the Columns
+	 *
+	 * @return void
+	 * @throws \App\Exceptions\Custom\CustomException
 	 */
-	private function checkTablesAndColumns()
+	private function checkTablesAndColumns(): void
 	{
 		$errTable = 'The table "%s" does not exist in the database.';
 		$errColumn = 'The column "%s" does not exist in the table "%s".';
 		
 		// Check the adjacent table
 		if (!Schema::hasTable($this->adjacentTable)) {
-			dd(sprintf($errTable, $this->adjacentTable));
+			throw new CustomException(sprintf($errTable, $this->adjacentTable));
 		}
 		if (!Schema::hasColumn($this->adjacentTable, $this->colPrimaryKey)) {
-			dd(sprintf($errColumn, $this->colPrimaryKey, $this->adjacentTable));
+			throw new CustomException(sprintf($errColumn, $this->colPrimaryKey, $this->adjacentTable));
 		}
 		if (!Schema::hasColumn($this->adjacentTable, $this->colParentId)) {
-			dd(sprintf($errColumn, $this->colParentId, $this->adjacentTable));
+			throw new CustomException(sprintf($errColumn, $this->colParentId, $this->adjacentTable));
 		}
 		
 		// Check the nested table
 		if (!Schema::hasTable($this->nestedTable)) {
-			dd(sprintf($errTable, $this->nestedTable));
+			throw new CustomException(sprintf($errTable, $this->nestedTable));
 		}
 		if (!Schema::hasColumn($this->nestedTable, $this->colPrimaryKey)) {
-			dd(sprintf($errColumn, $this->colPrimaryKey, $this->nestedTable));
+			throw new CustomException(sprintf($errColumn, $this->colPrimaryKey, $this->nestedTable));
 		}
 		if (!Schema::hasColumn($this->nestedTable, 'lft')) {
-			dd(sprintf($errColumn, 'lft', $this->nestedTable));
+			throw new CustomException(sprintf($errColumn, 'lft', $this->nestedTable));
 		}
 		if (!Schema::hasColumn($this->nestedTable, 'rgt')) {
-			dd(sprintf($errColumn, 'rgt', $this->nestedTable));
+			throw new CustomException(sprintf($errColumn, 'rgt', $this->nestedTable));
 		}
 	}
 }

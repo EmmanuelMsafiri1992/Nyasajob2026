@@ -16,12 +16,14 @@ class PackageSeeder extends Seeder
 	public function run()
 	{
 		// Packages' "active" column value
-		$appUrl = env('APP_URL');
+		$appUrl = config('app.url'); // env('APP_URL');
 		$isDemoDomain = (isDemoDomain($appUrl) || isDevEnv($appUrl));
 		$activeValue = $isDemoDomain ? '1' : '0';
 		
 		$entries = [
+			// promotion
 			[
+				'type'                  => 'promotion',
 				'name'                  => [
 					'en' => 'Regular List',
 					'fr' => 'Gratuit',
@@ -38,8 +40,8 @@ class PackageSeeder extends Seeder
 				'has_badge'             => '0',
 				'price'                 => '0.00',
 				'currency_code'         => 'USD',
-				'promo_duration'        => null,
-				'duration'              => null,
+				'promotion_time'        => null,
+				'expiration_time'       => null,
 				'description'           => null,
 				'facebook_ads_duration' => '0',
 				'google_ads_duration'   => '0',
@@ -53,11 +55,12 @@ class PackageSeeder extends Seeder
 				'active'                => $activeValue,
 			],
 			[
+				'type'                  => 'promotion',
 				'name'                  => [
-					'en' => 'Top page Job',
-					'fr' => 'Annonce Haut de Page',
-					'es' => 'Anuncio de inicio de página',
-					'ar' => 'إعلان أعلى الصفحة',
+					'en' => 'Premium Listing',
+					'fr' => 'Annonce Premium',
+					'es' => 'Anuncio premium',
+					'ar' => 'إعلان مميز',
 				],
 				'short_name'            => [
 					'en' => 'Premium',
@@ -69,8 +72,8 @@ class PackageSeeder extends Seeder
 				'has_badge'             => '0',
 				'price'                 => '99.00',
 				'currency_code'         => 'USD',
-				'promo_duration'        => '7',
-				'duration'              => '60',
+				'promotion_time'        => '7',
+				'expiration_time'       => '60',
 				'description'           => [
 					'en' => "Featured on the Homepage\nFeatured in the Category",
 					'fr' => "En vedette à l'accueil\nEn vedette dans la catégorie",
@@ -89,11 +92,12 @@ class PackageSeeder extends Seeder
 				'active'                => $activeValue,
 			],
 			[
+				'type'                  => 'promotion',
 				'name'                  => [
-					'en' => 'Top page Job+',
-					'fr' => 'Annonce Haut de Page+',
-					'es' => 'Anuncio de inicio de página+',
-					'ar' => 'إعلان أعلى الصفحة+',
+					'en' => 'Premium Listing (+)',
+					'fr' => 'Annonce Premium (+)',
+					'es' => 'Anuncio premium (+)',
+					'ar' => 'إعلان مميز (+)',
 				],
 				'short_name'            => [
 					'en' => 'Premium+',
@@ -105,8 +109,8 @@ class PackageSeeder extends Seeder
 				'has_badge'             => '0',
 				'price'                 => '129.00',
 				'currency_code'         => 'USD',
-				'promo_duration'        => '30',
-				'duration'              => '120',
+				'promotion_time'        => '30',
+				'expiration_time'       => '120',
 				'description'           => [
 					'en' => "Featured on the Homepage\nFeatured in the Category",
 					'fr' => "En vedette à l'accueil\nEn vedette dans la catégorie",
@@ -123,6 +127,62 @@ class PackageSeeder extends Seeder
 				'rgt'                   => '7',
 				'depth'                 => '0',
 				'active'                => $activeValue,
+			],
+			
+			// subscription
+			[
+				'type'            => 'subscription',
+				'name'            => [
+					'en' => 'Basic',
+					'fr' => 'Basique',
+					'es' => 'Básico',
+					'ar' => 'أساسي',
+				],
+				'short_name'      => [
+					'en' => 'Basic',
+					'fr' => 'Basique',
+					'es' => 'Básico',
+					'ar' => 'أساسي',
+				],
+				'price'           => '0.00',
+				'currency_code'   => 'USD',
+				'interval'        => 'month', // week, month, year or null
+				'listings_limit'  => null,
+				'expiration_time' => null,
+				'description'     => null,
+				'recommended'     => '0',
+				'parent_id'       => null,
+				'lft'             => '8',
+				'rgt'             => '9',
+				'depth'           => '0',
+				'active'          => $activeValue,
+			],
+			[
+				'type'            => 'subscription',
+				'name'            => [
+					'en' => 'Premium',
+					'fr' => 'Premium',
+					'es' => 'Prima',
+					'ar' => 'الممتازة',
+				],
+				'short_name'      => [
+					'en' => 'Premium',
+					'fr' => 'Premium',
+					'es' => 'Prima',
+					'ar' => 'الممتازة',
+				],
+				'price'           => '9.00',
+				'currency_code'   => 'USD',
+				'interval'        => 'month', // week, month, year or null
+				'listings_limit'  => '100',
+				'expiration_time' => '90',
+				'description'     => null,
+				'recommended'     => '1',
+				'parent_id'       => null,
+				'lft'             => '10',
+				'rgt'             => '11',
+				'depth'           => '0',
+				'active'          => $activeValue,
 			],
 		];
 		

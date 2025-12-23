@@ -15,5 +15,5 @@ if ($xPanel->model->translationEnabled()) {
 }
 ?>
 @if ($translatable && config('larapen.admin.show_translatable_field_icon'))
-	<i class="fas fa-flag-checkered pull-{{ config('larapen.admin.translatable_field_icon_position') }}" title="{{ trans('admin.field_translatable') }}"></i>
+	<i class="fa-solid fa-flag-checkered pull-{{ config('larapen.admin.translatable_field_icon_position') }}" title="{{ trans('admin.field_translatable') }}"></i>
 @endif
