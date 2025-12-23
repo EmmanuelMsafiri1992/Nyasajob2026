@@ -1,18 +1,4 @@
 <?php
-/**
- * Nyasajob - Job Board Web Application
- * Copyright (c) BeDigit. All Rights Reserved
- *
- * Website: https://laraclassifier.com/jobclass
- *
- * LICENSE
- * -------
- * This software is furnished under a license and may be used and copied
- * only in accordance with the terms of such license and with the inclusion
- * of the above copyright notice. If you Purchased from CodeCanyon,
- * Please read the full License from here - http://codecanyon.net/licenses/standard
- */
-
 /*
  * MySQL 5.7 | MariaDB 10.2.3 and later supports the JSON manipulation methods
  * (JSON_EXTRACT, JSON_UNQUOTE, ...)
