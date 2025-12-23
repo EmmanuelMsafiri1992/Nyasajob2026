@@ -7,5 +7,6 @@ deployment:
       - cd $DEPLOYPATH && /usr/local/bin/composer install --no-dev --optimize-autoloader
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan migrate --force || true
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan optimize:clear
+      - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php -r "if(function_exists('opcache_reset')) opcache_reset();" || true
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan view:cache
       - test -f $DEPLOYPATH/public/mix-manifest.json || echo '{ "/dist/public/styles.css": "/dist/public/styles.css", "/dist/public/styles.rtl.css": "/dist/public/styles.rtl.css", "/dist/public/scripts.js": "/dist/public/scripts.js" }' > $DEPLOYPATH/public/mix-manifest.json
