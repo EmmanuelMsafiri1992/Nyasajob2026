@@ -17,7 +17,6 @@
 namespace App\Providers\AppService;
 
 use Illuminate\Foundation\Http\Kernel;
-use Barryvdh\Debugbar\Facades\Debugbar;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
@@ -30,8 +29,8 @@ trait TelescopeTrait
 	{
 		// Is Debug Bar enabled?
 		$isDebugBarEnabled = (config('app.debug') && config('larapen.core.debugBar'));
-		if (!$isDebugBarEnabled) {
-			Debugbar::disable();
+		if (!$isDebugBarEnabled && class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {
+			\Barryvdh\Debugbar\Facades\Debugbar::disable();
 		}
 		
 		// Know if the server is taking too long to respond than a specific timeout
