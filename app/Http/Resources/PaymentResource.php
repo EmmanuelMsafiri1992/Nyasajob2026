@@ -29,8 +29,13 @@ class PaymentResource extends JsonResource
 	 */
 	public function toArray(Request $request): array
 	{
+		// Handle MissingValue when relationship isn't loaded
+		if ($this->resource instanceof \Illuminate\Http\Resources\MissingValue) {
+			return [];
+		}
+
 		$entity = [
-			'id' => $this->id,
+			'id' => $this->id ?? null,
 		];
 		
 		$columns = $this->getFillable();
