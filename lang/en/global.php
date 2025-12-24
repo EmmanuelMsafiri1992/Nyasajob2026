@@ -1085,6 +1085,7 @@ return [
 	'active_package_exists' => 'You have already an active package.',
 	'unintentional_logout' => 'Unauthenticated or token expired. Please (re-)login.',
 	'language' => 'Language',
+	'Select a Language' => 'Select a Language',
 	'surfing_on' => 'You are on :appName :country.',
 	'change_country' => 'Change Country',
 	'login_with' => 'Login with <strong>:media</strong>',
