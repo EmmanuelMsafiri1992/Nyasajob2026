@@ -6,6 +6,12 @@ deployment:
       - chmod -R 775 $DEPLOYPATH/storage $DEPLOYPATH/bootstrap/cache
       - cd $DEPLOYPATH && /usr/local/bin/composer install --no-dev --optimize-autoloader
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan migrate --force || true
+      - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan storage:link 2>/dev/null || true
+      - mkdir -p $DEPLOYPATH/storage/app/public/app/default/ico
+      - mkdir -p $DEPLOYPATH/storage/app/public/app/logo
+      - cp -n $DEPLOYPATH/public/app/default/* $DEPLOYPATH/storage/app/public/app/default/ 2>/dev/null || true
+      - cp -n $DEPLOYPATH/public/app/default/ico/* $DEPLOYPATH/storage/app/public/app/default/ico/ 2>/dev/null || true
+      - cp -n $DEPLOYPATH/public/app/logo/* $DEPLOYPATH/storage/app/public/app/logo/ 2>/dev/null || true
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan optimize:clear
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan view:cache
       - test -f $DEPLOYPATH/public/mix-manifest.json || echo '{ "/dist/public/styles.css": "/dist/public/styles.css", "/dist/public/styles.rtl.css": "/dist/public/styles.rtl.css", "/dist/public/scripts.js": "/dist/public/scripts.js" }' > $DEPLOYPATH/public/mix-manifest.json
