@@ -34,10 +34,14 @@ class UserResource extends JsonResource
 	 */
 	public function toArray(Request $request): array
 	{
+		if ($this->resource instanceof \Illuminate\Http\Resources\MissingValue) {
+			return [];
+		}
+
 		$entity = [
-			'id'       => $this->id,
-			'name'     => $this->name,
-			'username' => $this->username,
+			'id'       => $this->id ?? null,
+			'name'     => $this->name ?? null,
+			'username' => $this->username ?? null,
 		];
 		
 		$entity['updated_at'] = $this->updated_at ?? null;

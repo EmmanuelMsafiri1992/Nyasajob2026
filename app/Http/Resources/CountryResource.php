@@ -30,8 +30,12 @@ class CountryResource extends JsonResource
 	 */
 	public function toArray(Request $request): array
 	{
+		if ($this->resource instanceof \Illuminate\Http\Resources\MissingValue) {
+			return [];
+		}
+
 		$entity = [
-			'code' => $this->code,
+			'code' => $this->code ?? null,
 		];
 		
 		$columns = $this->getFillable();

@@ -29,10 +29,12 @@ class CategoryResource extends JsonResource
 	 */
 	public function toArray(Request $request): array
 	{
-		if (!isset($this->id)) return [];
-		
+		if ($this->resource instanceof \Illuminate\Http\Resources\MissingValue || !isset($this->id)) {
+			return [];
+		}
+
 		$entity = [
-			'id' => $this->id,
+			'id' => $this->id ?? null,
 		];
 		
 		$columns = $this->getFillable();
