@@ -1,5 +1,8 @@
 {{-- Modal Change Language --}}
-<?php $supportedLanguages = getSupportedLanguages(); ?>
+@php
+	$supportedLanguages = getSupportedLanguages();
+	$showLanguagesFlags = config('settings.localization.show_languages_flags');
+@endphp
 @if (is_array($supportedLanguages) && count($supportedLanguages) > 1)
 <div class="modal fade modalHasList" id="selectLanguage" tabindex="-1" role="dialog" aria-labelledby="selectLanguageLabel" aria-hidden="true">
 	<div class="modal-dialog modal-lg" role="document">
@@ -20,26 +23,33 @@
 				<div class="row row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-2">
 
 					@foreach($supportedLanguages as $langCode => $lang)
-						<div class="col mb-1 cat-list">
-							<?php
-								$langFlag = (
-									config('settings.app.show_languages_flags')
-									&& isset($lang, $lang['flag'])
-									&& is_string($lang['flag'])
-									&& !empty(trim($lang['flag']))
-								)
-									? '<i class="' . $lang['flag'] . '"></i>&nbsp;'
-									: '<i class="bi bi-translate"></i>&nbsp;';
-								$isActive = (strtolower($langCode) == strtolower(config('app.locale'))) ? ' fw-bold text-primary' : '';
-							?>
+						@php
+							$langFlag = $lang['flag'] ?? '';
+							$langFlagCountry = str_replace('flag-icon-', '', $langFlag);
+							$isActive = (strtolower($langCode) == strtolower(config('app.locale')));
+							$activeClass = $isActive ? ' fw-bold text-primary' : '';
+							$langNative = $lang['native'] ?? $lang['name'] ?? $langCode;
+							$langNameLimited = str($langNative)->limit(21)->toString();
+						@endphp
+						<div class="col mb-2 cat-list">
+							@if ($showLanguagesFlags && !empty($langFlagCountry))
+								<img src="{{ getCountryFlagUrl($langFlagCountry) }}"
+								     alt="{{ $langNative }}"
+								     style="margin-bottom: 4px; margin-right: 5px; width: 20px; height: 15px; object-fit: cover;">
+							@else
+								<i class="bi bi-translate" style="margin-right: 5px;"></i>
+							@endif
 							<a href="{{ url('locale/' . $langCode) }}"
-							   class="d-block{{ $isActive }}"
+							   class="{{ $activeClass }}"
 							   rel="alternate"
 							   hreflang="{{ $langCode }}"
-							   title="{{ $lang['name'] }}"
+							   title="{{ $lang['name'] ?? $langNative }}"
 							   data-bs-toggle="tooltip"
 							   data-bs-custom-class="modal-tooltip">
-								{!! $langFlag !!}{{ str($lang['native'])->limit(21) }}
+								{{ $langNameLimited }}
+								@if ($isActive)
+									<i class="fa-solid fa-check text-success ms-1"></i>
+								@endif
 							</a>
 						</div>
 					@endforeach
