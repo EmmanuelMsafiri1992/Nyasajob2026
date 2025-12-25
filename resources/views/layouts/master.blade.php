@@ -24,6 +24,12 @@
 <head>
 	<meta charset="{{ config('larapen.core.charset', 'utf-8') }}">
 	<meta name="csrf-token" content="{{ csrf_token() }}">
+
+	{{-- Preconnect for Google Ads - Improves ad loading performance --}}
+	<link rel="preconnect" href="https://pagead2.googlesyndication.com">
+	<link rel="preconnect" href="https://googleads.g.doubleclick.net">
+	<link rel="preconnect" href="https://www.googletagservices.com">
+	<link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
 	@includeFirst([config('larapen.core.customizedViewPath') . 'common.meta-robots', 'common.meta-robots'])
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="shortcut icon" href="{{ config('settings.app.favicon_url') }}">
@@ -32,6 +38,16 @@
 	<link rel="canonical" href="{{ request()->fullUrl() }}"/>
 	{{-- Specify a default target for all hyperlinks and forms on the page --}}
 	<base target="_top"/>
+
+	{{-- ============================================================== --}}
+	{{-- GOOGLE ADSENSE - AUTO ADS (DO NOT REMOVE - OWNER MONETIZATION) --}}
+	{{-- This code is essential for website monetization. --}}
+	{{-- Added: 2024 | Owner: Nyasajob --}}
+	{{-- ============================================================== --}}
+	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6716451863337296"
+		crossorigin="anonymous"></script>
+	{{-- ============================================================== --}}
+
 	@if (isset($post))
 		@if (isVerifiedPost($post))
 			@if (config('services.facebook.client_id'))

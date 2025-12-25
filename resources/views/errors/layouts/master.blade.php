@@ -26,7 +26,16 @@
 	<meta name="googlebot" content="noindex">
 	<link rel="shortcut icon" href="{{ config('settings.app.favicon_url') . getPictureVersion() }}">
 	<title>@yield('title')</title>
-	
+
+	{{-- ============================================================== --}}
+	{{-- GOOGLE ADSENSE - AUTO ADS (DO NOT REMOVE - OWNER MONETIZATION) --}}
+	{{-- This code is essential for website monetization. --}}
+	{{-- Added: 2024 | Owner: Nyasajob --}}
+	{{-- ============================================================== --}}
+	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6716451863337296"
+		crossorigin="anonymous"></script>
+	{{-- ============================================================== --}}
+
 	@if (file_exists(public_path('manifest.json')))
 		<link rel="manifest" href="/manifest.json">
 	@endif
