@@ -42,8 +42,9 @@ class UploadSetting
 			$value['min_file_size'] = '0';
 			$value['max_file_size'] = '2500';
 			
-			$value['image_types'] = 'jpg,jpeg,gif,png';
+			$value['image_types'] = 'jpg,jpeg,gif,png,webp,avif';
 			$value['image_quality'] = '90';
+			$value['preserve_image_format'] = '0';
 			$value['min_image_size'] = '0';
 			$value['max_image_size'] = '2500';
 			
@@ -86,10 +87,13 @@ class UploadSetting
 			}
 			
 			if (!array_key_exists('image_types', $value)) {
-				$value['image_types'] = 'jpg,jpeg,gif,png';
+				$value['image_types'] = 'jpg,jpeg,gif,png,webp,avif';
 			}
 			if (!array_key_exists('image_quality', $value)) {
 				$value['image_quality'] = '90';
+			}
+			if (!array_key_exists('preserve_image_format', $value)) {
+				$value['preserve_image_format'] = '0';
 			}
 			if (!array_key_exists('min_image_size', $value)) {
 				$value['min_image_size'] = '0';
@@ -260,6 +264,15 @@ class UploadSetting
 				'type'              => 'select2_from_array',
 				'options'           => collect(generateNumberRange(10, 100, 10))->mapWithKeys(fn ($i) => [$i => $i])->toArray(),
 				'hint'              => trans('admin.image_quality_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'preserve_image_format',
+				'label'             => trans('admin.preserve_image_format_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.preserve_image_format_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],

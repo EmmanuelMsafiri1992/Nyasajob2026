@@ -28,6 +28,35 @@ use Illuminate\Http\File as HttpFile;
 class Upload
 {
 	/**
+	 * Check if the given extension is an animated image format
+	 *
+	 * @param string $extension
+	 * @return bool
+	 */
+	private static function isAnimatedFormat(string $extension): bool
+	{
+		$animatedFormats = config('image.animated_formats', ['gif', 'webp', 'avif']);
+
+		return in_array(strtolower($extension), $animatedFormats);
+	}
+
+	/**
+	 * Get supported image formats based on the current image driver
+	 *
+	 * @return array
+	 */
+	public static function getSupportedFormats(): array
+	{
+		$driver = config('image.driver', 'gd');
+		$formats = config('image.formats', [
+			'gd' => ['jpg', 'jpeg', 'gif', 'png', 'avif', 'webp'],
+			'imagick' => ['jpg', 'jpeg', 'gif', 'png', 'avif', 'webp', 'jp2', 'heic'],
+		]);
+
+		return $formats[$driver] ?? $formats['gd'];
+	}
+
+	/**
 	 * @param string|null $destPath
 	 * @param $file
 	 * @param string|array|null $param
@@ -125,7 +154,14 @@ class Upload
 			}
 			
 			// Encode the Image!
-			$image = $image->encode($extension, $imageQuality);
+			// Preserve original format for animated images if enabled
+			$preserveFormat = config('settings.upload.preserve_image_format', false);
+			if ($preserveFormat && self::isAnimatedFormat($extension)) {
+				// Keep original format to preserve animation frames
+				$image = $image->encode($extension, $imageQuality);
+			} else {
+				$image = $image->encode($extension, $imageQuality);
+			}
 			
 			// Is it with Watermark?
 			if ($withWatermark) {

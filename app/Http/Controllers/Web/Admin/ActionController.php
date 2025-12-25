@@ -199,15 +199,24 @@ class ActionController extends Controller
 	public function maintenance($mode): \Illuminate\Http\RedirectResponse
 	{
 		$errorFound = false;
-		
+
 		// Go to maintenance with DOWN status
 		try {
-			Artisan::call($mode);
+			if ($mode == 'down') {
+				// Get custom message from settings
+				$customMessage = config('settings.app.maintenance_message', 'Be right back.');
+				Artisan::call('down', [
+					'--message' => $customMessage,
+					'--retry' => 60,
+				]);
+			} else {
+				Artisan::call('up');
+			}
 		} catch (\Throwable $e) {
 			notification($e->getMessage(), 'error');
 			$errorFound = true;
 		}
-		
+
 		// Check if error occurred
 		if (!$errorFound) {
 			if ($mode == 'down') {
@@ -217,7 +226,7 @@ class ActionController extends Controller
 			}
 			notification($message, 'success');
 		}
-		
+
 		return redirect()->back();
 	}
 }

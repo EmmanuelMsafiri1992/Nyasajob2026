@@ -181,7 +181,10 @@ class AppSetting
 			if (!array_key_exists('general_settings_as_submenu_in_sidebar', $value)) {
 				$value['general_settings_as_submenu_in_sidebar'] = '1';
 			}
-			
+			if (!array_key_exists('maintenance_message', $value)) {
+				$value['maintenance_message'] = 'We are currently performing maintenance. Please check back soon.';
+			}
+
 		}
 		
 		// logo
@@ -513,7 +516,25 @@ class AppSetting
 				],
 			],
 		]);
-		
+
+		// Maintenance Mode
+		$fields = array_merge($fields, [
+			[
+				'name'  => 'maintenance_sep',
+				'type'  => 'custom_html',
+				'value' => trans('admin.maintenance_sep_value'),
+			],
+			[
+				'name'              => 'maintenance_message',
+				'label'             => trans('admin.maintenance_message_label'),
+				'type'              => 'textarea',
+				'hint'              => trans('admin.maintenance_message_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-12',
+				],
+			],
+		]);
+
 		return addOptionsGroupJavaScript(__NAMESPACE__, __CLASS__, $fields, [
 			'phpDateFormatHint' => $phpDateFormatHint,
 			'phpDateFormat'     => $phpDateFormat,

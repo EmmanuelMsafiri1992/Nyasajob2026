@@ -1,16 +1,8 @@
 /*
- * JobClass - Job Board Web Application
- * Copyright (c) BeDigit. All Rights Reserved
+ * Nyasajob - Job Board Web Application
+ * Copyright (c) Nyasajob. All Rights Reserved.
  *
- * Website: https://laraclassifier.com/jobclass
- * Author: BeDigit | https://bedigit.com
- *
- * LICENSE
- * -------
- * This software is furnished under a license and may be used and copied
- * only in accordance with the terms of such license and with the inclusion
- * of the above copyright notice. If you Purchased from CodeCanyon,
- * Please read the full License from here - https://codecanyon.net/licenses/standard
+ * Website: https://nyasajob.com
  */
 
 if (typeof fakeLocationsResults === 'undefined') {
@@ -79,11 +71,14 @@ onDocumentReady(function (event) {
 			src: (query) => {
 				// Before AJAX Request ===================================================
 				disableTooltipForElement(tooltipTriggerEl);
-				
+
+				/* Trim whitespace from both ends of the query */
+				query = query.trim();
+
 				/* Clear all whitespaces from the 'query' when it does not contain any other type of character */
-				let tmpQuery = query.replace(/ /g, "");
-				query = (tmpQuery.length <= 0) ? tmpQuery : query;
-				
+				let tmpQuery = query.replace(/\s+/g, " ").trim();
+				query = (tmpQuery.length <= 0) ? "" : tmpQuery;
+
 				/* Empty the 'query' when its length is < 'threshold' */
 				query = (query.length >= threshold) ? query : "";
 				

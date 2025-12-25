@@ -94,10 +94,20 @@ class CityController extends BaseController
 				$cities->where('subadmin2_code', $admin2Code);
 			}
 			if (!empty($keyword)) {
+				// Trim whitespace from both ends
+				$keyword = trim($keyword);
+
 				if ($autocomplete) {
-					$cities->where('name', 'LIKE', $keyword . '%');
+					// Support for diacritics and case-insensitive search
+					$cities->where(function ($query) use ($keyword) {
+						$query->where('name', 'LIKE', $keyword . '%')
+							->orWhereRaw('LOWER(name) LIKE ?', [mb_strtolower($keyword) . '%']);
+					});
 				} else {
-					$cities->where('name', 'LIKE', '%' . $keyword . '%');
+					$cities->where(function ($query) use ($keyword) {
+						$query->where('name', 'LIKE', '%' . $keyword . '%')
+							->orWhereRaw('LOWER(name) LIKE ?', ['%' . mb_strtolower($keyword) . '%']);
+					});
 				}
 			}
 			

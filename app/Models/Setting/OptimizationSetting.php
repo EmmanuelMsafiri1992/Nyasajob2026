@@ -69,7 +69,13 @@ class OptimizationSetting
 			if (!array_key_exists('redis_database', $value)) {
 				$value['redis_database'] = '0';
 			}
-			
+			if (!array_key_exists('queue_image_processing', $value)) {
+				$value['queue_image_processing'] = '0';
+			}
+			if (!array_key_exists('queue_mail_sending', $value)) {
+				$value['queue_mail_sending'] = '0';
+			}
+
 		}
 		
 		// During the Cache variable updating from the Admin panel,
@@ -284,8 +290,32 @@ class OptimizationSetting
 					'class' => 'col-md-6',
 				],
 			],
+
+			[
+				'name'  => 'queue_processing_sep',
+				'type'  => 'custom_html',
+				'value' => trans('admin.queue_processing_sep_value'),
+			],
+			[
+				'name'              => 'queue_image_processing',
+				'label'             => trans('admin.queue_image_processing_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.queue_image_processing_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'queue_mail_sending',
+				'label'             => trans('admin.queue_mail_sending_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.queue_mail_sending_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
 		];
-		
+
 		return addOptionsGroupJavaScript(__NAMESPACE__, __CLASS__, $fields);
 	}
 }

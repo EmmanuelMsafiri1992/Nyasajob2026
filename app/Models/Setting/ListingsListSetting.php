@@ -100,7 +100,10 @@ class ListingsListSetting
 					$value['date_from_now'] = $value['elapsed_time_from_now'];
 				}
 			}
-			
+			if (!array_key_exists('cities_autocomplete_enabled', $value)) {
+				$value['cities_autocomplete_enabled'] = '1';
+			}
+
 		}
 		
 		return $value;
@@ -152,7 +155,16 @@ class ListingsListSetting
 				],
 				'newline'           => true,
 			],
-			
+			[
+				'name'              => 'cities_autocomplete_enabled',
+				'label'             => trans('admin.cities_autocomplete_enabled_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.cities_autocomplete_enabled_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+
 			[
 				'name'              => 'min_salary',
 				'label'             => trans('admin.min_salary_label'),

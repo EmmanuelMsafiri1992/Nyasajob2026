@@ -1316,6 +1316,27 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
 	'minify_html_sep_value' => '<h3>HTML Minification</h3>',
 	'minify_html_activation_label' => 'Enable HTML Minify',
 	'minify_html_activation_hint' => 'Remove unnecessary characters in the generated HTML source code.',
+
+	// Queue Processing
+	'queue_processing_sep_value' => '<h3>Queue Processing</h3>',
+	'queue_image_processing_label' => 'Queue Image Processing',
+	'queue_image_processing_hint' => 'Process image resizing in background using queues. Requires queue worker to be running.',
+	'queue_mail_sending_label' => 'Queue Mail Sending',
+	'queue_mail_sending_hint' => 'Send emails in background using queues. Requires queue worker to be running.',
+
+	// Cities Autocomplete
+	'cities_autocomplete_enabled_label' => 'Enable Cities Autocompletion',
+	'cities_autocomplete_enabled_hint' => 'Enable or disable the cities autocompletion feature in location search fields.',
+
+	// Image Format Preservation
+	'preserve_image_format_label' => 'Preserve Original Image Format',
+	'preserve_image_format_hint' => 'Keep original format to preserve animations in GIF/WebP/AVIF images.',
+
+	// Maintenance Mode
+	'maintenance_sep_value' => '<h3>Maintenance Mode</h3>',
+	'maintenance_message_label' => 'Maintenance Mode Message',
+	'maintenance_message_hint' => 'Custom message to display when the website is in maintenance mode.',
+
 	'caching_system_sep_value' => '<h3>Database Caching System</h3>',
 	'cache_driver_label' => 'Caching Driver',
 	'cache_driver_hint' => 'Which method should be used for storing and retrieving cached items.',
