@@ -17,7 +17,7 @@
 return [
 	
 	'php'           => '8.2',
-	'app'           => '14.2.0',
+	'app'           => '14.3.1',
 	// Plugins minimum version required
 	'compatibility' => [
 		'adyen'            => '2.1.1',
