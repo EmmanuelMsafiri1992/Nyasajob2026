@@ -1,6 +1,14 @@
+---
 deployment:
     tasks:
       - export DEPLOYPATH=/home/indegnnk/nyasajob.com
+      - export REPOPATH=/home/indegnnk/Nyasajob2026repo
+      - export LOGFILE=$REPOPATH/.cpanel/deployment.log
+      - mkdir -p $REPOPATH/.cpanel
+      - echo "--- Deployment Started: $(date) ---" >> $LOGFILE
+      - echo "Commit: $(git rev-parse HEAD)" >> $LOGFILE
+      - echo "Author: $(git log -1 --format='%an <%ae>')" >> $LOGFILE
+      - echo "Message: $(git log -1 --format='%s')" >> $LOGFILE
       - /bin/rsync -av --delete --exclude='.git' --exclude='.env' --exclude='vendor' --exclude='storage/logs/*' --exclude='storage/framework/cache/*' --exclude='storage/framework/sessions/*' --exclude='storage/framework/views/*' --exclude='public/mix-manifest.json' ./ $DEPLOYPATH/
       - chmod 755 $DEPLOYPATH
       - chmod -R 775 $DEPLOYPATH/storage $DEPLOYPATH/bootstrap/cache
@@ -15,3 +23,6 @@ deployment:
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan optimize:clear
       - cd $DEPLOYPATH && /opt/cpanel/ea-php83/root/usr/bin/php artisan view:cache
       - test -f $DEPLOYPATH/public/mix-manifest.json || echo '{ "/dist/public/styles.css": "/dist/public/styles.css", "/dist/public/styles.rtl.css": "/dist/public/styles.rtl.css", "/dist/public/scripts.js": "/dist/public/scripts.js" }' > $DEPLOYPATH/public/mix-manifest.json
+      - echo "Status: SUCCESS" >> $LOGFILE
+      - echo "Completed: $(date)" >> $LOGFILE
+      - echo "" >> $LOGFILE
