@@ -164,7 +164,7 @@ function doesCountriesPageCanBeLinkedToTheHomepage(): bool
  * @param bool $localized
  * @return string
  */
-function qsUrl(string $path = null, ?array $queryArray = [], $secure = null, bool $localized = true): string
+function qsUrl(?string $path = null, ?array $queryArray = [], $secure = null, bool $localized = true): string
 {
 	$url = getUrlWithoutQuery($path, $secure);
 	
@@ -403,7 +403,7 @@ function isFromAdminPanel($url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isAdminPanel(string $url = null): bool
+function isAdminPanel(?string $url = null): bool
 {
 	if (empty($url)) {
 		$isValid = (
@@ -434,7 +434,7 @@ function isAdminPanel(string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDevEnv(string $url = null): bool
+function isDevEnv(?string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
@@ -454,7 +454,7 @@ function isDevEnv(string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDemoEnv(string $url = null): bool
+function isDemoEnv(?string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
@@ -472,7 +472,7 @@ function isDemoEnv(string $url = null): bool
  * @param string|null $url
  * @return bool
  */
-function isDemoDomain(string $url = null): bool
+function isDemoDomain(?string $url = null): bool
 {
 	$isDemoDomain = isDemoEnv($url);
 	
@@ -606,7 +606,7 @@ function isFromUrlThatCanContainCountryCode(): bool
  * @param string|null $url
  * @return bool
  */
-function isFromUrlAlwaysContainingCountryCode(string $url = null): bool
+function isFromUrlAlwaysContainingCountryCode(?string $url = null): bool
 {
 	if (empty($url)) {
 		$isValid = (
@@ -844,7 +844,7 @@ function getPlural($number): float|int
  * @param string|null $locale
  * @return string
  */
-function getUrlPageByType(?string $type, string $locale = null): string
+function getUrlPageByType(?string $type, ?string $locale = null): string
 {
 	if (is_null($locale)) {
 		$locale = config('app.locale');
@@ -1532,7 +1532,7 @@ function getMetaTag(?string $page): array
  * @param string|null $countryCode
  * @return string
  */
-function getDistanceUnit(string $countryCode = null): string
+function getDistanceUnit(?string $countryCode = null): string
 {
 	if (empty($countryCode)) {
 		$countryCode = config('country.code');
@@ -1549,7 +1549,7 @@ function getDistanceUnit(string $countryCode = null): string
  * @param string|null $skin
  * @return string|null
  */
-function getFrontSkin(string $skin = null): ?string
+function getFrontSkin(?string $skin = null): ?string
 {
 	$savedSkin = config('settings.style.skin', 'default');
 	
@@ -1646,7 +1646,7 @@ function regexSimilarRoutesPrefixes(): array
  * @param string|null $browser
  * @return bool
  */
-function doesUserBrowserIs(string $browser = null): bool
+function doesUserBrowserIs(?string $browser = null): bool
 {
 	if (!empty($browser)) {
 		return (str_contains(request()->server('HTTP_USER_AGENT'), $browser));
@@ -1944,7 +1944,7 @@ function genPhoneNumberBtn($post, bool $btnBlock = false): string
  *
  * @param string|null $typeOfBackup
  */
-function setBackupConfig(string $typeOfBackup = null)
+function setBackupConfig(?string $typeOfBackup = null)
 {
 	// Get the current version value
 	$version = preg_replace('/[^\d+]/', '', config('version.app'));

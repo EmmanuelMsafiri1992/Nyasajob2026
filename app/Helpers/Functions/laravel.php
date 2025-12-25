@@ -132,7 +132,7 @@ function isTranslatableColumn($model, string $column): bool
  * @param string|null $locale
  * @return array|\Illuminate\Contracts\Translation\Translator|string|null
  */
-function t(string $key = null, array $replace = [], string $file = 'global', string $locale = null)
+function t(?string $key = null, array $replace = [], string $file = 'global', ?string $locale = null)
 {
 	if (is_null($locale)) {
 		$locale = config('app.locale');
@@ -207,7 +207,7 @@ function getIp(?string $defaultIp = ''): string
  * @param string|null $url
  * @return string
  */
-function getHost(string $url = null): string
+function getHost(?string $url = null): string
 {
 	if (!empty($url)) {
 		$host = parse_url($url, PHP_URL_HOST);
@@ -228,7 +228,7 @@ function getHost(string $url = null): string
  * @param string|null $url
  * @return string
  */
-function getDomain(string $url = null): string
+function getDomain(?string $url = null): string
 {
 	if (!empty($url)) {
 		$host = parse_url($url, PHP_URL_HOST);
@@ -290,7 +290,7 @@ function getCookieDomain(): string
  * @param bool|null $secure
  * @return string
  */
-function getUrlWithoutQuery(?string $url, bool $secure = null): string
+function getUrlWithoutQuery(?string $url, ?bool $secure = null): string
 {
 	if (empty($url)) {
 		$url = request()->fullUrl();
@@ -351,7 +351,7 @@ function getUrlQuery(?string $url, $except = null): array
  * @param string|null $url
  * @return bool
  */
-function isLocalEnv(string $url = null): bool
+function isLocalEnv(?string $url = null): bool
 {
 	if (empty($url)) {
 		$url = config('app.url');
@@ -563,7 +563,7 @@ function getRawBaseUrl(): string
  * @param string|null $pattern
  * @return string
  */
-function getRequestPath(string $pattern = null): string
+function getRequestPath(?string $pattern = null): string
 {
 	if (empty($pattern)) {
 		return request()->path();
@@ -836,7 +836,7 @@ function linkStrLimit(string $url, string $string, int $length = 0, string $attr
  * @param string|null $locale
  * @return string
  */
-function getColumnTranslation($column, string $locale = null): string
+function getColumnTranslation($column, ?string $locale = null): string
 {
 	if (empty($locale)) {
 		$locale = app()->getLocale();
@@ -881,7 +881,7 @@ function getRelativePath(?string $path): string
  * @param string|null $acceptLanguage
  * @return array
  */
-function parseAcceptLanguageHeader(string $acceptLanguage = null): array
+function parseAcceptLanguageHeader(?string $acceptLanguage = null): array
 {
 	if (empty($acceptLanguage)) {
 		$acceptLanguage = request()->server('HTTP_ACCEPT_LANGUAGE');

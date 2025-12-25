@@ -22,7 +22,7 @@ use App\Helpers\DotenvEditor;
  * @param string|null $itemId
  * @return string
  */
-function getPurchaseCodeApiEndpoint(?string $purchaseCode, string $itemId = null): string
+function getPurchaseCodeApiEndpoint(?string $purchaseCode, ?string $itemId = null): string
 {
 	$baseUrl = getAsString(config('larapen.core.purchaseCodeCheckerUrl'));
 	

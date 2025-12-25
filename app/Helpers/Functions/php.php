@@ -363,7 +363,7 @@ function getUrlHost(?string $url): ?string
  * @param string|null $skip
  * @return string
  */
-function noFollowLinks(?string $html, string $skip = null): string
+function noFollowLinks(?string $html, ?string $skip = null): string
 {
 	$callback = function ($mach) use ($skip) {
 		$link = $mach[1] ?? null;
@@ -1007,7 +1007,7 @@ function splitName(?string $input): array
  * @param int|null $default
  * @return string
  */
-function keepOnlyNumericChars(?string $value, int $default = null): string
+function keepOnlyNumericChars(?string $value, ?int $default = null): string
 {
 	// Use regular expression to keep only numeric characters
 	$value = preg_replace('/[^0-9]/', '', strval($value));
@@ -1251,7 +1251,7 @@ function arrayTranslationsToJson(?array $entry, bool $unescapedUnicode = true): 
  * @param int|null $decimalPlaces
  * @return string
  */
-function getInputNumberStep(int $decimalPlaces = null): string
+function getInputNumberStep(?int $decimalPlaces = null): string
 {
 	if (empty($decimalPlaces) || $decimalPlaces <= 0) {
 		$decimalPlaces = 2;

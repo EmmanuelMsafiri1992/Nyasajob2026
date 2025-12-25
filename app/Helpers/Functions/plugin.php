@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\File;
  * @param bool $checkInstalled
  * @return array
  */
-function plugin_list(string $category = null, bool $checkInstalled = false): array
+function plugin_list(?string $category = null, bool $checkInstalled = false): array
 {
 	$plugins = [];
 	
@@ -71,7 +71,7 @@ function plugin_list(string $category = null, bool $checkInstalled = false): arr
  * @param string|null $category
  * @return array
  */
-function plugin_installed_list(string $category = null): array
+function plugin_installed_list(?string $category = null): array
 {
 	return plugin_list($category, true);
 }
@@ -163,7 +163,7 @@ function load_installed_plugin(string $name)
  * @param string|null $localNamespace
  * @return string
  */
-function plugin_namespace(string $pluginFolderName, string $localNamespace = null): string
+function plugin_namespace(string $pluginFolderName, ?string $localNamespace = null): string
 {
 	if (!is_null($localNamespace)) {
 		return config('larapen.core.plugin.namespace') . $pluginFolderName . '\\' . $localNamespace;
@@ -179,7 +179,7 @@ function plugin_namespace(string $pluginFolderName, string $localNamespace = nul
  * @param string|null $localPath
  * @return string
  */
-function plugin_path(string $pluginFolderName, string $localPath = null): string
+function plugin_path(string $pluginFolderName, ?string $localPath = null): string
 {
 	return config('larapen.core.plugin.path') . $pluginFolderName . '/' . $localPath;
 }
@@ -191,7 +191,7 @@ function plugin_path(string $pluginFolderName, string $localPath = null): string
  * @param string|null $path
  * @return bool
  */
-function plugin_exists(string $pluginFolderName, string $path = null): bool
+function plugin_exists(string $pluginFolderName, ?string $path = null): bool
 {
 	$fullPath = config('larapen.core.plugin.path') . $pluginFolderName . '/';
 	
