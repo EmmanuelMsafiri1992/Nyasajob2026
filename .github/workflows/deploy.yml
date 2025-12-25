@@ -1,0 +1,46 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            cd /home/indegnnk/Nyasajob2026repo
+            git pull origin main
+
+            DEPLOYPATH=/home/indegnnk/nyasajob.com
+
+            /bin/rsync -av --delete \
+              --exclude='.git' \
+              --exclude='.env' \
+              --exclude='vendor' \
+              --exclude='storage/logs/*' \
+              --exclude='storage/framework/cache/*' \
+              --exclude='storage/framework/sessions/*' \
+              --exclude='storage/framework/views/*' \
+              --exclude='public/mix-manifest.json' \
+              ./ $DEPLOYPATH/
+
+            chmod 755 $DEPLOYPATH
+            chmod -R 775 $DEPLOYPATH/storage $DEPLOYPATH/bootstrap/cache
+            chown -R indegnnk:indegnnk $DEPLOYPATH
+
+            cd $DEPLOYPATH
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan migrate --force
+            php artisan optimize:clear
+            php artisan view:cache
+
+            echo "Deployment completed: $(date)"
