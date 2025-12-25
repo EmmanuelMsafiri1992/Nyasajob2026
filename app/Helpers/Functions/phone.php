@@ -155,12 +155,18 @@ function isPossiblePhoneNumber(?string $phone, ?string $countryCode = null): boo
  *
  * @param string|null $phone
  * @param string|null $countryCode
+ * @param int $depth
  * @return string|null
  */
-function phoneNational(?string $phone, ?string $countryCode = null): ?string
+function phoneNational(?string $phone, ?string $countryCode = null, int $depth = 0): ?string
 {
+	// Prevent recursive formatting (max depth = 3)
+	if ($depth > 3) {
+		return $phone;
+	}
+
 	$phone = normalizePhoneNumber($phone, $countryCode);
-	
+
 	try {
 		$phoneUtil = PhoneNumberUtil::getInstance();
 		$phoneObj = $phoneUtil->parse($phone, $countryCode);
@@ -168,7 +174,7 @@ function phoneNational(?string $phone, ?string $countryCode = null): ?string
 	} catch (\Throwable $e) {
 		// Keep the default value
 	}
-	
+
 	return $phone;
 }
 

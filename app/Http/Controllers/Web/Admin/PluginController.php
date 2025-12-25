@@ -36,46 +36,63 @@ class PluginController extends Controller
 	public function index()
 	{
 		$plugins = [];
+		$errors = [];
+
 		try {
 			// Load all the plugins' services providers
-			$plugins = plugin_list();
-			
-			// Append the Plugin Options
-			$plugins = collect($plugins)->map(function ($item, $key) {
-				if (is_object($item)) {
-					$item = Arr::fromObject($item);
+			$pluginList = plugin_list();
+
+			// Append the Plugin Options - handle each plugin individually
+			$plugins = collect($pluginList)->map(function ($item, $key) use (&$errors) {
+				try {
+					if (is_object($item)) {
+						$item = Arr::fromObject($item);
+					}
+
+					// Append formatted name
+					$name = $item['name'] ?? null;
+					$displayName = $item['display_name'] ?? null;
+					$item['formatted_name'] = $displayName . plugin_demo_info($name);
+
+					if (!empty($item['item_id'])) {
+						$item['activated'] = plugin_check_purchase_code($item);
+					}
+
+					// Append the Options
+					$item['options'] = null;
+					if ($item['is_compatible'] ?? false) {
+						try {
+							$pluginClass = plugin_namespace($item['name'], ucfirst($item['name']));
+							$item['options'] = method_exists($pluginClass, 'getOptions')
+								? (array)call_user_func($pluginClass . '::getOptions')
+								: null;
+						} catch (\Throwable $e) {
+							$errors[] = 'Plugin "' . ($name ?? 'unknown') . '": ' . $e->getMessage();
+							$item['options'] = null;
+						}
+					}
+
+					return Arr::toObject($item);
+				} catch (\Throwable $e) {
+					$errors[] = 'Error loading plugin: ' . $e->getMessage();
+					return null;
 				}
-				
-				// Append formatted name
-				$name = $item['name'] ?? null;
-				$displayName = $item['display_name'] ?? null;
-				$item['formatted_name'] = $displayName . plugin_demo_info($name);
-				
-				if (!empty($item['item_id'])) {
-					$item['activated'] = plugin_check_purchase_code($item);
-				}
-				
-				// Append the Options
-				$item['options'] = null;
-				if ($item['is_compatible']) {
-					$pluginClass = plugin_namespace($item['name'], ucfirst($item['name']));
-					$item['options'] = method_exists($pluginClass, 'getOptions')
-						? (array)call_user_func($pluginClass . '::getOptions')
-						: null;
-				}
-				
-				return Arr::toObject($item);
-			})->toArray();
+			})->filter()->toArray();
 		} catch (\Throwable $e) {
 			$message = $e->getMessage();
 			if (!empty($message)) {
 				notification($message, 'error');
 			}
 		}
-		
+
+		// Show collected errors as notifications
+		foreach ($errors as $error) {
+			notification($error, 'warning');
+		}
+
 		$this->data['plugins'] = $plugins;
 		$this->data['title'] = 'Plugins';
-		
+
 		return view('admin.plugins', $this->data);
 	}
 	
