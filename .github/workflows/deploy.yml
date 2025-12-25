@@ -30,7 +30,8 @@ jobs:
               --exclude='storage/framework/cache/*' \
               --exclude='storage/framework/sessions/*' \
               --exclude='storage/framework/views/*' \
-              --exclude='public/mix-manifest.json' \
+              --exclude='storage/app/public/*' \
+              --exclude='public/storage' \
               ./ $DEPLOYPATH/
 
             chmod 755 $DEPLOYPATH
@@ -38,6 +39,7 @@ jobs:
             chown -R indegnnk:indegnnk $DEPLOYPATH
 
             cd $DEPLOYPATH
+            php artisan storage:link 2>/dev/null || true
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force
             php artisan optimize:clear

@@ -1,1 +1,8 @@
-{}
+{
+  "/dist/public/styles.css": "/dist/public/styles.css",
+  "/dist/public/scripts.js": "/dist/public/scripts.js",
+  "/dist/public/custom.css": "/dist/public/custom.css",
+  "/dist/public/styles.rtl.css": "/dist/public/styles.rtl.css",
+  "/dist/admin/styles.css": "/dist/admin/styles.css",
+  "/dist/admin/scripts.js": "/dist/admin/scripts.js"
+}
