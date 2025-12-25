@@ -48,6 +48,7 @@ Thumbs.db
 *.zip
 *.tar.gz
 *.bak
+*.mmdb
 /dist
 /extras
 /.scribe
