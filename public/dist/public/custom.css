@@ -128,3 +128,231 @@ html::-webkit-scrollbar {
 .container:has(> .row > .col-12.text-center:empty) {
 	display: none !important;
 }
+
+/* ============================================ */
+/* HEADER & NAVIGATION IMPROVEMENTS            */
+/* ============================================ */
+
+/* Improved Navbar Styling */
+.navbar-site {
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.navbar-site.stuck {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Better dropdown transitions */
+.navbar-site .dropdown-menu {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.navbar-site .dropdown-item {
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+}
+
+.navbar-site .dropdown-item:hover {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    color: var(--bs-primary);
+}
+
+/* Improved mobile toggle button */
+.navbar-toggler {
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.navbar-toggler:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* Better nav link styling */
+.navbar-site .nav-link {
+    padding: 10px 15px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.navbar-site .nav-link:hover {
+    background: rgba(var(--bs-primary-rgb), 0.08);
+}
+
+/* Create Job button improvements */
+.btn-listing {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+.btn-listing:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(var(--bs-primary-rgb), 0.3);
+}
+
+/* ============================================ */
+/* FOOTER IMPROVEMENTS                         */
+/* ============================================ */
+
+.main-footer {
+    background: linear-gradient(180deg, #1a1d24 0%, #0d0f12 100%);
+}
+
+.main-footer .footer-title {
+    font-weight: 600;
+    margin-bottom: 20px;
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.main-footer .footer-title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 40px;
+    height: 3px;
+    background: var(--bs-primary);
+    border-radius: 2px;
+}
+
+.main-footer .footer-nav li {
+    margin-bottom: 8px;
+}
+
+.main-footer .footer-nav a {
+    transition: all 0.2s ease;
+    opacity: 0.8;
+}
+
+.main-footer .footer-nav a:hover {
+    opacity: 1;
+    padding-left: 5px;
+    color: var(--bs-primary);
+}
+
+/* Social media icons improvements */
+.social-links li a {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.social-links li a:hover {
+    background: var(--bs-primary);
+    transform: translateY(-3px);
+}
+
+/* Copyright section */
+.main-footer .copy-info {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+}
+
+/* ============================================ */
+/* TINY SLIDER CAROUSEL STYLES                 */
+/* ============================================ */
+
+.tns-outer {
+    position: relative;
+}
+
+.tns-controls {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 10;
+    padding: 0 10px;
+}
+
+.tns-controls button {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.tns-controls button:hover {
+    background: var(--bs-primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.tns-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.featured-list-slider .item {
+    padding: 10px;
+}
+
+/* ============================================ */
+/* TOAST NOTIFICATION ENHANCEMENTS             */
+/* ============================================ */
+
+.toast-container .toast {
+    min-width: 300px;
+    backdrop-filter: blur(10px);
+}
+
+.toast-container .toast-body {
+    font-weight: 500;
+}
+
+.toast-container .toast.text-bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.toast-container .toast.text-bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%) !important;
+}
+
+.toast-container .toast.text-bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+}
+
+.toast-container .toast.text-bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+}

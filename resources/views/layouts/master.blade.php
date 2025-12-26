@@ -172,6 +172,10 @@
 	@show
 </head>
 <body class="skin">
+
+{{-- Bootstrap Toast Notifications --}}
+@include('common.toast')
+
 <div id="wrapper">
 	
 	@section('header')

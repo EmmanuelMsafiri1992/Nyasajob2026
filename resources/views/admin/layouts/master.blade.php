@@ -47,6 +47,10 @@
     <![endif]-->
 </head>
 <body>
+
+{{-- Bootstrap Toast Notifications --}}
+@include('common.toast')
+
 {{-- Main wrapper - style you can find in pages.scss --}}
 <div id="main-wrapper">
     

@@ -2,11 +2,11 @@
 	$widget ??= [];
 	$posts = (array)data_get($widget, 'posts');
 	$totalPosts = (int)data_get($widget, 'totalPosts', 0);
-	
+
 	$sectionOptions ??= [];
 	$hideOnMobile = (data_get($sectionOptions, 'hide_on_mobile') == '1') ? ' hidden-sm' : '';
 	$carouselEl = '_' . createRandomString(6);
-	
+
 	$isFromHome ??= false;
 @endphp
 @if ($totalPosts > 0)
@@ -29,13 +29,13 @@
 						</h2>
 					</div>
 				</div>
-		
+
 				<div style="clear: both"></div>
-		
+
 				<div class="relative content featured-list-row clearfix">
-					
+
 					<div class="large-12 columns">
-						<div class="no-margin featured-list-slider {{ $carouselEl }} owl-carousel owl-theme">
+						<div class="no-margin featured-list-slider {{ $carouselEl }}">
 							@foreach($posts as $key => $post)
 								<div class="item">
 									<a href="{{ \App\Helpers\UrlGen::post($post) }}">
@@ -54,7 +54,7 @@
 							@endforeach
 						</div>
 					</div>
-		
+
 				</div>
 			</div>
 		</div>
@@ -63,17 +63,19 @@
 
 @section('after_style')
 	@parent
+	<link rel="stylesheet" href="{{ url('assets/plugins/tinyslider/tiny-slider.min.css') }}">
 @endsection
 
 @section('after_scripts')
 	@parent
+	<script src="{{ url('assets/plugins/tinyslider/tiny-slider.min.js') }}"></script>
 	<script>
 		onDocumentReady((event) => {
 			{{-- Check if RTL or LTR --}}
 			let isRTLEnabled = (document.documentElement.getAttribute('dir') === 'rtl');
-			
+
 			{{-- Carousel Parameters --}}
-			{{-- Documentation: https://owlcarousel2.github.io/OwlCarousel2/ --}}
+			{{-- Documentation: https://github.com/ganlanyuan/tiny-slider --}}
 			let carouselItems = {{ $totalPosts ?? 0 }};
 			let carouselAutoplay = {{ data_get($sectionOptions, 'autoplay') ?? 'false' }};
 			let carouselAutoplayTimeout = {{ (int)(data_get($sectionOptions, 'autoplay_timeout') ?? 1500) }};
@@ -83,40 +85,39 @@
 					'next': "{{ t('next') }}"
 				}
 			};
-			
-			{{-- Featured Listings Carousel --}}
-			let carouselObject = $('.featured-list-slider.{{ $carouselEl }}');
-			let responsiveObject = {
-				0: {
+
+			{{-- Featured Listings Carousel using Tiny Slider --}}
+			let carouselContainer = document.querySelector('.featured-list-slider.{{ $carouselEl }}');
+			if (carouselContainer && carouselItems > 0) {
+				let slider = tns({
+					container: '.featured-list-slider.{{ $carouselEl }}',
 					items: 1,
-					nav: true
-				},
-				576: {
-					items: 2,
-					nav: false
-				},
-				768: {
-					items: 3,
-					nav: false
-				},
-				992: {
-					items: 5,
+					slideBy: 1,
+					autoplay: carouselAutoplay,
+					autoplayTimeout: carouselAutoplayTimeout,
+					autoplayHoverPause: true,
+					autoplayButtonOutput: false,
+					loop: true,
 					nav: false,
-					loop: (carouselItems > 5)
-				}
-			};
-			carouselObject.owlCarousel({
-				rtl: isRTLEnabled,
-				nav: false,
-				navText: [carouselLang.navText.prev, carouselLang.navText.next],
-				loop: true,
-				responsiveClass: true,
-				responsive: responsiveObject,
-				autoWidth: true,
-				autoplay: carouselAutoplay,
-				autoplayTimeout: carouselAutoplayTimeout,
-				autoplayHoverPause: true
-			});
+					controls: true,
+					controlsText: [
+						'<i class="fa-solid fa-chevron-left"></i> ' + carouselLang.navText.prev,
+						carouselLang.navText.next + ' <i class="fa-solid fa-chevron-right"></i>'
+					],
+					responsive: {
+						0: { items: 1 },
+						576: { items: 2 },
+						768: { items: 3 },
+						992: { items: 5, loop: (carouselItems > 5) }
+					},
+					textDirection: isRTLEnabled ? 'rtl' : 'ltr',
+					gutter: 10,
+					edgePadding: 0,
+					mouseDrag: true,
+					swipeAngle: false,
+					speed: 400
+				});
+			}
 		});
 	</script>
 @endsection
