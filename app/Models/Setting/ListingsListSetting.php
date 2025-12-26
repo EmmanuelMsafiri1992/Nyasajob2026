@@ -34,6 +34,7 @@ class ListingsListSetting
 			$value['salary_slider_step'] = '50';
 			$value['show_category_icon'] = '7';
 			$value['cities_extended_searches'] = '1';
+			$value['diacritic_sensitive_search'] = '0';
 			if (DBTool::isMySqlMinVersion('5.7.6') && !DBTool::isMariaDB()) {
 				$value['distance_calculation_formula'] = 'ST_Distance_Sphere';
 			} else {
@@ -103,6 +104,9 @@ class ListingsListSetting
 			if (!array_key_exists('cities_autocomplete_enabled', $value)) {
 				$value['cities_autocomplete_enabled'] = '1';
 			}
+			if (!array_key_exists('diacritic_sensitive_search', $value)) {
+				$value['diacritic_sensitive_search'] = '0';
+			}
 
 		}
 		
@@ -160,6 +164,15 @@ class ListingsListSetting
 				'label'             => trans('admin.cities_autocomplete_enabled_label'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.cities_autocomplete_enabled_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'diacritic_sensitive_search',
+				'label'             => trans('admin.diacritic_sensitive_search_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.diacritic_sensitive_search_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],

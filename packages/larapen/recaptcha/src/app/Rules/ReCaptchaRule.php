@@ -72,10 +72,23 @@ class ReCaptchaRule implements Rule
 		if (is_null($buffer) || empty($buffer)) {
 			return false;
 		}
-		
+
 		$response = json_decode(trim($buffer), true);
-		
-		return (isset($response['success'])) ? $response['success'] : false;
+
+		// Check basic success
+		if (!isset($response['success']) || !$response['success']) {
+			return false;
+		}
+
+		// For reCAPTCHA v3, validate the score against the threshold
+		if (config('recaptcha.version') === 'v3') {
+			$scoreThreshold = (float) config('recaptcha.score_threshold', 0.5);
+			$score = isset($response['score']) ? (float) $response['score'] : 0;
+
+			return $score >= $scoreThreshold;
+		}
+
+		return true;
 	}
 	
 	/**

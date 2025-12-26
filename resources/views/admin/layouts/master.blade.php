@@ -308,6 +308,54 @@
     }
 </script>
 
+{{-- Dark Mode Toggle Script --}}
+<script>
+    onDocumentReady((event) => {
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const mainWrapper = document.getElementById('main-wrapper');
+        const moonIcon = document.querySelector('.dark-mode-icon');
+        const sunIcon = document.querySelector('.light-mode-icon');
+
+        // Check for saved dark mode preference or system preference
+        function isDarkMode() {
+            const savedTheme = localStorage.getItem('adminDarkMode');
+            if (savedTheme !== null) {
+                return savedTheme === 'true';
+            }
+            // Check if dark theme is enabled in settings
+            return {{ config('settings.style.admin_dark_theme') == '1' ? 'true' : 'false' }};
+        }
+
+        // Apply dark mode state
+        function applyDarkMode(dark) {
+            if (dark) {
+                mainWrapper.setAttribute('data-theme', 'dark');
+                document.body.classList.add('dark-theme');
+                if (moonIcon) moonIcon.style.display = 'none';
+                if (sunIcon) sunIcon.style.display = 'inline-block';
+            } else {
+                mainWrapper.removeAttribute('data-theme');
+                document.body.classList.remove('dark-theme');
+                if (moonIcon) moonIcon.style.display = 'inline-block';
+                if (sunIcon) sunIcon.style.display = 'none';
+            }
+        }
+
+        // Initialize
+        applyDarkMode(isDarkMode());
+
+        // Toggle dark mode on click
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function() {
+                const currentlyDark = mainWrapper.getAttribute('data-theme') === 'dark';
+                const newDarkState = !currentlyDark;
+                localStorage.setItem('adminDarkMode', newDarkState);
+                applyDarkMode(newDarkState);
+            });
+        }
+    });
+</script>
+
 @include('admin.layouts.inc.alerts')
 
 @yield('after_scripts')

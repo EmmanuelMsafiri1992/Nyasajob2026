@@ -34,7 +34,8 @@ class SecuritySetting
 			
 			$value['captcha_delay'] = '1000';
 			$value['recaptcha_version'] = 'v2';
-			
+			$value['recaptcha_v3_score_threshold'] = '0.5';
+
 			$value['login_open_in_modal'] = '1';
 			$value['login_max_attempts'] = '5';
 			$value['login_decay_minutes'] = '15';
@@ -77,6 +78,9 @@ class SecuritySetting
 			}
 			if (!array_key_exists('recaptcha_version', $value)) {
 				$value['recaptcha_version'] = 'v2';
+			}
+			if (!array_key_exists('recaptcha_v3_score_threshold', $value)) {
+				$value['recaptcha_v3_score_threshold'] = '0.5';
 			}
 			
 			// Get reCAPTCHA old config values
@@ -555,6 +559,26 @@ class SecuritySetting
 				'name'              => 'recaptcha_v3_secret_key',
 				'label'             => trans('admin.recaptcha_v3_secret_key_label'),
 				'type'              => 'text',
+				'wrapperAttributes' => [
+					'class' => 'col-md-6 recaptcha recaptcha-v3',
+				],
+			],
+			[
+				'name'              => 'recaptcha_v3_score_threshold',
+				'label'             => trans('admin.recaptcha_v3_score_threshold_label'),
+				'type'              => 'select2_from_array',
+				'options'           => [
+					'0.1' => '0.1 (Very Lenient)',
+					'0.2' => '0.2',
+					'0.3' => '0.3',
+					'0.4' => '0.4',
+					'0.5' => '0.5 (Recommended)',
+					'0.6' => '0.6',
+					'0.7' => '0.7',
+					'0.8' => '0.8',
+					'0.9' => '0.9 (Very Strict)',
+				],
+				'hint'              => trans('admin.recaptcha_v3_score_threshold_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6 recaptcha recaptcha-v3',
 				],

@@ -37,7 +37,7 @@ class UpdateThePostCounter
 	public function handle(PostWasVisited $event)
 	{
 		$isFromApi = isFromApi();
-		
+
 		// Don't count the self-visits
 		$guard = $isFromApi ? 'sanctum' : null;
 		if (auth($guard)->check()) {
@@ -45,31 +45,45 @@ class UpdateThePostCounter
 				return false;
 			}
 		}
-		
-		if ($isFromApi) {
-			if (
-				!request()->hasHeader('X-VISITED-BY-SAME-SESSION')
-				|| request()->header('X-VISITED-BY-SAME-SESSION') != $event->post->id
-			) {
-				$this->updateCounter($event->post);
-				
-				return true;
-			}
-			
+
+		// Generate a unique visitor identifier based on IP and User Agent
+		$visitorHash = md5(request()->ip() . request()->userAgent());
+		$cacheKey = 'post_visit_' . $event->post->id . '_' . $visitorHash;
+
+		// Check if this visitor has already viewed this post recently (within 1 hour)
+		if (cache()->has($cacheKey)) {
 			return false;
 		}
-		
-		if (
-			!session()->has('postIsVisited')
-			|| session('postIsVisited') != $event->post->id
-		) {
-			$this->updateCounter($event->post);
-			session()->put('postIsVisited', $event->post->id);
-			
-			return true;
+
+		// Also check session and header for additional protection
+		if ($isFromApi) {
+			if (
+				request()->hasHeader('X-VISITED-BY-SAME-SESSION')
+				&& request()->header('X-VISITED-BY-SAME-SESSION') == $event->post->id
+			) {
+				return false;
+			}
+		} else {
+			if (
+				session()->has('postIsVisited')
+				&& session('postIsVisited') == $event->post->id
+			) {
+				return false;
+			}
 		}
-		
-		return false;
+
+		// Update the counter
+		$this->updateCounter($event->post);
+
+		// Cache the visit for 1 hour to prevent duplicate counting
+		cache()->put($cacheKey, true, 3600);
+
+		// Also set session for web requests
+		if (!$isFromApi) {
+			session()->put('postIsVisited', $event->post->id);
+		}
+
+		return true;
 	}
 	
 	/**

@@ -58,6 +58,13 @@
 			
 			{{-- Right side toggle and nav items --}}
 			<ul class="navbar-nav justify-content-end">
+				{{-- Dark Mode Toggle --}}
+				<li class="nav-item">
+					<a class="nav-link waves-effect waves-dark" href="javascript:void(0)" id="darkModeToggle" title="{{ t('toggle_dark_mode') }}">
+						<i class="fa-solid fa-moon dark-mode-icon" style="display: none;"></i>
+						<i class="fa-solid fa-sun light-mode-icon"></i>
+					</a>
+				</li>
 				{{-- Profile --}}
 				<li class="nav-item dropdown">
 					<a class="nav-link dropdown-toggle waves-effect waves-dark"

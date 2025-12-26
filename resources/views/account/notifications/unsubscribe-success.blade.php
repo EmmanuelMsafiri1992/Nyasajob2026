@@ -27,7 +27,7 @@
 							<div class="alert alert-info">
 								<h6><i class="fas fa-lightbulb"></i> Changed your mind?</h6>
 								<p>You can re-subscribe at any time by:</p>
-								<ul class="text-left">
+								<ul class="text-start">
 									<li>Logging into your account</li>
 									<li>Going to <strong>Notification Settings</strong></li>
 									<li>Enabling job notifications again</li>
@@ -39,11 +39,11 @@
 									<i class="fas fa-home"></i> Go to Homepage
 								</a>
 								@auth
-									<a href="{{ route('notifications.settings') }}" class="btn btn-outline-primary btn-lg ml-2">
+									<a href="{{ route('notifications.settings') }}" class="btn btn-outline-primary btn-lg ms-2">
 										<i class="fas fa-cog"></i> Notification Settings
 									</a>
 								@else
-									<a href="{{ \App\Helpers\UrlGen::login() }}" class="btn btn-outline-primary btn-lg ml-2">
+									<a href="{{ \App\Helpers\UrlGen::login() }}" class="btn btn-outline-primary btn-lg ms-2">
 										<i class="fas fa-sign-in-alt"></i> Login to Account
 									</a>
 								@endauth

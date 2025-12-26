@@ -1130,4 +1130,24 @@ return [
 	'Advertise' => 'Advertise',
 	'My Advertisements' => 'My Advertisements',
 
+	// Dark Mode
+	'toggle_dark_mode' => 'Toggle Dark Mode',
+	'dark_mode' => 'Dark Mode',
+	'light_mode' => 'Light Mode',
+
+	// Unsaved Form Guard
+	'unsaved_changes_warning' => 'You have unsaved changes. Are you sure you want to leave this page?',
+
+	// Two-Factor Authentication
+	'two_factor_authentication' => 'Two-Factor Authentication',
+	'enable_2fa' => 'Enable 2FA',
+	'disable_2fa' => 'Disable 2FA',
+	'scan_qr_code' => 'Scan this QR code with your authenticator app',
+	'enter_verification_code' => 'Enter the verification code from your app',
+	'recovery_codes' => 'Recovery Codes',
+	'recovery_codes_info' => 'Store these recovery codes in a safe place. You can use them to access your account if you lose your device.',
+	'2fa_enabled_successfully' => 'Two-factor authentication has been enabled.',
+	'2fa_disabled_successfully' => 'Two-factor authentication has been disabled.',
+	'invalid_2fa_code' => 'The verification code is invalid.',
+
 ];

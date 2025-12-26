@@ -41,7 +41,8 @@ class ListingFormSetting
 			$value['cat_display_type'] = 'c_border_list';
 			$value['wysiwyg_editor'] = 'tinymce';
 			$value['auto_registration'] = '0';
-			
+			$value['recruiter_company_limit'] = '0';
+
 		} else {
 			
 			if (!array_key_exists('publication_form_type', $value)) {
@@ -89,7 +90,10 @@ class ListingFormSetting
 			if (!array_key_exists('auto_registration', $value)) {
 				$value['auto_registration'] = '0';
 			}
-			
+			if (!array_key_exists('recruiter_company_limit', $value)) {
+				$value['recruiter_company_limit'] = '0';
+			}
+
 		}
 		
 		return $value;
@@ -434,6 +438,25 @@ class ListingFormSetting
 					2 => trans('admin.auto_registration_option_2'),
 				],
 				'hint'              => trans('admin.auto_registration_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+
+			[
+				'name'  => 'recruiter_company_sep',
+				'type'  => 'custom_html',
+				'value' => trans('admin.recruiter_company_sep_value'),
+			],
+			[
+				'name'              => 'recruiter_company_limit',
+				'label'             => trans('admin.recruiter_company_limit_label'),
+				'type'              => 'select2_from_array',
+				'options'           => [
+					0 => trans('admin.recruiter_company_limit_option_0'),
+					1 => trans('admin.recruiter_company_limit_option_1'),
+				],
+				'hint'              => trans('admin.recruiter_company_limit_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],

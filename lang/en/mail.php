@@ -233,4 +233,31 @@ return [
 	'generated_password_content_6'        => 'You\'re receiving this email because you recently created a new :appName account or added a new email address. If this wasn\'t you, please ignore this email.',
 
 
+	// account_suspended
+	'hello_user'                        => 'Hello :userName,',
+	'account_suspended_title'           => 'Your account has been suspended - :appName',
+	'account_suspended_content_1'       => 'We wanted to let you know that your :appName account has been temporarily suspended.',
+	'account_suspended_content_2'       => 'During this suspension period, you will not be able to access your account or use our services.',
+	'suspension_reason'                 => 'Reason: :reason',
+	'account_suspension_contact'        => 'If you believe this is a mistake or would like more information, please contact our support team.',
+
+	// account_banned
+	'account_banned_title'              => 'Your account has been banned - :appName',
+	'account_banned_content_1'          => 'We regret to inform you that your :appName account has been permanently banned.',
+	'account_banned_content_2'          => 'You will no longer be able to access your account or use our services.',
+
+	// account_locked
+	'account_locked_title'              => 'Security Alert: Your account has been locked - :appName',
+	'account_locked_content_1'          => 'We detected multiple failed login attempts on your :appName account.',
+	'account_locked_content_2'          => 'For your security, your account has been temporarily locked for :minutes minutes.',
+	'account_locked_content_3'          => 'If this wasn\'t you, we recommend changing your password after the lockout period.',
+	'account_locked_content_4'          => 'If you did not attempt to log in, please contact our support team immediately.',
+
+	// two_factor_authentication
+	'two_factor_code_title'             => 'Your verification code - :appName',
+	'two_factor_code_content_1'         => 'Your verification code is:',
+	'two_factor_code_content_2'         => 'This code will expire in 10 minutes.',
+	'two_factor_code_content_3'         => 'If you did not request this code, please ignore this email or contact support if you have concerns.',
+
 ];
+

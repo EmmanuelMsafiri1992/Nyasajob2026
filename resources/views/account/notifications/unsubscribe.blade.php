@@ -39,7 +39,7 @@
 									<button type="submit" class="btn btn-danger btn-lg">
 										<i class="fas fa-bell-slash"></i> Yes, Unsubscribe Me
 									</button>
-									<a href="{{ url('/') }}" class="btn btn-success btn-lg ml-2">
+									<a href="{{ url('/') }}" class="btn btn-success btn-lg ms-2">
 										<i class="fas fa-check"></i> No, Keep Me Subscribed
 									</a>
 								</div>

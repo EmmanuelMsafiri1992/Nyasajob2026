@@ -96,7 +96,36 @@ class BannedUser
 	 */
 	private function doesUserIsBlocked(Request $request, $authUser): bool
 	{
-		return ($authUser->blocked == 1);
+		if ($authUser->blocked == 1) {
+			// Log out the blocked user to prevent infinite redirect loop
+			$this->logoutBlockedUser($authUser);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Log out a blocked/banned user to prevent redirect loops
+	 *
+	 * @param $authUser
+	 * @return void
+	 */
+	private function logoutBlockedUser($authUser): void
+	{
+		try {
+			if (isFromApi()) {
+				// Revoke all API tokens
+				$authUser->tokens()->delete();
+			}
+			// Log out from web session
+			auth()->logout();
+			if (request()->hasSession()) {
+				request()->session()->invalidate();
+				request()->session()->regenerateToken();
+			}
+		} catch (\Throwable $e) {
+			// Silently fail
+		}
 	}
 	
 	/**
@@ -110,24 +139,27 @@ class BannedUser
 	private function doesUserIsBanned(Request $request, $authUser): bool
 	{
 		$cacheExpiration = (int)config('settings.optimization.cache_expiration', 86400);
-		
+
 		// Check if the user's email address has been banned
 		$cacheId = 'blacklist.email.' . $authUser->email;
 		$bannedUser = cache()->remember($cacheId, $cacheExpiration, function () use($authUser) {
 			return Blacklist::ofType('email')->where('entry', $authUser->email)->first();
 		});
-		
+
 		if (empty($bannedUser)) {
 			return false;
 		}
-		
+
 		$user = User::find($authUser->id);
 		if (empty($user)) {
 			return false;
 		}
-		
+
+		// Log out the banned user before deleting to prevent redirect loops
+		$this->logoutBlockedUser($authUser);
+
 		$user->delete();
-		
+
 		return true;
 	}
 }

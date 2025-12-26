@@ -67,9 +67,9 @@
 										@php
 											$col = (config('settings.sms.enable_phone_as_auth_field') == '1') ? 'col-6' : 'col-12';
 										@endphp
-										<label class="form-label {{ $col }} m-0 py-2 text-left" for="email">{{ t('email') }}:</label>
+										<label class="form-label {{ $col }} m-0 py-2 text-start" for="email">{{ t('email') }}:</label>
 										@if (config('settings.sms.enable_phone_as_auth_field') == '1')
-											<div class="col-6 py-2 text-right">
+											<div class="col-6 py-2 text-end">
 												<a href="" class="auth-field" data-auth-field="phone">{{ t('use_phone') }}</a>
 											</div>
 										@endif
@@ -98,8 +98,8 @@
 									@endphp
 									<div class="mb-3 auth-field-item">
 										<div class="row">
-											<label class="form-label col-6 m-0 py-2 text-left" for="phone">{{ t('phone_number') }}:</label>
-											<div class="col-6 py-2 text-right">
+											<label class="form-label col-6 m-0 py-2 text-start" for="phone">{{ t('phone_number') }}:</label>
+											<div class="col-6 py-2 text-end">
 												<a href="" class="auth-field" data-auth-field="email">{{ t('use_email') }}</a>
 											</div>
 										</div>

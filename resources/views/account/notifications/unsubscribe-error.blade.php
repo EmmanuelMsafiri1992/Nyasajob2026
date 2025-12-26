@@ -27,7 +27,7 @@
 							<div class="alert alert-info">
 								<h6><i class="fas fa-question-circle"></i> Need Help?</h6>
 								<p>If you're trying to unsubscribe from job notifications, you can:</p>
-								<ul class="text-left">
+								<ul class="text-start">
 									<li>Log into your account and visit Notification Settings</li>
 									<li>Contact our support team for assistance</li>
 									<li>Check your email for a recent job notification and use that unsubscribe link</li>
@@ -38,7 +38,7 @@
 								<a href="{{ url('/') }}" class="btn btn-primary btn-lg">
 									<i class="fas fa-home"></i> Go to Homepage
 								</a>
-								<a href="{{ \App\Helpers\UrlGen::login() }}" class="btn btn-outline-primary btn-lg ml-2">
+								<a href="{{ \App\Helpers\UrlGen::login() }}" class="btn btn-outline-primary btn-lg ms-2">
 									<i class="fas fa-sign-in-alt"></i> Login to Account
 								</a>
 							</div>

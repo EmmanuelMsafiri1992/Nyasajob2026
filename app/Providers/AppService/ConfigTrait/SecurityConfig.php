@@ -106,23 +106,26 @@ trait SecurityConfig
 		if (config('settings.security.captcha') == 'recaptcha') {
 			$version = config('settings.security.recaptcha_version', 'v2');
 			$version = env('RECAPTCHA_VERSION', $version);
-			
+
 			if ($version == 'v3') {
 				$siteKey = config('settings.security.recaptcha_v3_site_key');
 				$secretKey = config('settings.security.recaptcha_v3_secret_key');
+				$scoreThreshold = config('settings.security.recaptcha_v3_score_threshold', '0.5');
 			} else {
 				$siteKey = config('settings.security.recaptcha_v2_site_key');
 				$secretKey = config('settings.security.recaptcha_v2_secret_key');
+				$scoreThreshold = null;
 			}
-			
+
 			$skipIps = env('RECAPTCHA_SKIP_IPS', config('settings.security.recaptcha_skip_ips', ''));
 			$skipIpsArr = preg_split('#[:,;\s]+#ui', $skipIps);
 			$skipIpsArr = array_filter(array_map('trim', $skipIpsArr));
-			
+
 			config()->set('recaptcha.version', $version);
 			config()->set('recaptcha.site_key', env('RECAPTCHA_SITE_KEY', $siteKey));
 			config()->set('recaptcha.secret_key', env('RECAPTCHA_SECRET_KEY', $secretKey));
 			config()->set('recaptcha.skip_ip', $skipIpsArr);
+			config()->set('recaptcha.score_threshold', $scoreThreshold);
 		}
 	}
 }

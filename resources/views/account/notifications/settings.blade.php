@@ -20,9 +20,7 @@
 							@if (session('success'))
 								<div class="alert alert-success alert-dismissible fade show" role="alert">
 									<i class="fas fa-check-circle"></i> {{ session('success') }}
-									<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-										<span aria-hidden="true">&times;</span>
-									</button>
+									<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 								</div>
 							@endif
 
@@ -43,16 +41,16 @@
 													Receive email alerts when new jobs are posted in <strong>{{ auth()->user()->country->name ?? 'your country' }}</strong>
 												</p>
 											</div>
-											<div class="col-md-4 text-right">
-												<div class="custom-control custom-switch" style="font-size: 1.5rem;">
+											<div class="col-md-4 text-end">
+												<div class="form-check form-switch" style="font-size: 1.5rem;">
 													<input type="checkbox"
-														   class="custom-control-input"
+														   class="form-check-input"
 														   id="jobNotificationSwitch"
 														   name="enabled"
 														   value="1"
 														   {{ $user->job_notification_enabled ? 'checked' : '' }}
 														   onchange="this.form.submit()">
-													<label class="custom-control-label" for="jobNotificationSwitch"></label>
+													<label class="form-check-label" for="jobNotificationSwitch"></label>
 												</div>
 											</div>
 										</div>
@@ -108,7 +106,7 @@
 										<tr>
 											<td class="text-muted">Status:</td>
 											<td>
-												<span class="badge badge-{{ $user->job_notification_enabled ? 'success' : 'secondary' }}">
+												<span class="badge bg-{{ $user->job_notification_enabled ? 'success' : 'secondary' }}">
 													{{ $user->job_notification_enabled ? 'Active' : 'Inactive' }}
 												</span>
 											</td>

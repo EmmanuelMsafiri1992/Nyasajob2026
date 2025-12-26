@@ -75,28 +75,44 @@ trait KeywordFilter
 		// Get all keywords in array
 		$wordsArray = preg_split('/[\s,+]+/', $keywords);
 		
+		// Check if diacritic-insensitive search should be used
+		$useDiacriticInsensitive = !isDiacriticSensitiveSearchEnabled();
+
 		//-- If third parameter is set as true, it will check if the column starts with the search
 		//-- if then it adds relevance * 30
 		//-- this ensures that relevant results will be at top
-		$select[] = "(CASE WHEN title LIKE ? THEN 300 ELSE 0 END) ";
-		$bindings[] = $keywords . '%';
-		
+		$searchKeywords = $useDiacriticInsensitive ? removeDiacritics($keywords) : $keywords;
+		if ($useDiacriticInsensitive) {
+			$select[] = "(CASE WHEN title COLLATE utf8mb4_general_ci LIKE ? THEN 300 ELSE 0 END) ";
+		} else {
+			$select[] = "(CASE WHEN title LIKE ? THEN 300 ELSE 0 END) ";
+		}
+		$bindings[] = $searchKeywords . '%';
+
 		foreach ($searchableColumns as $column => $relevance) {
 			$tmp = [];
-			
+
 			foreach ($wordsArray as $key => $word) {
 				// Skip short keywords
 				if (strlen($word) <= self::$queryLength) {
 					continue;
 				}
-				
+
 				// @todo: Find another way
 				if (in_array(mb_strtolower($word), $this->bannedWords)) {
 					continue;
 				}
-				
-				$wordFilter = $column . " LIKE ?";
-				$wordBinding = '%' . $word . '%';
+
+				// Apply diacritic-insensitive search if enabled
+				$searchWord = $useDiacriticInsensitive ? removeDiacritics($word) : $word;
+
+				// Use COLLATE for diacritic-insensitive search on MySQL
+				if ($useDiacriticInsensitive) {
+					$wordFilter = $column . " COLLATE utf8mb4_general_ci LIKE ?";
+				} else {
+					$wordFilter = $column . " LIKE ?";
+				}
+				$wordBinding = '%' . $searchWord . '%';
 				
 				$masterLocaleWordFilter = '';
 				$masterLocaleWordBinding = '';

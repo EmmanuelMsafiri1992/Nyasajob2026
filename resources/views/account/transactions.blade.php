@@ -45,12 +45,12 @@
 						@if ($isAllTypesOfTransactionExist)
 							<div class="col-12 mb-4">
 								<div class="row d-flex justify-content-center">
-									<div class="col-sm-6 col-6 text-right pe-1">
+									<div class="col-sm-6 col-6 text-end pe-1">
 										<a class="btn {{ $isPromoting ? 'btn-primary' : 'btn-default' }}"
 										   href="{{ url('account/transactions/promotion') }}"
 										>{{ t('promo_packages_tab') }}</a>
 									</div>
-									<div class="col-sm-6 col-6 text-left ps-1">
+									<div class="col-sm-6 col-6 text-start ps-1">
 										<a class="btn {{ $isSubscripting ? 'btn-primary' : 'btn-default' }}"
 										        href="{{ url('account/transactions/subscription') }}"
 										>{{ t('subs_packages_tab') }}</a>
