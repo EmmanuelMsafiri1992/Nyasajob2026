@@ -1,44 +1,94 @@
 @php
 	$sectionOptions = $getSearchFormOp ?? [];
 	$sectionData ??= [];
-	
+
 	// Get Search Form Options
 	$enableFormAreaCustomization = data_get($sectionOptions, 'enable_extended_form_area') ?? '0';
 	$hideTitles = data_get($sectionOptions, 'hide_titles') ?? '0';
-	
+
 	$headerTitle = data_get($sectionOptions, 'title_' . config('app.locale'));
 	$headerTitle = (!empty($headerTitle)) ? replaceGlobalPatterns($headerTitle) : null;
-	
+
 	$headerSubTitle = data_get($sectionOptions, 'sub_title_' . config('app.locale'));
 	$headerSubTitle = (!empty($headerSubTitle)) ? replaceGlobalPatterns($headerSubTitle) : null;
-	
+
 	$parallax = data_get($sectionOptions, 'parallax') ?? '0';
 	$hideForm = data_get($sectionOptions, 'hide_form') ?? '0';
 	$displayStatesSearchTip = config('settings.listings_list.display_states_search_tip');
-	
+
 	$hideOnMobile = (data_get($sectionOptions, 'hide_on_mobile') == '1') ? ' hidden-sm' : '';
+
+	// Hero Slider Configuration with Images
+	$heroSlides = [
+		[
+			'title' => 'Find Your Dream Job',
+			'subtitle' => 'Discover thousands of job opportunities across Malawi and beyond',
+			'image' => 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+			'overlay' => 'rgba(102, 126, 234, 0.7)',
+		],
+		[
+			'title' => 'Build Your Career',
+			'subtitle' => 'Connect with top employers and take the next step in your professional journey',
+			'image' => 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+			'overlay' => 'rgba(245, 87, 108, 0.7)',
+		],
+		[
+			'title' => 'Hire Top Talent',
+			'subtitle' => 'Post jobs and find the perfect candidates for your organization',
+			'image' => 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+			'overlay' => 'rgba(79, 172, 254, 0.7)',
+		],
+		[
+			'title' => 'Simple, Fast & Efficient',
+			'subtitle' => 'The easiest way to find a job from any country',
+			'image' => 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+			'overlay' => 'rgba(67, 233, 123, 0.7)',
+		],
+	];
 @endphp
 @if (isset($enableFormAreaCustomization) && $enableFormAreaCustomization == '1')
-	
+
 	@if (isset($firstSection) && !$firstSection)
 		<div class="p-0 mt-lg-4 mt-md-3 mt-3"></div>
 	@endif
-	
+
 	@php
 		$parallax = ($parallax == '1') ? ' parallax' : '';
 	@endphp
-	<div class="intro{{ $hideOnMobile }}{{ $parallax }}">
-		<div class="container text-center">
-			
+	<div class="intro hero-slider-section{{ $hideOnMobile }}{{ $parallax }}">
+		{{-- Hero Slider --}}
+		<div class="hero-slider" id="heroSlider">
+			@foreach($heroSlides as $index => $slide)
+				<div class="hero-slide {{ $index === 0 ? 'active' : '' }}" data-index="{{ $index }}" style="background-image: url('{{ $slide['image'] }}');">
+					<div class="hero-slide-overlay" style="background: {{ $slide['overlay'] }};"></div>
+				</div>
+			@endforeach
+		</div>
+
+		{{-- Slider Navigation Dots --}}
+		<div class="hero-slider-dots">
+			@foreach($heroSlides as $index => $slide)
+				<span class="hero-dot {{ $index === 0 ? 'active' : '' }}" data-index="{{ $index }}"></span>
+			@endforeach
+		</div>
+
+		<div class="container text-center hero-content">
+
 			@if ($hideTitles != '1')
-				<h1 class="intro-title animated fadeInDown">
-					{{ $headerTitle }}
-				</h1>
-				<p class="sub animateme fittext3 animated fadeIn">
-					{!! $headerSubTitle !!}
-				</p>
+				<div class="hero-text-slider">
+					@foreach($heroSlides as $index => $slide)
+						<div class="hero-text-slide {{ $index === 0 ? 'active' : '' }}" data-index="{{ $index }}">
+							<h1 class="intro-title animated fadeInDown">
+								{{ $slide['title'] }}
+							</h1>
+							<p class="sub animateme fittext3 animated fadeIn">
+								{{ $slide['subtitle'] }}
+							</p>
+						</div>
+					@endforeach
+				</div>
 			@endif
-			
+
 			@if ($hideForm != '1')
 				<form id="search" name="search" action="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" method="GET">
 					<div class="row search-row animated fadeInUp">
@@ -165,8 +215,67 @@
 					</div>
 				</form>
 			@endif
-		
+
 		</div>
 	</div>
-	
+
 @endif
+
+@push('after_scripts_stack')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const heroSlider = document.getElementById('heroSlider');
+    if (!heroSlider) return;
+
+    const slides = document.querySelectorAll('.hero-slide');
+    const textSlides = document.querySelectorAll('.hero-text-slide');
+    const dots = document.querySelectorAll('.hero-dot');
+    let currentSlide = 0;
+    let slideInterval;
+    const intervalTime = 5000; // 5 seconds
+
+    function goToSlide(index) {
+        // Remove active class from all
+        slides.forEach(slide => slide.classList.remove('active'));
+        textSlides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+
+        // Add active class to current
+        if (slides[index]) slides[index].classList.add('active');
+        if (textSlides[index]) textSlides[index].classList.add('active');
+        if (dots[index]) dots[index].classList.add('active');
+
+        currentSlide = index;
+    }
+
+    function nextSlide() {
+        const next = (currentSlide + 1) % slides.length;
+        goToSlide(next);
+    }
+
+    function startSlider() {
+        slideInterval = setInterval(nextSlide, intervalTime);
+    }
+
+    function stopSlider() {
+        clearInterval(slideInterval);
+    }
+
+    // Click on dots
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            stopSlider();
+            goToSlide(index);
+            startSlider();
+        });
+    });
+
+    // Pause on hover
+    heroSlider.addEventListener('mouseenter', stopSlider);
+    heroSlider.addEventListener('mouseleave', startSlider);
+
+    // Start the slider
+    startSlider();
+});
+</script>
+@endpush
