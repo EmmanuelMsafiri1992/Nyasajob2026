@@ -65,5 +65,8 @@ class Kernel
 			$schedule->command('cache:clear')->timezone($tz)->weeklyOn(7, '6:05'); // To prevent file lock issues (Optional)
 			$schedule->command('view:clear')->timezone($tz)->weeklyOn(7, '6:00');
 		}
+
+		// Send Daily Job Digest Notifications
+		$schedule->command('jobs:send-daily-digest')->timezone($tz)->dailyAt('08:00');
 	}
 }

@@ -897,7 +897,7 @@ function parseAcceptLanguageHeader(?string $acceptLanguage = null): array
 			
 			if (isset($tmp[0]) && isset($tmp[1])) {
 				$q = str_replace('q=', '', $tmp[1]);
-				$array[$tmp[0]] = (double)$q;
+				$array[$tmp[0]] = (float)$q;
 			} else {
 				$array[$tmp[0]] = 1;
 			}
