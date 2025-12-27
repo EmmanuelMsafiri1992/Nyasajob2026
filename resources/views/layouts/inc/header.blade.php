@@ -140,13 +140,11 @@
 				</ul>
 				
 				<ul class="nav navbar-nav ms-auto navbar-right">
-					@if (config('settings.listings_list.display_browse_jobs_link'))
-						<li class="nav-item d-lg-block d-md-none d-block">
-							<a href="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" class="nav-link">
-								<i class="fa-solid fa-list"></i> {{ t('Browse Jobs') }}
-							</a>
-						</li>
-					@endif
+					<li class="nav-item">
+						<a href="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" class="nav-link">
+							<i class="fa-solid fa-briefcase"></i> Browse Jobs
+						</a>
+					</li>
 
 					{{-- Courses --}}
 					<li class="nav-item">

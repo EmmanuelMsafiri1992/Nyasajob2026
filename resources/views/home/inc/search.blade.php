@@ -46,16 +46,14 @@
 		],
 	];
 @endphp
-@if (isset($enableFormAreaCustomization) && $enableFormAreaCustomization == '1')
+@if (isset($firstSection) && !$firstSection)
+	<div class="p-0 mt-lg-4 mt-md-3 mt-3"></div>
+@endif
 
-	@if (isset($firstSection) && !$firstSection)
-		<div class="p-0 mt-lg-4 mt-md-3 mt-3"></div>
-	@endif
-
-	@php
-		$parallax = ($parallax == '1') ? ' parallax' : '';
-	@endphp
-	<div class="intro hero-slider-section{{ $hideOnMobile }}{{ $parallax }}">
+@php
+	$parallax = ($parallax == '1') ? ' parallax' : '';
+@endphp
+<div class="intro hero-slider-section{{ $hideOnMobile }}{{ $parallax }}">
 		{{-- Hero Slider --}}
 		<div class="hero-slider" id="heroSlider">
 			@foreach($heroSlides as $index => $slide)
@@ -72,6 +70,7 @@
 			@endforeach
 		</div>
 
+		
 		<div class="container text-center hero-content">
 
 			@if ($hideTitles != '1')
@@ -147,135 +146,24 @@
 								</button>
 							</div>
 						</div>
-					
-					</div>
-				</form>
-			@endif
-		
-		</div>
-	</div>
 
-@else
-	
-	@includeFirst([config('larapen.core.customizedViewPath') . 'home.inc.spacer', 'home.inc.spacer'])
-	<div class="intro only-search-bar{{ $hideOnMobile }}">
-		<div class="container text-center">
-			
-			@if ($hideForm != '1')
-				<form id="search" name="search" action="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" method="GET">
-					<div class="row search-row animated fadeInUp">
-						
-						<div class="col-md-5 col-sm-12 search-col relative mb-1 mb-xxl-0 mb-xl-0 mb-lg-0 mb-md-0">
-							<div class="search-col-inner">
-								<i class="fa-solid {{ (config('lang.direction')=='rtl') ? 'fa-angles-left' : 'fa-angles-right' }} icon-append"></i>
-								<div class="search-col-input">
-									<input class="form-control has-icon" name="q" placeholder="{{ t('what') }}" type="text" value="">
-								</div>
-							</div>
-						</div>
-						
-						<input type="hidden" id="lSearch" name="l" value="">
-						
-						<div class="col-md-5 col-sm-12 search-col relative locationicon mb-1 mb-xxl-0 mb-xl-0 mb-lg-0 mb-md-0">
-							<div class="search-col-inner">
-								<i class="fa-solid fa-location-dot icon-append"></i>
-								<div class="search-col-input">
-									@if ($displayStatesSearchTip)
-										<input class="form-control locinput input-rel searchtag-input has-icon"
-											   id="locSearch"
-											   name="location"
-											   placeholder="{{ t('where') }}"
-											   type="text"
-											   value=""
-											   data-bs-placement="top"
-											   data-bs-toggle="tooltipHover"
-											   title="{{ t('Enter a city name OR a state name with the prefix', ['prefix' => t('area')]) . t('State Name') }}"
-										>
-									@else
-										<input class="form-control locinput input-rel searchtag-input has-icon"
-											   id="locSearch"
-											   name="location"
-											   placeholder="{{ t('where') }}"
-											   type="text"
-											   value=""
-										>
-									@endif
-								</div>
-							</div>
-						</div>
-						
-						<div class="col-md-2 col-sm-12 search-col">
-							<div class="search-btn-border bg-primary">
-								<button type="submit" class="btn btn-primary btn-search btn-block btn-gradient">
-									<i class="fa-solid fa-magnifying-glass"></i> <strong>{{ t('find') }}</strong>
-								</button>
-							</div>
-						</div>
-					
 					</div>
 				</form>
+
+				{{-- Browse Listings Button --}}
+				<div class="browse-listings-wrapper mt-4">
+					<a href="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" class="btn btn-browse-listings">
+						<i class="fa-solid fa-briefcase"></i> Browse All Jobs
+					</a>
+					<a href="{{ url('companies') }}" class="btn btn-browse-companies">
+						<i class="fa-solid fa-building"></i> Browse Companies
+					</a>
+				</div>
 			@endif
 
 		</div>
 	</div>
-
-@endif
 
 @push('after_scripts_stack')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const heroSlider = document.getElementById('heroSlider');
-    if (!heroSlider) return;
-
-    const slides = document.querySelectorAll('.hero-slide');
-    const textSlides = document.querySelectorAll('.hero-text-slide');
-    const dots = document.querySelectorAll('.hero-dot');
-    let currentSlide = 0;
-    let slideInterval;
-    const intervalTime = 5000; // 5 seconds
-
-    function goToSlide(index) {
-        // Remove active class from all
-        slides.forEach(slide => slide.classList.remove('active'));
-        textSlides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
-
-        // Add active class to current
-        if (slides[index]) slides[index].classList.add('active');
-        if (textSlides[index]) textSlides[index].classList.add('active');
-        if (dots[index]) dots[index].classList.add('active');
-
-        currentSlide = index;
-    }
-
-    function nextSlide() {
-        const next = (currentSlide + 1) % slides.length;
-        goToSlide(next);
-    }
-
-    function startSlider() {
-        slideInterval = setInterval(nextSlide, intervalTime);
-    }
-
-    function stopSlider() {
-        clearInterval(slideInterval);
-    }
-
-    // Click on dots
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            stopSlider();
-            goToSlide(index);
-            startSlider();
-        });
-    });
-
-    // Pause on hover
-    heroSlider.addEventListener('mouseenter', stopSlider);
-    heroSlider.addEventListener('mouseleave', startSlider);
-
-    // Start the slider
-    startSlider();
-});
-</script>
+<script src="{{ url()->asset('dist/public/hero-slider.js') }}?v={{ time() }}"></script>
 @endpush
