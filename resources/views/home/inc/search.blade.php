@@ -165,5 +165,6 @@
 	</div>
 
 @push('after_scripts_stack')
+{{-- Hero Slider JS --}}
 <script src="{{ url()->asset('dist/public/hero-slider.js') }}?v={{ time() }}"></script>
 @endpush
