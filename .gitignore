@@ -35,8 +35,8 @@ Thumbs.db
 
 # Compiled assets
 /public/build
-/public/css
-/public/js
+# /public/css - Needed for deployment
+# /public/js - Needed for deployment
 
 
 # Testing

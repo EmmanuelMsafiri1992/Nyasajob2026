@@ -1,0 +1,131 @@
+/*
+ * Your custom CSS here...
+ */
+
+/* Hide browser scrollbar while keeping scroll functionality */
+html {
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+}
+
+html::-webkit-scrollbar {
+	display: none; /* Chrome, Safari, Opera */
+}
+
+/* Courses & Interview Tips Button Styles */
+.btn-courses,
+.btn-interview-tips {
+	padding: 10px 20px;
+	border-radius: 25px;
+	font-weight: 600;
+	font-size: 14px;
+	text-decoration: none;
+	transition: all 0.3s ease;
+	border: 2px solid transparent;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	position: relative;
+	overflow: hidden;
+}
+
+/* Courses Button - Purple/Blue Gradient */
+.btn-courses {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: #ffffff;
+	border-color: #667eea;
+}
+
+.btn-courses:hover {
+	background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+	color: #ffffff;
+}
+
+.btn-courses i {
+	font-size: 16px;
+}
+
+/* Interview Tips Button - Orange/Red Gradient */
+.btn-interview-tips {
+	background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+	color: #ffffff;
+	border-color: #f5576c;
+}
+
+.btn-interview-tips:hover {
+	background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+	color: #ffffff;
+}
+
+.btn-interview-tips i {
+	font-size: 16px;
+}
+
+/* Active/Focus States */
+.btn-courses:active,
+.btn-courses:focus {
+	background: linear-gradient(135deg, #5568d3 0%, #6a3c91 100%);
+	box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+	transform: translateY(0);
+	color: #ffffff;
+}
+
+.btn-interview-tips:active,
+.btn-interview-tips:focus {
+	background: linear-gradient(135deg, #e04558 0%, #df7fe8 100%);
+	box-shadow: 0 2px 10px rgba(245, 87, 108, 0.3);
+	transform: translateY(0);
+	color: #ffffff;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+	.btn-courses,
+	.btn-interview-tips {
+		padding: 8px 16px;
+		font-size: 13px;
+		margin-bottom: 8px;
+	}
+
+	.btn-courses i,
+	.btn-interview-tips i {
+		font-size: 14px;
+	}
+}
+
+/* Animation on load */
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.btn-courses,
+.btn-interview-tips {
+	animation: fadeInUp 0.5s ease;
+}
+
+/* Hide empty advertising containers */
+.ads-parent-responsive:empty,
+.infeed-ad:empty,
+.ads-parent-responsive:has(> .text-center:empty),
+.infeed-ad .col-12:empty {
+	display: none !important;
+	height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Hide ad containers with no actual content */
+.container:has(> .row > .ads-parent-responsive:empty),
+.container:has(> .row > .col-12.text-center:empty) {
+	display: none !important;
+}
+
