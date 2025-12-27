@@ -25,11 +25,19 @@
 	<meta charset="{{ config('larapen.core.charset', 'utf-8') }}">
 	<meta name="csrf-token" content="{{ csrf_token() }}">
 
-	{{-- Preconnect for Google Ads - Improves ad loading performance --}}
+	{{-- Preconnect for faster external resource loading --}}
+	<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="preconnect" href="https://pagead2.googlesyndication.com">
-	<link rel="preconnect" href="https://googleads.g.doubleclick.net">
-	<link rel="preconnect" href="https://www.googletagservices.com">
 	<link rel="dns-prefetch" href="https://pagead2.googlesyndication.com">
+	<link rel="dns-prefetch" href="https://googleads.g.doubleclick.net">
+
+	{{-- Preload critical CSS for faster rendering --}}
+	@if (config('lang.direction') == 'rtl')
+		<link rel="preload" href="{{ url(mix('dist/public/styles.rtl.css')) }}" as="style">
+	@else
+		<link rel="preload" href="{{ url(mix('dist/public/styles.css')) }}" as="style">
+	@endif
 	@includeFirst([config('larapen.core.customizedViewPath') . 'common.meta-robots', 'common.meta-robots'])
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="shortcut icon" href="{{ config('settings.app.favicon_url') }}">
@@ -42,9 +50,9 @@
 	{{-- ============================================================== --}}
 	{{-- GOOGLE ADSENSE - AUTO ADS (DO NOT REMOVE - OWNER MONETIZATION) --}}
 	{{-- This code is essential for website monetization. --}}
-	{{-- Added: 2024 | Owner: Nyasajob --}}
+	{{-- Added: 2024 | Owner: Nyasajob - Deferred for performance --}}
 	{{-- ============================================================== --}}
-	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6716451863337296"
+	<script async defer src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6716451863337296"
 		crossorigin="anonymous"></script>
 	{{-- ============================================================== --}}
 
@@ -74,7 +82,7 @@
 	@yield('before_styles')
 	
 	@if (config('lang.direction') == 'rtl')
-		<link href="https://fonts.googleapis.com/css?family=Cairo|Changa" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Cairo|Changa&display=swap" rel="stylesheet">
 		<link href="{{ url(mix('dist/public/styles.rtl.css')) }}" rel="stylesheet">
 	@else
 		<link href="{{ url(mix('dist/public/styles.css')) }}" rel="stylesheet">
@@ -125,11 +133,13 @@
 	
 	<script>
 		paceOptions = {
-			elements: true
+			elements: true,
+			restartOnRequestAfter: false,
+			restartOnPushState: false
 		};
 	</script>
-	<script src="{{ url()->asset('assets/plugins/pace/0.4.17/pace.min.js') }}"></script>
-	<script src="{{ url()->asset('assets/plugins/modernizr/modernizr-custom.js') }}"></script>
+	<script src="{{ url()->asset('assets/plugins/pace/0.4.17/pace.min.js') }}" defer></script>
+	<script src="{{ url()->asset('assets/plugins/modernizr/modernizr-custom.js') }}" defer></script>
 	
 	@yield('captcha_head')
 	@section('recaptcha_head')
@@ -235,6 +245,21 @@
 @endif
 
 @include('common.js.init')
+
+{{-- Native Lazy Loading for Images --}}
+<script>
+	// Add native lazy loading to all images below the fold
+	document.addEventListener('DOMContentLoaded', function() {
+		const images = document.querySelectorAll('img:not([loading])');
+		images.forEach(function(img) {
+			// Skip images in the first viewport
+			const rect = img.getBoundingClientRect();
+			if (rect.top > window.innerHeight) {
+				img.setAttribute('loading', 'lazy');
+			}
+		});
+	});
+</script>
 
 <script>
 	var countryCode = '{{ config('country.code', 0)  }}';

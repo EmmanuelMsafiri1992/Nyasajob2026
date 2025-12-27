@@ -356,3 +356,55 @@ html::-webkit-scrollbar {
 .toast-container .toast.text-bg-info {
     background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
 }
+
+/* ============================================ */
+/* NAVBAR STYLE OPTIONS                         */
+/* ============================================ */
+
+/* Gradient Navbar Style */
+.navbar.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, #6366f1 100%) !important;
+}
+
+.navbar.bg-gradient-primary .nav-link,
+.navbar.bg-gradient-primary .navbar-brand {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.navbar.bg-gradient-primary .nav-link:hover {
+    color: #ffffff !important;
+}
+
+/* Transparent Navbar Style */
+.navbar.bg-transparent {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Dark Navbar Style */
+.navbar.navbar-dark.bg-dark {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.navbar.navbar-dark .dropdown-menu {
+    background: #1a1d24;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar.navbar-dark .dropdown-item {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.navbar.navbar-dark .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+/* Minimal Navbar Style */
+.navbar.bg-white.border-0 {
+    box-shadow: none;
+}
+
+.navbar.bg-white.border-0.stuck {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}

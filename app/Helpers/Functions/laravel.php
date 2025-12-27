@@ -1235,35 +1235,122 @@ function isDarkModeEnabledForCurrentDevice(): bool
 }
 
 /**
- * Flash message notification
+ * Flash message notification with enhanced options
  *
- * @param string|null $message
- * @param string|null $level
- * @param string|null $currentUrl
- * @param \Illuminate\Http\Request|null $request
+ * @param string|null $message The notification message
+ * @param string|null $level The notification level: info, success, warning, error
+ * @param string|null $currentUrl Optional current URL
+ * @param \Illuminate\Http\Request|null $request Optional request object
+ * @param array $options Additional options:
+ *                       - title: Custom notification title
+ *                       - duration: Time in ms before auto-dismiss (0 = no auto-dismiss)
+ *                       - dismissible: Whether user can dismiss (default: true)
  * @return void
  */
 function notification(
 	?string  $message = null,
 	?string  $level = 'info',
 	?string  $currentUrl = null,
-	?Request $request = null
+	?Request $request = null,
+	array    $options = []
 ): void
 {
 	if (isFromApi($request) || isFromAjax($request)) return;
 	if (empty($message)) return;
-	
+
 	$level = !empty($level) ? $level : 'info';
+	$title = $options['title'] ?? null;
+	$duration = $options['duration'] ?? 5000;
+	$dismissible = $options['dismissible'] ?? true;
+
 	try {
 		if (isAdminPanel($currentUrl)) {
 			// Levels: success, error, warning, info
-			Alert::$level($message)->flash();
+			$alert = Alert::$level($message);
+
+			// Store additional options in session for view rendering
+			if (!empty($title) || $duration !== 5000 || !$dismissible) {
+				session()->flash('notification_options', [
+					'title' => $title,
+					'duration' => $duration,
+					'dismissible' => $dismissible,
+				]);
+			}
+
+			$alert->flash();
 		} else {
 			// Levels: info, success, error, warning
-			flash($message)->$level();
+			$flasher = flash($message);
+
+			if (!empty($title)) {
+				$flasher->important();
+			}
+
+			$flasher->$level();
+
+			// Store options for custom toast rendering
+			if (!empty($title) || $duration !== 5000 || !$dismissible) {
+				session()->flash('notification_options', [
+					'title' => $title,
+					'duration' => $duration,
+					'dismissible' => $dismissible,
+				]);
+			}
 		}
 	} catch (\Throwable $e) {
 	}
+}
+
+/**
+ * Show a success notification with optional title
+ *
+ * @param string $message
+ * @param string|null $title
+ * @param array $options
+ */
+function notifySuccess(string $message, ?string $title = null, array $options = []): void
+{
+	$options['title'] = $title ?? trans('admin.Success');
+	notification($message, 'success', null, null, $options);
+}
+
+/**
+ * Show an error notification with optional title
+ *
+ * @param string $message
+ * @param string|null $title
+ * @param array $options
+ */
+function notifyError(string $message, ?string $title = null, array $options = []): void
+{
+	$options['title'] = $title ?? trans('admin.Error');
+	notification($message, 'error', null, null, $options);
+}
+
+/**
+ * Show a warning notification with optional title
+ *
+ * @param string $message
+ * @param string|null $title
+ * @param array $options
+ */
+function notifyWarning(string $message, ?string $title = null, array $options = []): void
+{
+	$options['title'] = $title ?? trans('admin.Warning');
+	notification($message, 'warning', null, null, $options);
+}
+
+/**
+ * Show an info notification with optional title
+ *
+ * @param string $message
+ * @param string|null $title
+ * @param array $options
+ */
+function notifyInfo(string $message, ?string $title = null, array $options = []): void
+{
+	$options['title'] = $title ?? trans('admin.Info');
+	notification($message, 'info', null, null, $options);
 }
 
 /**

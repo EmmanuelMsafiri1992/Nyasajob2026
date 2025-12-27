@@ -453,9 +453,10 @@ Route::prefix('settings')
 		Route::get('{key}', 'show')->name('settings.show');
 	});
 
-// homeSections
+// homeSections - Cached for better performance
 Route::prefix('homeSections')
 	->controller(HomeSectionController::class)
+	->middleware(['cache.headers:public;max_age=3600;etag'])
 	->group(function ($router) {
 		$router->pattern('method', '[^/]+');
 		Route::get('/', 'index')->name('homeSections.index');

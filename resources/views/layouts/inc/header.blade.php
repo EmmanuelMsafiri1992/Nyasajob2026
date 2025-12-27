@@ -41,9 +41,19 @@
 	// User Menu
 	$authUser = auth()->check() ? auth()->user() : null;
 	$userMenu ??= collect();
+
+	// Navbar Style
+	$navbarStyle = config('settings.style.navbar_style', 'default');
+	$navbarClasses = match($navbarStyle) {
+		'dark' => 'navbar-dark bg-dark',
+		'transparent' => 'navbar-light bg-transparent',
+		'gradient' => 'navbar-dark bg-gradient-primary',
+		'minimal' => 'navbar-light bg-white border-0',
+		default => 'navbar-light bg-light',
+	};
 @endphp
 <div class="header">
-	<nav class="navbar fixed-top navbar-site navbar-light bg-light navbar-expand-md" role="navigation">
+	<nav class="navbar fixed-top navbar-site {{ $navbarClasses }} navbar-expand-md" role="navigation">
 		<div class="container">
 			
 			<div class="navbar-identity p-sm-0">

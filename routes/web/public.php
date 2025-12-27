@@ -98,12 +98,12 @@ Route::middleware(['auth'])
 	});
 
 
-// HOMEPAGE
+// HOMEPAGE - With response caching for better performance
 if (!doesCountriesPageCanBeHomepage()) {
-	Route::get('/', [HomeController::class, 'index']);
+	Route::middleware(['cache.response:3600'])->get('/', [HomeController::class, 'index']);
 	Route::get(dynamicRoute('routes.countries'), [CountriesController::class, 'index']);
 } else {
-	Route::get('/', [CountriesController::class, 'index']);
+	Route::middleware(['cache.response:3600'])->get('/', [CountriesController::class, 'index']);
 }
 
 

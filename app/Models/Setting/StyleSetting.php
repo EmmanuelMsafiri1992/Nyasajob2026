@@ -387,6 +387,23 @@ class StyleSetting
 			],
 			
 			[
+				'name'              => 'navbar_style',
+				'label'             => trans('admin.navbar_style_label'),
+				'type'              => 'select2_from_array',
+				'options'           => [
+					'default'     => trans('admin.navbar_style_default'),
+					'dark'        => trans('admin.navbar_style_dark'),
+					'transparent' => trans('admin.navbar_style_transparent'),
+					'gradient'    => trans('admin.navbar_style_gradient'),
+					'minimal'     => trans('admin.navbar_style_minimal'),
+				],
+				'hint'              => trans('admin.navbar_style_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			
+			[
 				'name'  => 'separator_logo',
 				'type'  => 'custom_html',
 				'value' => trans('admin.style_logo_title'),

@@ -90,6 +90,80 @@ return [
     'salary types'          => 'salary types',
     'plugin'                => 'plugin',
     'plugins'               => 'plugins',
+    'homepage_preset'       => 'homepage preset',
+    'homepage_presets'      => 'homepage presets',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Homepage Presets Language Lines
+    |--------------------------------------------------------------------------
+    */
+
+    'preset_applied_successfully' => 'Preset applied successfully!',
+    'preset_apply_failed' => 'Failed to apply preset.',
+    'confirm_apply_preset' => 'Are you sure you want to apply this preset? This will update your homepage sections.',
+    'apply' => 'Apply',
+    'default_presets_created' => 'Default presets have been created.',
+    'sections_configuration' => 'Sections Configuration',
+    'sections_config' => 'Sections Config (JSON)',
+    'sections_config_hint' => 'JSON configuration for homepage sections order and visibility',
+    'navbar_configuration' => 'Navbar Configuration',
+    'navbar_config' => 'Navbar Config (JSON)',
+    'navbar_config_hint' => 'JSON configuration for navbar style settings',
+    'is_default' => 'Default Preset',
+    
+    // Navbar Style Options
+    'navbar_style_label' => 'Navbar Style',
+    'navbar_style_hint' => 'Select the style for the navigation bar',
+    'navbar_style_default' => 'Default',
+    'navbar_style_dark' => 'Dark',
+    'navbar_style_transparent' => 'Transparent',
+    'navbar_style_gradient' => 'Gradient',
+    'navbar_style_minimal' => 'Minimal',
+
+    // Section Margin Options
+    'section_margins_title' => 'Section Spacing',
+    'margin_top_desktop' => 'Top Margin (Desktop)',
+    'margin_bottom_desktop' => 'Bottom Margin (Desktop)',
+    'margin_top_mobile' => 'Top Margin (Mobile)',
+    'margin_bottom_mobile' => 'Bottom Margin (Mobile)',
+    'margin_desktop_hint' => 'Margin in pixels for desktop screens (992px+)',
+    'margin_mobile_hint' => 'Margin in pixels for mobile screens (<992px)',
+
+    // Menu Management
+    'menu' => 'menu',
+    'menus' => 'menus',
+    'menu_item' => 'menu item',
+    'menu_items' => 'menu items',
+    'manage_items' => 'Manage Items',
+    'menu_item_title_placeholder' => 'Enter menu item title',
+    'menu_item_parent_hint' => 'Leave empty for root level item',
+    'menu_item_url_hint' => 'Full URL or leave empty if using route',
+    'menu_item_route_hint' => 'Laravel route name (optional)',
+    'menu_item_icon_hint' => 'FontAwesome class e.g. fa-solid fa-home',
+    'menu_type_link' => 'Link',
+    'menu_type_button' => 'Button',
+    'menu_type_dropdown' => 'Dropdown',
+    'menu_type_divider' => 'Divider',
+    'menu_type_text' => 'Text Only',
+    'menu_type_page' => 'Page Link',
+    'menu_type_category' => 'Category Link',
+    'visibility_conditions' => 'Visibility Conditions',
+    'auth_required' => 'Login Required',
+    'guest_only' => 'Guests Only',
+    'Header' => 'Header',
+    'Footer' => 'Footer',
+    'Sidebar' => 'Sidebar',
+    'Items' => 'Items',
+    'None' => 'None',
+    'Same Window' => 'Same Window',
+    'New Window' => 'New Window',
+    'CSS Class' => 'CSS Class',
+    'Route Name' => 'Route Name',
+    'back_to_menus' => 'Back to Menus',
+    'php_info' => 'PHP Information',
+    'system_info' => 'System Info',
+    'back' => 'Back',
 
     /*
     |--------------------------------------------------------------------------
@@ -306,6 +380,12 @@ return [
 	'download'                       => 'Download',
 	'delete_error_title'             => 'Error',
 	'delete_error_message'           => 'The backup file has NOT been deleted.',
+
+	// Notification titles
+	'Success' => 'Success',
+	'Error' => 'Error',
+	'Warning' => 'Warning',
+	'Info' => 'Information',
 	'delete_cancel_title'            => "It's ok",
 	'delete_cancel_message'          => 'The backup file has NOT been deleted.',
 	'create_confirmation_title'      => 'Backup completed',
@@ -1153,6 +1233,27 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
 	
 	'Admin panel' => 'Admin panel',
 	'Hide Links' => 'Hide Links',
+
+	// Header Settings
+	'header_visibility_options' => 'Visibility Options',
+	'show_country_flag' => 'Show Country Flag',
+	'show_country_flag_hint' => 'Show the current country flag in the header.',
+	'show_language_selector' => 'Show Language Selector',
+	'show_language_selector_hint' => 'Show the language selector dropdown in the header.',
+	'show_post_job_button' => 'Show Post Job Button',
+	'show_post_job_button_hint' => 'Show the "Post a Job" button in the header.',
+	'hide_auth_links' => 'Hide Authentication Links',
+	'hide_auth_links_hint' => 'Hide the Login and Register links from the header.',
+	'topbar_options' => 'Topbar Options',
+	'show_topbar' => 'Show Topbar',
+	'show_topbar_hint' => 'Display a topbar above the main header with contact information.',
+	'topbar_phone' => 'Topbar Phone Number',
+	'topbar_phone_hint' => 'Phone number to display in the topbar.',
+	'topbar_email' => 'Topbar Email',
+	'topbar_email_hint' => 'Email address to display in the topbar.',
+	'topbar_text' => 'Topbar Custom Text',
+	'topbar_text_hint' => 'Custom text or announcement to display in the topbar.',
+
 	'getSearchForm_html_background' => '<h3>Background</h3>',
 	'getSearchForm_background_image_hint' => 'Choose a picture from your computer.<br>You can set a background image by country in Settings &rarr; International &rarr; Countries &rarr; [Edit] &rarr; Background Image',
 	'getSearchForm_html_search_form' => '<h3>Search Form</h3>',

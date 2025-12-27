@@ -26,8 +26,11 @@ use App\Http\Controllers\Web\Admin\CurrencyController;
 use App\Http\Controllers\Web\Admin\DashboardController;
 use App\Http\Controllers\Web\Admin\FileController;
 use App\Http\Controllers\Web\Admin\HomeSectionController;
+use App\Http\Controllers\Web\Admin\HomepagePresetController;
 use App\Http\Controllers\Web\Admin\InlineRequestController;
 use App\Http\Controllers\Web\Admin\LanguageController;
+use App\Http\Controllers\Web\Admin\MenuController;
+use App\Http\Controllers\Web\Admin\MenuItemController;
 use App\Http\Controllers\Web\Admin\MetaTagController;
 use App\Http\Controllers\Web\Admin\PackageController;
 use App\Http\Controllers\Web\Admin\PageController;
@@ -79,6 +82,11 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 				Route::get('homepage/find/{method}', 'find')->where('method', '[^/]+');
 				Route::get('homepage/reset/all/{action}', 'resetAll')->where('action', 'reorder|options');
 			});
+		Route::controller(HomepagePresetController::class)
+			->group(function ($router) {
+				Route::get('homepage-presets/{id}/apply', 'apply')->where('id', '[0-9]+');
+				Route::get('homepage-presets/seed-defaults', 'seedDefaults');
+			});
 		Route::controller(LanguageController::class)
 			->group(function ($router) {
 				Route::get('languages/sync_files', 'syncFilesLines');
@@ -105,11 +113,14 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 		PanelRoutes::resource('countries/{countryCode}/admins1', SubAdmin1Controller::class);
 		PanelRoutes::resource('currencies', CurrencyController::class);
 		PanelRoutes::resource('homepage', HomeSectionController::class);
+		PanelRoutes::resource('homepage-presets', HomepagePresetController::class);
 		PanelRoutes::resource('admins1/{admin1Code}/cities', CityController::class);
 		PanelRoutes::resource('admins1/{admin1Code}/admins2', SubAdmin2Controller::class);
 		PanelRoutes::resource('admins2/{admin2Code}/cities', CityController::class);
 		PanelRoutes::resource('languages', LanguageController::class);
 		PanelRoutes::resource('meta_tags', MetaTagController::class);
+		PanelRoutes::resource('menus', MenuController::class);
+		PanelRoutes::resource('menus/{menuId}/items', MenuItemController::class);
 		PanelRoutes::resource('packages/promotion', PackageController::class);
 		PanelRoutes::resource('packages/subscription', PackageController::class);
 		PanelRoutes::resource('pages', PageController::class);
@@ -176,6 +187,7 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 		
 		// System Info
 		Route::get('system', [SystemController::class, 'systemInfo']);
+		Route::get('system/php-info', [SystemController::class, 'phpInfo']);
 	});
 
 // Files (JS, CSS, ...)

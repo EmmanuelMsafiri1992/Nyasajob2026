@@ -21,8 +21,11 @@
 	<div class="row">
 		<div class="col-12">
 			<div class="card rounded">
-				<div class="card-header">
-					<h3 class="card-title"><i class="fa-solid fa-circle-info"></i> {{ trans('admin.system') }}</h3>
+				<div class="card-header d-flex justify-content-between align-items-center">
+					<h3 class="card-title mb-0"><i class="fa-solid fa-circle-info"></i> {{ trans('admin.system') }}</h3>
+					<a href="{{ admin_url('system/php-info') }}" class="btn btn-info btn-sm">
+						<i class="fa-brands fa-php"></i> {{ trans('admin.php_info') }}
+					</a>
 				</div>
 				
 				<div class="card-body">

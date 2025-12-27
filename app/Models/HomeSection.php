@@ -223,6 +223,55 @@ class HomeSection extends BaseModel
 	| OTHER PRIVATE METHODS
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Get responsive margin fields for all sections
+	 *
+	 * @return array
+	 */
+	private function getResponsiveMarginFields(): array
+	{
+		return [
+			[
+				'name'  => 'separator_margins',
+				'type'  => 'custom_html',
+				'value' => '<hr><h5>' . trans('admin.section_margins_title') . '</h5>',
+			],
+			[
+				'name'              => 'margin_top_desktop',
+				'label'             => trans('admin.margin_top_desktop'),
+				'type'              => 'number',
+				'attributes'        => ['placeholder' => '0'],
+				'hint'              => trans('admin.margin_desktop_hint'),
+				'wrapperAttributes' => ['class' => 'col-md-3'],
+			],
+			[
+				'name'              => 'margin_bottom_desktop',
+				'label'             => trans('admin.margin_bottom_desktop'),
+				'type'              => 'number',
+				'attributes'        => ['placeholder' => '0'],
+				'hint'              => trans('admin.margin_desktop_hint'),
+				'wrapperAttributes' => ['class' => 'col-md-3'],
+			],
+			[
+				'name'              => 'margin_top_mobile',
+				'label'             => trans('admin.margin_top_mobile'),
+				'type'              => 'number',
+				'attributes'        => ['placeholder' => '0'],
+				'hint'              => trans('admin.margin_mobile_hint'),
+				'wrapperAttributes' => ['class' => 'col-md-3'],
+			],
+			[
+				'name'              => 'margin_bottom_mobile',
+				'label'             => trans('admin.margin_bottom_mobile'),
+				'type'              => 'number',
+				'attributes'        => ['placeholder' => '0'],
+				'hint'              => trans('admin.margin_mobile_hint'),
+				'wrapperAttributes' => ['class' => 'col-md-3'],
+			],
+		];
+	}
+
 	/**
 	 * Get the right Setting class
 	 *

@@ -81,6 +81,31 @@ class SystemController extends PanelController
 	}
 	
 	/**
+	 * Display PHP Information page
+	 */
+	public function phpInfo()
+	{
+		// Capture phpinfo output
+		ob_start();
+		phpinfo();
+		$phpinfo = ob_get_clean();
+
+		// Extract only the body content
+		preg_match("/<body[^>]*>(.*?)<\/body>/is", $phpinfo, $matches);
+		$phpinfoBody = $matches[1] ?? $phpinfo;
+
+		// Clean up styles for better integration
+		$phpinfoBody = preg_replace("/<style[^>]*>.*?<\/style>/is", "", $phpinfoBody);
+
+		$data = [
+			"title" => trans("admin.php_info"),
+			"phpinfo" => $phpinfoBody,
+		];
+
+		return view("admin.php-info", $data);
+	}
+
+	/**
 	 * @return array
 	 */
 	protected function getAdvancedComponents(): array

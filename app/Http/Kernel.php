@@ -121,12 +121,13 @@ class Kernel
 			'throttle'         => \Illuminate\Routing\Middleware\ThrottleRequests::class,
 			'verified'         => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 			
-			'banned.user'   => \App\Http\Middleware\BannedUser::class,
-			'install'       => \App\Http\Middleware\Install::class,
-			'installed'     => \App\Http\Middleware\Installed::class,
-			'clearance'     => \App\Http\Middleware\Clearance::class,
-			'no.http.cache' => \App\Http\Middleware\NoHttpCache::class,
-			'only.ajax'     => \App\Http\Middleware\OnlyAjax::class,
+			'banned.user'    => \App\Http\Middleware\BannedUser::class,
+			'install'        => \App\Http\Middleware\Install::class,
+			'installed'      => \App\Http\Middleware\Installed::class,
+			'clearance'      => \App\Http\Middleware\Clearance::class,
+			'no.http.cache'  => \App\Http\Middleware\NoHttpCache::class,
+			'only.ajax'      => \App\Http\Middleware\OnlyAjax::class,
+			'cache.response' => \App\Http\Middleware\CacheResponse::class,
 		]);
 		
 		/*

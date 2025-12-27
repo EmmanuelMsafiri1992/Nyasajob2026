@@ -94,6 +94,7 @@
 			"app/Helpers/Functions/plugin.php",
 			"app/Helpers/Functions/referrer.php",
 			"app/Helpers/Functions/wordpress.php",
+			"app/Helpers/Functions/menu.php",
 			"packages/larapen/captcha/src/helpers.php",
 			"packages/larapen/recaptcha/src/app/Helpers/functions.php"
 		],
