@@ -56,20 +56,25 @@ class LimitationCompliance extends Request
 		
 		// For logged-in user
 		$payment = $user->payment ?? null;
-		
+
+		// Check if user has unlimited posting (posts_limit = 0)
+		if ($user->posts_limit === 0) {
+			return $rules; // Skip limit check for unlimited users
+		}
+
 		// User without a valid & active subscription
 		if (empty($payment)) {
 			$remainingPosts = $user->remaining_posts ?? 0;
 			if ($remainingPosts <= 0) {
 				$rules['posts_limitation_compliance'] = 'required';
-				
+
 				$message = t('listings_limit_reached_with_no_subscription', ['url' => UrlGen::pricing() . '?type=subscription']);
 				if (isFromApi() && !doesRequestIsFromWebApp()) {
 					$message = strip_tags($message);
 				}
 				$this->errorMessages['posts_limitation_compliance.required'] = $message;
 			}
-			
+
 			return $rules;
 		}
 		

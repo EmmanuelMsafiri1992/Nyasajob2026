@@ -124,6 +124,7 @@ class User extends BaseUser
 		'time_zone',
 		'featured',
 		'blocked',
+		'posts_limit',
 		'closed',
 		'last_activity',
 	];
@@ -168,6 +169,7 @@ class User extends BaseUser
 			'updated_at'        => 'datetime',
 			'last_login_at'     => 'datetime',
 			'deleted_at'        => 'datetime',
+			'posts_limit'       => 'integer',
 		];
 	}
 	
@@ -619,15 +621,27 @@ class User extends BaseUser
 				if (!$this->relationLoaded('posts')) {
 					return null;
 				}
-				
-				$postsLimit = (int)config('settings.listing_form.listings_limit');
+
+				// Check for custom user posts limit
+				$userLimit = $this->posts_limit;
+
+				// If posts_limit is 0, user has unlimited posting
+				if ($userLimit === 0) {
+					return PHP_INT_MAX; // Return very large number to indicate unlimited
+				}
+
+				// Use user's custom limit if set (> 0), otherwise use global setting
+				$postsLimit = !is_null($userLimit) && $userLimit > 0
+					? (int)$userLimit
+					: (int)config('settings.listing_form.listings_limit');
+
 				try {
 					$countPosts = $this->posts->count();
 				} catch (\Throwable $e) {
 					$countPosts = 0;
 				}
 				$remainingPosts = ($postsLimit >= $countPosts) ? $postsLimit - $countPosts : 0;
-				
+
 				return (int)$remainingPosts;
 			},
 		);

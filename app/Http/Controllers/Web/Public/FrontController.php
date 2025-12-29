@@ -224,6 +224,15 @@ class FrontController extends Controller
 					'isActive'   => (request()->segment(2) == 'resumes'),
 				],
 				[
+					'name'       => t('Worker Profile'),
+					'url'        => url('account/worker-profile'),
+					'icon'       => 'fa-solid fa-user-tie',
+					'group'      => t('my_listings'),
+					'countVar'   => null,
+					'inDropdown' => true,
+					'isActive'   => (request()->segment(2) == 'worker-profile'),
+				],
+				[
 					'name'       => t('Favourite jobs'),
 					'url'        => url('account/posts/favourite'),
 					'icon'       => 'fa-solid fa-bookmark',

@@ -251,3 +251,75 @@ function userHasSuperAdminPermissions(): bool
 	
 	return false;
 }
+
+/**
+ * Check if user can view worker contact details
+ * Requires: verified employer (email + phone) with active subscription
+ *
+ * @param $user
+ * @return bool
+ */
+function canViewWorkerContactDetails($user): bool
+{
+	if (empty($user)) {
+		return false;
+	}
+
+	// Admin can always view
+	if ($user->is_admin) {
+		return true;
+	}
+
+	// Must be an employer (user_type_id = 1)
+	if ($user->user_type_id != 1) {
+		return false;
+	}
+
+	// Must have email verified
+	if (empty($user->email_verified_at)) {
+		return false;
+	}
+
+	// Must have phone verified
+	if (empty($user->phone_verified_at)) {
+		return false;
+	}
+
+	// Must have active subscription
+	$hasActiveSubscription = \App\Models\UserSubscription::where('user_id', $user->id)
+		->where('status', 'active')
+		->where('end_date', '>', now())
+		->exists();
+
+	return $hasActiveSubscription;
+}
+
+/**
+ * Check if a user is a verified employer
+ *
+ * @param $user
+ * @return bool
+ */
+function isVerifiedEmployer($user): bool
+{
+	if (empty($user)) {
+		return false;
+	}
+
+	// Must be an employer (user_type_id = 1)
+	if ($user->user_type_id != 1) {
+		return false;
+	}
+
+	// Must have email verified
+	if (empty($user->email_verified_at)) {
+		return false;
+	}
+
+	// Must have phone verified
+	if (empty($user->phone_verified_at)) {
+		return false;
+	}
+
+	return true;
+}

@@ -46,6 +46,8 @@ use App\Http\Controllers\Api\ThreadController;
 use App\Http\Controllers\Api\ThreadMessageController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserTypeController;
+use App\Http\Controllers\Api\WorkerProfileController;
+use App\Http\Controllers\Api\WorkerSkillController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -270,12 +272,38 @@ Route::prefix('resumes')
 			});
 	});
 
+// workerSkills
+Route::prefix('workerSkills')
+	->controller(WorkerSkillController::class)
+	->group(function ($router) {
+		$router->pattern('id', '[0-9]+');
+		Route::get('/', 'index')->name('workerSkills.index');
+		Route::get('{id}', 'show')->name('workerSkills.show');
+	});
+
+// workerProfiles
+Route::prefix('workerProfiles')
+	->controller(WorkerProfileController::class)
+	->group(function ($router) {
+		$router->pattern('id', '[0-9]+');
+
+		Route::get('/', 'index')->name('workerProfiles.index');
+		Route::get('{id}', 'show')->name('workerProfiles.show');
+		Route::middleware(['auth:sanctum'])
+			->group(function ($router) {
+				Route::post('/', 'store')->name('workerProfiles.store');
+				Route::put('{id}', 'update')->name('workerProfiles.update');
+				Route::delete('{id}', 'destroy')->name('workerProfiles.destroy');
+				Route::post('toggle-visibility', 'toggleVisibility')->name('workerProfiles.toggleVisibility');
+			});
+	});
+
 // posts
 Route::prefix('posts')
 	->controller(PostController::class)
 	->group(function ($router) {
 		$router->pattern('id', '[0-9]+');
-		
+
 		Route::get('/', 'index')->name('posts.index');
 		Route::get('{id}', 'show')->name('posts.show');
 		Route::post('/', 'store')->name('posts.store');
@@ -287,7 +315,7 @@ Route::prefix('posts')
 				Route::put('{id}', 'update')->name('posts.update');
 				Route::delete('{ids}', 'destroy')->name('posts.destroy');
 			});
-		
+
 		// listings - Email Address or Phone Number verification
 		$router->pattern('field', 'email|phone');
 		$router->pattern('token', '.*');

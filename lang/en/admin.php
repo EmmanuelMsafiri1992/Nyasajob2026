@@ -2421,4 +2421,11 @@ WARNING: Before changing this option, it is important to note that restrictions 
     'recruiter_company_limit_option_0' => 'Allow multiple companies (No limit)',
     'recruiter_company_limit_option_1' => 'Allow only one company per recruiter',
     'recruiter_reached_company_limit' => 'You have reached the maximum number of companies allowed for your account.',
+
+    // User Posts Limit
+    'posts_limit' => 'Posts Limit',
+    'posts_limit_default' => 'Default (use global setting)',
+    'posts_limit_unlimited' => 'Unlimited',
+    'posts' => 'posts',
+    'posts_limit_hint' => 'Set custom posting limit for this user. "Unlimited" means no restrictions (for team members).',
 ];

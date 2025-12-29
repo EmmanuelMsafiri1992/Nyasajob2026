@@ -25,6 +25,7 @@ use App\Models\City;
 use App\Models\Company;
 use App\Models\Post;
 use App\Models\User;
+use App\Models\WorkerProfile;
 
 trait SectionDataTrait
 {
@@ -459,9 +460,36 @@ trait SectionDataTrait
 				->where('slug', 'bottom')
 				->first();
 		});
-		
+
 		return [
 			'bottomAdvertising' => $bottomAdvertising,
+		];
+	}
+
+	/**
+	 * Get unskilled workers section data
+	 * Shows unskilled labor jobs on the left and available worker profiles on the right
+	 *
+	 * @param array|null $value
+	 * @return array
+	 */
+	protected function getUnskilledWorkers(?array $value = []): array
+	{
+		// Return static data for now - no database queries
+		// This ensures fast page load while we develop the feature
+		return [
+			'unskilledJobs' => [
+				'title' => $value['jobs_title'] ?? t('Unskilled Labor Jobs'),
+				'link' => url('search'),
+				'posts' => [],
+				'totalPosts' => 0,
+			],
+			'workerProfiles' => [
+				'title' => $value['profiles_title'] ?? t('Available Workers'),
+				'link' => url('workers'),
+				'profiles' => [],
+				'totalProfiles' => 0,
+			],
 		];
 	}
 }

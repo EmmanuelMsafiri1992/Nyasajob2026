@@ -57,6 +57,8 @@ use App\Http\Controllers\Web\Public\Search\UserController;
 use App\Http\Controllers\Web\Public\SitemapController;
 use App\Http\Controllers\Web\Public\SitemapsController;
 use App\Http\Controllers\Web\Public\CareerToolsController;
+use App\Http\Controllers\Web\Public\WorkerProfileController;
+use App\Http\Controllers\Web\Public\Account\WorkerProfileController as AccountWorkerProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Select Language
@@ -382,6 +384,19 @@ Route::namespace('Account')
 						Route::get('{id}/delete', 'destroy');
 						Route::post('delete', 'destroy');
 					});
+
+				// Worker Profile
+				Route::prefix('worker-profile')
+					->controller(AccountWorkerProfileController::class)
+					->group(function ($router) {
+						Route::get('/', 'index')->name('account.worker-profile');
+						Route::get('create', 'create')->name('account.worker-profile.create');
+						Route::post('/', 'store')->name('account.worker-profile.store');
+						Route::get('edit', 'edit')->name('account.worker-profile.edit');
+						Route::put('/', 'update')->name('account.worker-profile.update');
+						Route::post('toggle-visibility', 'toggleVisibility')->name('account.worker-profile.toggle');
+						Route::delete('/', 'destroy')->name('account.worker-profile.destroy');
+					});
 				
 				// Posts
 				Route::controller(PostsController::class)
@@ -529,19 +544,29 @@ Route::controller(CareerToolsController::class)
 	->group(function () {
 		// Salary Calculator
 		Route::get('salary-calculator', 'salaryCalculator')->name('salary-calculator');
-		
+
 		// Career Assessment/Quiz
 		Route::get('career-quiz', 'careerQuiz')->name('career-quiz');
 		Route::get('career-quiz/{type}', 'careerQuiz')->name('career-quiz.type');
 		Route::get('career-quiz/results/{resultId}', 'quizResults')->name('career-quiz.results');
-		
+
 		// Career Guides
 		Route::get('career-guides', 'careerGuides')->name('career-guides');
 		Route::get('career-guides/{guide:slug}', 'showCareerGuide')->name('career-guide.show');
-		
+
 		// Career Planning
 		Route::get('career-planning', 'careerPlanning')->name('career-planning')->middleware('auth');
-		
+
 		// Profile Scoring
 		Route::get('profile-scoring', 'profileScoring')->name('profile-scoring')->middleware('auth');
+	});
+
+
+// WORKER PROFILES (Public)
+Route::controller(WorkerProfileController::class)
+	->prefix('workers')
+	->group(function ($router) {
+		$router->pattern('id', '[0-9]+');
+		Route::get('/', 'index')->name('workers.index');
+		Route::get('{id}', 'show')->name('workers.show');
 	});

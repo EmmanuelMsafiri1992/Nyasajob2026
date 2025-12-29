@@ -492,9 +492,29 @@ class UserController extends PanelController
 			'wrapperAttributes' => [
 				'class' => 'col-md-6',
 			],
+		]);
+		$this->xPanel->addField([
+			'name'              => 'posts_limit',
+			'label'             => trans('admin.posts_limit'),
+			'type'              => 'select2_from_array',
+			'options'           => [
+				''    => trans('admin.posts_limit_default'),
+				'0'   => trans('admin.posts_limit_unlimited'),
+				'10'  => '10 ' . trans('admin.posts'),
+				'25'  => '25 ' . trans('admin.posts'),
+				'50'  => '50 ' . trans('admin.posts'),
+				'100' => '100 ' . trans('admin.posts'),
+				'200' => '200 ' . trans('admin.posts'),
+				'500' => '500 ' . trans('admin.posts'),
+			],
+			'allows_null'       => true,
+			'hint'              => trans('admin.posts_limit_hint'),
+			'wrapperAttributes' => [
+				'class' => 'col-md-6',
+			],
 			'newline'           => !empty($entity),
 		]);
-		
+
 		if (!empty($entity)) {
 			$emptyIp = 'N/A';
 			
