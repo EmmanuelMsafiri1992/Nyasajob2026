@@ -20,7 +20,7 @@ function checkAndDropIndex(string $tableName, string $indexName)
 			checkAndDropIndexMySql($tableName, $indexName);
 		}
 	} catch (\PDOException $e) {
-		dd($e);
+		logger()->error('Database index drop failed: ' . $e->getMessage());
 	}
 	
 	checkAndDropIndexLaravel($tableName, $indexName);

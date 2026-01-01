@@ -173,7 +173,7 @@ trait SectionDataTrait
 		}
 		
 		$postsCollection = $query->limit($maxItems)->get();
-		$totalPosts = $query->count();
+		$totalPosts = $postsCollection->count();
 		
 		// Transform posts to match expected API format
 		$posts = $postsCollection->map(function ($post) {
