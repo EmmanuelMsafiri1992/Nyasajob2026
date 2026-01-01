@@ -25,6 +25,8 @@ jobs:
             /bin/rsync -av --delete \
               --exclude='.git' \
               --exclude='.env' \
+              --exclude='.htaccess' \
+              --exclude='public/.htaccess' \
               --exclude='vendor' \
               --exclude='storage/logs/*' \
               --exclude='storage/framework/cache/*' \
