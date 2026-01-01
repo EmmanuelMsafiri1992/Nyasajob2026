@@ -11,10 +11,15 @@ trait CheckerTrait
 	 */
 	public function getPhpBinaryVersion(): ?string
 	{
+		// Check if exec() function is available (may be disabled on some servers)
+		if (!function_exists('exec') || $this->isExecDisabled()) {
+			return PHP_VERSION;
+		}
+
 		$phpBinaryPath = $this->getPhpBinaryPath();
 
 		if (empty($phpBinaryPath)) {
-			return null;
+			return PHP_VERSION;
 		}
 
 		try {
@@ -26,11 +31,24 @@ trait CheckerTrait
 					return $matches[1];
 				}
 			}
-		} catch (\Exception $e) {
-			return null;
+		} catch (\Throwable $e) {
+			return PHP_VERSION;
 		}
 
 		return PHP_VERSION;
+	}
+
+	/**
+	 * Check if exec() function is disabled
+	 */
+	private function isExecDisabled(): bool
+	{
+		$disabledFunctions = ini_get('disable_functions');
+		if (!empty($disabledFunctions)) {
+			$disabledArray = array_map('trim', explode(',', $disabledFunctions));
+			return in_array('exec', $disabledArray);
+		}
+		return false;
 	}
 
 	/**
