@@ -30,11 +30,8 @@ class Authenticate extends Middleware
 	protected function redirectTo($request)
 	{
 		if (!$request->expectsJson()) {
-			if (isAdminPanel()) {
-				return admin_uri('login');
-			} else {
-				return UrlGen::loginPath();
-			}
+			// Always redirect to the main login page (admins use same login as users)
+			return UrlGen::loginPath();
 		}
 	}
 }

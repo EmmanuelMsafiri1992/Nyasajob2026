@@ -135,7 +135,7 @@ class LoginController extends FrontController
 			}
 			
 			if (data_get($data, 'extra.isAdmin')) {
-				return redirect()->to(admin_uri());
+				return redirect()->to(admin_uri('dashboard'));
 			}
 			
 			return redirect()->intended($this->redirectTo);
