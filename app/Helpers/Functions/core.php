@@ -218,9 +218,10 @@ function dmUrl(Collection|string|null $country, ?string $path = '/', bool $force
 	$langCode = getCountryMainLangCode($country);
 	
 	// Get the country main language path
+	// Only use the locale path if the language is available in the system
 	$langPath = '';
 	if ($forceLocale) {
-		if (!empty($langCode)) {
+		if (!empty($langCode) && isAvailableLang($langCode)) {
 			$parseUrl = mb_parse_url(url($path));
 			if (!isset($parseUrl['path']) || ($parseUrl['path'] == '/')) {
 				$langPath = '/locale/' . $langCode;

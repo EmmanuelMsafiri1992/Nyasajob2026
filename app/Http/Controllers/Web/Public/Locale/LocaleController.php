@@ -63,20 +63,17 @@ class LocaleController extends FrontController
 		
 		// If the Country selection parameter is filled,
 		// Redirect to the homepage with it (without the eventual 'from' parameter)
-		// If not, redirect the user to the previous page
+		// The country parameter MUST be kept so GetLocalization middleware can process it
+		// and save the country to session on the next request
 		if (request()->filled('country')) {
 			$queryString = '';
 			$queryArray = request()->except(['from']);
 			if (!empty($queryArray)) {
 				$queryString = '?' . Arr::query($queryArray);
 			}
-			
+
 			$nextUrl = request()->root() . '/' . $queryString;
-			
-			if (config('settings.localization.auto_detect_language') == 'from_country') {
-				$nextUrl = $this->removeCountrySelectionParameter($nextUrl);
-			}
-			
+
 			return redirect()->to($nextUrl);
 		} else {
 			$previousUrl = url()->previous();
