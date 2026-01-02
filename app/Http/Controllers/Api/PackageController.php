@@ -46,11 +46,12 @@ class PackageController extends BaseController
 		// Cache control
 		$this->updateCachingParameters();
 		
-		// Cache ID
+		// Cache ID - include user's currency for converted prices
 		$cacheEmbedId = request()->filled('embed') ? '.embed.' . request()->input('embed') : '';
 		$cacheFiltersId = '.filters.' . $type;
 		$cachePageId = '.page.' . $page . '.of.' . $this->perPage;
-		$cacheId = 'packages.' . $cacheEmbedId . $cacheFiltersId . $cachePageId . $locale;
+		$userCurrency = config('country.currency', 'USD');
+		$cacheId = 'packages.' . $cacheEmbedId . $cacheFiltersId . $cachePageId . $locale . '.currency.' . $userCurrency;
 		
 		// Cached Query
 		$packages = cache()->remember($cacheId, $this->cacheExpiration, function () use ($isPromoting, $isSubscripting, $embed) {

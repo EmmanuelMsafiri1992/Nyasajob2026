@@ -47,7 +47,9 @@ class PackageResource extends JsonResource
 		$entity['description_array'] = $this->description_array ?? [];
 		$entity['description_string'] = $this->description_string ?? null;
 		$entity['price_formatted'] = $this->price_formatted ?? null;
-		
+		$entity['converted_price'] = $this->converted_price ?? null;
+		$entity['converted_price_formatted'] = $this->converted_price_formatted ?? null;
+
 		$embed = explode(',', request()->input('embed'));
 		
 		if (in_array('currency', $embed)) {
