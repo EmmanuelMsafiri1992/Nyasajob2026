@@ -1118,6 +1118,8 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
 	'show_tips_messages_hint' => 'e.g. SITENAME is also available in your country: COUNTRY. Starting good deals here now!<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Login for faster access to the best deals. Click here if you do not have an account.',
 	'Allow users to pay the Packages in their country currency' => 'Allow users to pay the Packages in their country currency',
 	'package_currency_by_country_hint' => 'You have to create a list of <a href="#admin#/package" target="_blank">Packages</a> per currency (using currencies of activated countries) to allow users to pay the Packages in their local currency.<br>NOTE: By unchecking this field all the lists of Packages (without currency matching) will be shown during the payment process.',
+	'auto_currency_conversion_label' => 'Auto Currency Conversion',
+	'auto_currency_conversion_hint' => 'Automatically convert package prices to the user\'s local currency based on their location. Prices are converted using live exchange rates. Note: Actual payment will still be processed in the package\'s base currency (e.g., USD).',
 	'Hide Payment Plugins Logos' => 'Hide Payment Plugins Logos',
 	'setup' => 'setup',
 	'general setting' => 'general setting',

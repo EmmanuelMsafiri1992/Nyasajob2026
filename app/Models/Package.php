@@ -53,6 +53,8 @@ class Package extends BaseModel
 		'description_array',
 		'description_string',
 		'price_formatted',
+		'converted_price',
+		'converted_price_formatted',
 	];
 	
 	/**
@@ -245,12 +247,50 @@ class Package extends BaseModel
 						$currency = $this->currency->toArray();
 					}
 				}
-				
+
 				return Num::money($this->price, $currency);
 			},
 		);
 	}
-	
+
+	protected function convertedPrice(): Attribute
+	{
+		return Attribute::make(
+			get: function ($value) {
+				// Check if auto currency conversion is enabled
+				if (!config('settings.localization.auto_currency_conversion')) {
+					return $this->price;
+				}
+
+				$userCurrency = config('country.currency', 'USD');
+				$packageCurrency = $this->currency_code ?? 'USD';
+
+				// If same currency, no conversion needed
+				if ($userCurrency === $packageCurrency) {
+					return $this->price;
+				}
+
+				return convertCurrency((float)$this->price, $userCurrency, $packageCurrency);
+			},
+		);
+	}
+
+	protected function convertedPriceFormatted(): Attribute
+	{
+		return Attribute::make(
+			get: function ($value) {
+				// Check if auto currency conversion is enabled
+				if (!config('settings.localization.auto_currency_conversion')) {
+					return $this->price_formatted;
+				}
+
+				$userCurrency = config('country.currency', 'USD');
+
+				return formatLocalPrice($this->converted_price, $userCurrency);
+			},
+		);
+	}
+
 	/*
 	|--------------------------------------------------------------------------
 	| OTHER PRIVATE METHODS

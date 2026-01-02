@@ -25,7 +25,7 @@
 						<div class="card-body">
 							<h1 class="text-center">
 								<span class="fw-bold">
-									{{ data_get($package, 'price_formatted') }}
+									{{ data_get($package, 'converted_price_formatted') ?? data_get($package, 'price_formatted') }}
 								</span>
 								<small class="text-muted">/ {{ data_get($package, 'interval', '--') }}</small>
 							</h1>

@@ -69,7 +69,10 @@ class LocalizationSetting
 				$oldShowLanguagesFlags = config('settings.app.show_languages_flags', '0');
 				$value['show_languages_flags'] = $oldShowLanguagesFlags;
 			}
-			
+			if (!array_key_exists('auto_currency_conversion', $value)) {
+				$value['auto_currency_conversion'] = '0';
+			}
+
 		}
 		
 		return $value;
@@ -420,6 +423,15 @@ class LocalizationSetting
 				'label'             => trans('admin.Allow users to pay the Packages in their country currency'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.package_currency_by_country_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'auto_currency_conversion',
+				'label'             => trans('admin.auto_currency_conversion_label'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.auto_currency_conversion_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],

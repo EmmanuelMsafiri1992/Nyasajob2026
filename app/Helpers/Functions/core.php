@@ -2862,3 +2862,72 @@ function isSubscriptionAvailable(): bool
 {
 	return (bool)version_compare(getCurrentVersion(), '13.0.0', '>=');
 }
+
+/**
+ * Convert price from base currency to user's local currency
+ *
+ * @param float $amount
+ * @param string|null $targetCurrency
+ * @param string|null $baseCurrency
+ * @return float
+ */
+function convertCurrency(float $amount, ?string $targetCurrency = null, ?string $baseCurrency = null): float
+{
+	$targetCurrency = $targetCurrency ?? config('country.currency', 'USD');
+
+	$exchangeService = app(\App\Services\ExchangeRateService::class);
+
+	return $exchangeService->convert($amount, $targetCurrency, $baseCurrency);
+}
+
+/**
+ * Format price in user's local currency
+ *
+ * @param float $amount
+ * @param string|null $currencyCode
+ * @return string
+ */
+function formatLocalPrice(float $amount, ?string $currencyCode = null): string
+{
+	$currencyCode = $currencyCode ?? config('country.currency', 'USD');
+
+	$exchangeService = app(\App\Services\ExchangeRateService::class);
+
+	return $exchangeService->formatPrice($amount, $currencyCode);
+}
+
+/**
+ * Convert and format price from base currency to user's local currency
+ *
+ * @param float $amount
+ * @param string|null $baseCurrency
+ * @return string
+ */
+function convertAndFormatPrice(float $amount, ?string $baseCurrency = null): string
+{
+	$targetCurrency = config('country.currency', 'USD');
+
+	$convertedAmount = convertCurrency($amount, $targetCurrency, $baseCurrency);
+
+	return formatLocalPrice($convertedAmount, $targetCurrency);
+}
+
+/**
+ * Get the user's current currency code based on their location
+ *
+ * @return string
+ */
+function getUserCurrency(): string
+{
+	return config('country.currency', 'USD');
+}
+
+/**
+ * Check if currency conversion is enabled
+ *
+ * @return bool
+ */
+function isCurrencyConversionEnabled(): bool
+{
+	return (bool)config('settings.localization.auto_currency_conversion', false);
+}
