@@ -10,14 +10,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Fix localization settings to have correct values:
-        // - auto_currency_conversion: Enable it (was disabled)
-        // - default_country_code: MW (Malawi)
-        // - ipinfo_token: Add the token for GeoIP detection
+        // Enable auto currency conversion in localization settings
         DB::table('settings')
             ->where('key', 'localization')
             ->update([
-                'value' => DB::raw("JSON_SET(value, '$.auto_currency_conversion', '1', '$.ipinfo_token', '5a4772cacdb39f', '$.default_country_code', 'MW')")
+                'value' => DB::raw("JSON_SET(value, '$.auto_currency_conversion', '1')")
             ]);
     }
 
@@ -26,11 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Revert to original values if needed
         DB::table('settings')
             ->where('key', 'localization')
             ->update([
-                'value' => DB::raw("JSON_SET(value, '$.default_country_code', 'US')")
+                'value' => DB::raw("JSON_SET(value, '$.auto_currency_conversion', '0')")
             ]);
     }
 };
