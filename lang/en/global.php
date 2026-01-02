@@ -930,6 +930,7 @@ return [
 	'facebook_ads_included' => '{0}Facebook Ads (:number day)|{1}Facebook Ads (:number day)|[2,*]Facebook Ads (:number days)',
 	'google_ads_included' => '{0}Google Ads (:number day)|{1}Google Ads (:number day)|[2,*]Google Ads (:number days)',
 	'x_ads_included' => '{0}X Ads (:number day)|{1}X Ads (:number day)|[2,*]X Ads (:number days)',
+	'twitter_ads_included' => '{0}Twitter Ads (:number day)|{1}Twitter Ads (:number day)|[2,*]Twitter Ads (:number days)',
 	'linkedin_ads_included' => '{0}LinkedIn Ads (:number day)|{1}LinkedIn Ads (:number day)|[2,*]LinkedIn Ads (:number days)',
 	'package_pictures_limit' => 'Up to :limit images allowed',
 	'get_started' => 'Get started',
