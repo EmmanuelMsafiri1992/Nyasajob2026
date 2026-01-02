@@ -36,6 +36,34 @@ Route::get('storage/app/default/{filename}', function ($filename) {
     abort(404);
 });
 
+// Debug route for country switching - TEMPORARY
+Route::middleware(['installed', 'web'])->get('debug-country', function () {
+    $countryHelper = new \App\Helpers\Localization\Country();
+
+    return response()->json([
+        'request_info' => [
+            'country_query_param' => request()->query('country'),
+            'full_url' => request()->fullUrl(),
+        ],
+        'session_info' => [
+            'countryCode_in_session' => session('countryCode'),
+        ],
+        'detected_country' => [
+            'code' => config('country.code'),
+            'name' => config('country.name'),
+            'currency' => config('country.currency'),
+        ],
+        'ip_country' => [
+            'code' => config('ipCountry.code'),
+            'name' => config('ipCountry.name'),
+        ],
+        'is_za_available' => $countryHelper->isAvailableCountry('ZA'),
+        'is_mw_available' => $countryHelper->isAvailableCountry('MW'),
+        'generated_switch_url' => dmUrl('ZA', '/', true, true),
+        'countries_count' => \App\Helpers\Localization\Country::getCountries()->count(),
+    ]);
+});
+
 Route::middleware(['installed'])
 	->group(function () {
 		// admin
