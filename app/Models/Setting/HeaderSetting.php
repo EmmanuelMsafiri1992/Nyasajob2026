@@ -29,6 +29,9 @@ class HeaderSetting
 			$value['show_country_flag'] = '1';
 			$value['show_language_selector'] = '1';
 			$value['show_post_job_button'] = '1';
+			$value['show_browse_jobs_tab'] = '1';
+			$value['show_courses_tab'] = '1';
+			$value['show_advertise_tab'] = '1';
 
 		} else {
 
@@ -40,6 +43,15 @@ class HeaderSetting
 			}
 			if (!array_key_exists('show_post_job_button', $value)) {
 				$value['show_post_job_button'] = '1';
+			}
+			if (!array_key_exists('show_browse_jobs_tab', $value)) {
+				$value['show_browse_jobs_tab'] = '1';
+			}
+			if (!array_key_exists('show_courses_tab', $value)) {
+				$value['show_courses_tab'] = '1';
+			}
+			if (!array_key_exists('show_advertise_tab', $value)) {
+				$value['show_advertise_tab'] = '1';
 			}
 
 		}
@@ -92,6 +104,38 @@ class HeaderSetting
 				'label'             => trans('admin.hide_auth_links'),
 				'type'              => 'checkbox_switch',
 				'hint'              => trans('admin.hide_auth_links_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'  => 'navigation_tabs_separator',
+				'type'  => 'custom_html',
+				'value' => '<h4 class="mb-3 mt-4">' . trans('admin.navigation_tabs_options') . '</h4>',
+			],
+			[
+				'name'              => 'show_browse_jobs_tab',
+				'label'             => trans('admin.show_browse_jobs_tab'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.show_browse_jobs_tab_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'show_courses_tab',
+				'label'             => trans('admin.show_courses_tab'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.show_courses_tab_hint'),
+				'wrapperAttributes' => [
+					'class' => 'col-md-6',
+				],
+			],
+			[
+				'name'              => 'show_advertise_tab',
+				'label'             => trans('admin.show_advertise_tab'),
+				'type'              => 'checkbox_switch',
+				'hint'              => trans('admin.show_advertise_tab_hint'),
 				'wrapperAttributes' => [
 					'class' => 'col-md-6',
 				],

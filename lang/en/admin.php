@@ -1244,6 +1244,15 @@ e.g. With MAMP (on Mac OS) we can done it like that: <code>DB_DUMP_BINARY_PATH=/
 	'show_post_job_button_hint' => 'Show the "Post a Job" button in the header.',
 	'hide_auth_links' => 'Hide Authentication Links',
 	'hide_auth_links_hint' => 'Hide the Login and Register links from the header.',
+	// Navigation Tabs Options
+	'navigation_tabs_options' => 'Navigation Tabs',
+	'show_browse_jobs_tab' => 'Show Browse Jobs Tab',
+	'show_browse_jobs_tab_hint' => 'Show the "Browse Jobs" tab in the header navigation.',
+	'show_courses_tab' => 'Show Courses Tab',
+	'show_courses_tab_hint' => 'Show the "Courses" tab in the header navigation.',
+	'show_advertise_tab' => 'Show Advertise Tab',
+	'show_advertise_tab_hint' => 'Show the "Advertise" tab in the header navigation.',
+
 	'topbar_options' => 'Topbar Options',
 	'show_topbar' => 'Show Topbar',
 	'show_topbar_hint' => 'Display a topbar above the main header with contact information.',

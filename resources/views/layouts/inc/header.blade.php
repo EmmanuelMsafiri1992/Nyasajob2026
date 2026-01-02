@@ -140,25 +140,32 @@
 				</ul>
 				
 				<ul class="nav navbar-nav ms-auto navbar-right">
-					<li class="nav-item">
-						<a href="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" class="nav-link">
-							<i class="fa-solid fa-briefcase"></i> Browse Jobs
-						</a>
-					</li>
+					{{-- Browse Jobs --}}
+					@if (config('settings.header.show_browse_jobs_tab') != '0')
+						<li class="nav-item">
+							<a href="{{ \App\Helpers\UrlGen::searchWithoutQuery() }}" class="nav-link">
+								<i class="fa-solid fa-briefcase"></i> Browse Jobs
+							</a>
+						</li>
+					@endif
 
 					{{-- Courses --}}
-					<li class="nav-item">
-						<a href="{{ url('/courses') }}" class="nav-link">
-							<i class="fa-solid fa-graduation-cap"></i> {{ t('Courses') }}
-						</a>
-					</li>
+					@if (config('settings.header.show_courses_tab') != '0')
+						<li class="nav-item">
+							<a href="{{ url('/courses') }}" class="nav-link">
+								<i class="fa-solid fa-graduation-cap"></i> {{ t('Courses') }}
+							</a>
+						</li>
+					@endif
 
 					{{-- Advertise With Us --}}
-					<li class="nav-item">
-						<a href="{{ route('advertise.index') }}" class="nav-link">
-							<i class="fa-solid fa-bullhorn"></i> {{ t('Advertise') }}
-						</a>
-					</li>
+					@if (config('settings.header.show_advertise_tab') != '0')
+						<li class="nav-item">
+							<a href="{{ route('advertise.index') }}" class="nav-link">
+								<i class="fa-solid fa-bullhorn"></i> {{ t('Advertise') }}
+							</a>
+						</li>
+					@endif
 
 					@if (empty($authUser))
 						<li class="nav-item dropdown no-arrow open-on-hover d-md-block d-sm-none d-none">
