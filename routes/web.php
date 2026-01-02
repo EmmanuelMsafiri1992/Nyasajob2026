@@ -36,6 +36,82 @@ Route::get('storage/app/default/{filename}', function ($filename) {
     abort(404);
 });
 
+// Debug route for currency conversion - TEMPORARY
+Route::middleware(['installed', 'web'])->get('debug-currency', function () {
+    $package = \App\Models\Package::withoutGlobalScopes()->with('currency')->where('price', '>', 0)->first();
+
+    // Test GeoIP directly
+    $geoIpData = null;
+    $geoIpError = null;
+    try {
+        $geoIp = new \App\Helpers\GeoIP();
+        $geoIpData = $geoIp->getData();
+    } catch (\Exception $e) {
+        $geoIpError = $e->getMessage();
+    }
+
+    // Test exchange rate service
+    $exchangeTest = null;
+    try {
+        $service = new \App\Services\ExchangeRateService();
+        $exchangeTest = [
+            'mwk_rate' => $service->getRate('MWK', 'USD'),
+            'converted_50_usd_to_mwk' => $service->convert(50, 'MWK', 'USD'),
+        ];
+    } catch (\Exception $e) {
+        $exchangeTest = ['error' => $e->getMessage()];
+    }
+
+    // Test the Package accessor directly
+    $packageTest = null;
+    if ($package) {
+        // Manually set currency to test
+        $originalCurrency = config('country.currency');
+        config()->set('country.currency', 'MWK');
+
+        // Force reload the model to get fresh accessor values
+        $freshPackage = \App\Models\Package::withoutGlobalScopes()->with('currency')->find($package->id);
+
+        $packageTest = [
+            'name' => $freshPackage->name,
+            'price' => $freshPackage->price,
+            'currency_code' => $freshPackage->currency_code,
+            'converted_price_with_mwk_forced' => $freshPackage->converted_price,
+            'converted_price_formatted_with_mwk_forced' => $freshPackage->converted_price_formatted,
+        ];
+
+        // Restore original
+        config()->set('country.currency', $originalCurrency);
+    }
+
+    return response()->json([
+        'localization_settings' => [
+            'auto_currency_conversion' => config('settings.localization.auto_currency_conversion'),
+            'geoip_activation' => config('settings.localization.geoip_activation'),
+            'geoip_driver' => config('settings.localization.geoip_driver'),
+            'ipinfo_token_set' => !empty(config('settings.localization.ipinfo_token')),
+            'default_country_code' => config('settings.localization.default_country_code'),
+        ],
+        'geoip_config' => [
+            'driver' => config('geoip.default'),
+            'ipinfo_token_set' => !empty(config('geoip.drivers.ipinfo.token')),
+        ],
+        'detected_country' => [
+            'code' => config('country.code'),
+            'name' => config('country.name'),
+            'currency' => config('country.currency'),
+        ],
+        'geoip_result' => $geoIpData,
+        'geoip_error' => $geoIpError,
+        'user_ip' => request()->ip(),
+        'exchange_service_test' => $exchangeTest,
+        'package_test_with_forced_mwk' => $packageTest,
+        'migration_check' => [
+            'hint' => 'If default_country_code is US, migration may not have run',
+        ],
+    ]);
+});
+
 Route::middleware(['installed'])
 	->group(function () {
 		// admin
