@@ -121,7 +121,8 @@ trait ConfigTrait
 				foreach ($settings as $setting) {
 					if (is_array($setting->value) && count($setting->value) > 0) {
 						foreach ($setting->value as $subKey => $value) {
-							if (!empty($value)) {
+							// Use strict check to allow '0' values (for checkbox toggles)
+							if ($value !== null && $value !== '') {
 								config()->set('settings.' . $setting->key . '.' . $subKey, $value);
 							}
 						}
