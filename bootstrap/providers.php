@@ -10,6 +10,7 @@ return [
 	App\Providers\PluginServiceProvider::class,
 	App\Providers\MacroServiceProvider::class,
 	App\Providers\ExtensionServiceProvider::class,
+	App\Providers\RssFeedServiceProvider::class,
 	
 	Larapen\TextToImage\TextToImageServiceProvider::class,
 	Larapen\LaravelMetaTags\MetaTagsServiceProvider::class,

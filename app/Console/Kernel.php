@@ -68,5 +68,40 @@ class Kernel
 
 		// Send Daily Job Digest Notifications
 		$schedule->command('jobs:send-daily-digest')->timezone($tz)->dailyAt('08:00');
+
+		// =============================================
+		// RSS Feed Job Aggregation Scheduled Commands
+		// =============================================
+
+		// Fetch RSS feeds every 3 hours (staggered to avoid peak traffic)
+		// Limit to 10 sources per run to prevent server overload
+		$schedule->command('rss:fetch --limit=10')
+			->timezone($tz)
+			->everyThreeHours()
+			->withoutOverlapping()
+			->runInBackground();
+
+		// Process staged items every 4 hours
+		// Clean descriptions, resolve locations, infer categories
+		$schedule->command('rss:process --limit=200')
+			->timezone($tz)
+			->everyFourHours()
+			->withoutOverlapping()
+			->runInBackground();
+
+		// Import approved items every 2 hours with auto-approve
+		// This imports jobs directly without manual review
+		$schedule->command('rss:import --limit=100 --auto-approve')
+			->timezone($tz)
+			->everyTwoHours()
+			->withoutOverlapping()
+			->runInBackground();
+
+		// Weekly cleanup - remove old staged items and logs
+		// Run on Sundays at 4:00 AM to minimize impact
+		$schedule->command('rss:cleanup --days=30 --log-days=90')
+			->timezone($tz)
+			->weeklyOn(0, '04:00')
+			->runInBackground();
 	}
 }

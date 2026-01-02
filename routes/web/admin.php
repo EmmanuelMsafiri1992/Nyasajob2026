@@ -50,6 +50,10 @@ use App\Http\Controllers\Web\Admin\SubAdmin1Controller;
 use App\Http\Controllers\Web\Admin\SubAdmin2Controller;
 use App\Http\Controllers\Web\Admin\SystemController;
 use App\Http\Controllers\Web\Admin\UserController;
+use App\Http\Controllers\Web\Admin\JobFeedSourceController;
+use App\Http\Controllers\Web\Admin\JobFeedStagedController;
+use App\Http\Controllers\Web\Admin\JobFeedLogController;
+use App\Http\Controllers\Web\Admin\JobFeedDashboardController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes hidden - return 404 to hide admin panel existence
@@ -188,6 +192,30 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 		// System Info
 		Route::get('system', [SystemController::class, 'systemInfo']);
 		Route::get('system/php-info', [SystemController::class, 'phpInfo']);
+
+		// Job Feed Aggregation Routes
+		Route::prefix('job-feeds')->group(function () {
+			// Dashboard
+			Route::get('dashboard', [JobFeedDashboardController::class, 'index']);
+
+			// Feed Sources
+			Route::get('sources/{id}/test-fetch', [JobFeedSourceController::class, 'testFetch'])
+				->where('id', '[0-9]+');
+			PanelRoutes::resource('sources', JobFeedSourceController::class);
+
+			// Staged Jobs
+			Route::post('staged/bulk-approve', [JobFeedStagedController::class, 'bulkApprove']);
+			Route::post('staged/bulk-reject', [JobFeedStagedController::class, 'bulkReject']);
+			Route::post('staged/bulk-import', [JobFeedStagedController::class, 'bulkImport']);
+			Route::get('staged/{id}/process', [JobFeedStagedController::class, 'process'])
+				->where('id', '[0-9]+');
+			Route::get('staged/{id}/import', [JobFeedStagedController::class, 'import'])
+				->where('id', '[0-9]+');
+			PanelRoutes::resource('staged', JobFeedStagedController::class);
+
+			// Fetch Logs
+			PanelRoutes::resource('logs', JobFeedLogController::class);
+		});
 	});
 
 // Files (JS, CSS, ...)

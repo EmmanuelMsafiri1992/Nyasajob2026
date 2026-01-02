@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
 				->namespace('App\Http\Controllers\Api')
 				->prefix('api')
 				->group(base_path('routes/api.php'));
-			
+
 			// web
 			Route::middleware('web')
 				->namespace('App\Http\Controllers\Web')

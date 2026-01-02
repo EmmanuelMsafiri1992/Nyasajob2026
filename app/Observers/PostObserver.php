@@ -43,6 +43,11 @@ class PostObserver
 	 */
 	public function created(Post $post)
 	{
+		// Skip admin notifications for aggregated posts (RSS feeds, etc.)
+		if (!empty($post->partner) && $post->partner === 'rss_aggregator') {
+			return;
+		}
+
 		// Send Admin Notification Email
 		if (config('settings.mail.admin_notification') == '1') {
 			try {
@@ -172,6 +177,11 @@ class PostObserver
 	 */
 	private function sendNotification(Post $post)
 	{
+		// Skip notifications for aggregated posts (RSS feeds, etc.)
+		if (!empty($post->partner) && $post->partner === 'rss_aggregator') {
+			return;
+		}
+
 		try {
 			if ($post->wasRecentlyCreated) {
 				// verified

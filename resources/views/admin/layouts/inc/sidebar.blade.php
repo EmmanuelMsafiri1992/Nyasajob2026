@@ -172,6 +172,41 @@
 							</a>
 						</li>
 					@endif
+
+					@if (userHasSuperAdminPermissions())
+						<li class="sidebar-item">
+							<a href="#" class="sidebar-link has-arrow waves-effect waves-dark">
+								<i data-feather="rss" class="feather-icon"></i> <span class="hide-menu">RSS Feeds</span>
+							</a>
+							<ul aria-expanded="false" class="collapse first-level">
+								<li class="sidebar-item">
+									<a href="{{ admin_url('job-feeds/dashboard') }}" class="sidebar-link">
+										<i class="mdi mdi-adjust"></i>
+										<span class="hide-menu">Dashboard</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="{{ admin_url('job-feeds/sources') }}" class="sidebar-link">
+										<i class="mdi mdi-adjust"></i>
+										<span class="hide-menu">Feed Sources</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="{{ admin_url('job-feeds/staged') }}" class="sidebar-link">
+										<i class="mdi mdi-adjust"></i>
+										<span class="hide-menu">Staged Jobs</span>
+									</a>
+								</li>
+								<li class="sidebar-item">
+									<a href="{{ admin_url('job-feeds/logs') }}" class="sidebar-link">
+										<i class="mdi mdi-adjust"></i>
+										<span class="hide-menu">Fetch Logs</span>
+									</a>
+								</li>
+							</ul>
+						</li>
+					@endif
+
 					{!! $pluginsMenu !!}
 					
 					{{-- ======================================= --}}
