@@ -92,6 +92,10 @@ return [
     'plugins'               => 'plugins',
     'homepage_preset'       => 'homepage preset',
     'homepage_presets'      => 'homepage presets',
+    'feed_source'           => 'feed source',
+    'feed_sources'          => 'feed sources',
+    'api_credential'        => 'API credential',
+    'api_credentials'       => 'API credentials',
 
     /*
     |--------------------------------------------------------------------------

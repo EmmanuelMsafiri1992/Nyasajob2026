@@ -203,6 +203,12 @@
 										<span class="hide-menu">Fetch Logs</span>
 									</a>
 								</li>
+								<li class="sidebar-item">
+									<a href="{{ admin_url('api-credentials/setup') }}" class="sidebar-link">
+										<i class="mdi mdi-key-variant"></i>
+										<span class="hide-menu">API Credentials</span>
+									</a>
+								</li>
 							</ul>
 						</li>
 					@endif

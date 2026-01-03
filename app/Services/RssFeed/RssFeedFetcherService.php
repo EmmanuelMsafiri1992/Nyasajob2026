@@ -7,6 +7,9 @@ use App\Models\JobFeedLog;
 use App\Models\JobFeedStagedItem;
 use App\Models\Country;
 use App\Models\Post;
+use App\Services\RssFeed\ApiFetchers\AdzunaFetcher;
+use App\Services\RssFeed\ApiFetchers\JoobleFetcher;
+use App\Services\RssFeed\ApiFetchers\CareerjetFetcher;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -41,23 +44,28 @@ class RssFeedFetcherService
             // Update last fetched timestamp
             $source->update(['last_fetched_at' => now()]);
 
-            // Fetch RSS content
-            $response = Http::timeout($this->timeout)
-                ->retry($this->maxRetries, 500)
-                ->withHeaders([
-                    'User-Agent' => 'NyasaJob RSS Aggregator/1.0 (+https://nyasajob.com)',
-                    'Accept' => 'application/rss+xml, application/atom+xml, application/xml, text/xml, application/json',
-                ])
-                ->get($source->feed_url);
+            // Check if this is an API-based source
+            if ($this->isApiFeedFormat($source->feed_format)) {
+                $items = $this->fetchFromApi($source);
+            } else {
+                // Fetch RSS content
+                $response = Http::timeout($this->timeout)
+                    ->retry($this->maxRetries, 500)
+                    ->withHeaders([
+                        'User-Agent' => 'NyasaJob RSS Aggregator/1.0 (+https://nyasajob.com)',
+                        'Accept' => 'application/rss+xml, application/atom+xml, application/xml, text/xml, application/json',
+                    ])
+                    ->get($source->feed_url);
 
-            if (!$response->successful()) {
-                throw new \Exception("HTTP {$response->status()}: Failed to fetch feed");
+                if (!$response->successful()) {
+                    throw new \Exception("HTTP {$response->status()}: Failed to fetch feed");
+                }
+
+                $content = $response->body();
+
+                // Parse feed based on format
+                $items = $this->parseFeed($content, $source->feed_format);
             }
-
-            $content = $response->body();
-
-            // Parse feed based on format
-            $items = $this->parseFeed($content, $source->feed_format);
 
             // Process items
             $result = $this->processItems($items, $source);
@@ -96,6 +104,29 @@ class RssFeedFetcherService
         $log->save();
 
         return $log;
+    }
+
+    /**
+     * Check if the feed format is API-based
+     */
+    protected function isApiFeedFormat(string $format): bool
+    {
+        return in_array($format, ['api_adzuna', 'api_jooble', 'api_careerjet']);
+    }
+
+    /**
+     * Fetch jobs from an API-based source
+     */
+    protected function fetchFromApi(JobFeedSource $source): array
+    {
+        $fetcher = match ($source->feed_format) {
+            'api_adzuna' => app(AdzunaFetcher::class),
+            'api_jooble' => app(JoobleFetcher::class),
+            'api_careerjet' => app(CareerjetFetcher::class),
+            default => throw new \Exception("Unknown API feed format: {$source->feed_format}"),
+        };
+
+        return $fetcher->fetch($source, $source->max_items_per_fetch ?? 50);
     }
 
     /**

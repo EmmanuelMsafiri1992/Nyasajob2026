@@ -54,6 +54,7 @@ use App\Http\Controllers\Web\Admin\JobFeedSourceController;
 use App\Http\Controllers\Web\Admin\JobFeedStagedController;
 use App\Http\Controllers\Web\Admin\JobFeedLogController;
 use App\Http\Controllers\Web\Admin\JobFeedDashboardController;
+use App\Http\Controllers\Web\Admin\ApiCredentialController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes hidden - return 404 to hide admin panel existence
@@ -216,6 +217,15 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 			// Fetch Logs
 			PanelRoutes::resource('logs', JobFeedLogController::class);
 		});
+
+		// API Credentials Management
+		Route::prefix('api-credentials')->group(function () {
+			Route::get('setup', [ApiCredentialController::class, 'setup_page']);
+			Route::post('setup', [ApiCredentialController::class, 'save_credentials']);
+			Route::get('{id}/test', [ApiCredentialController::class, 'test'])
+				->where('id', '[0-9]+');
+		});
+		PanelRoutes::resource('api-credentials', ApiCredentialController::class);
 	});
 
 // Files (JS, CSS, ...)

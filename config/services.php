@@ -107,5 +107,26 @@ return [
 	'googlemaps' => [
 		'key' => null, //-> for Google Map JavaScript & Embeded
 	],
-	
+
+	/*
+	 * Job Board APIs
+	 */
+	'adzuna' => [
+		'app_id' => env('ADZUNA_APP_ID'),
+		'app_key' => env('ADZUNA_APP_KEY'),
+		'base_url' => 'https://api.adzuna.com/v1/api/jobs',
+		// Supported countries: gb, us, au, at, br, ca, de, fr, in, it, nl, nz, pl, ru, sg, za
+		'countries' => ['gb', 'us', 'au', 'at', 'br', 'ca', 'de', 'fr', 'in', 'it', 'nl', 'nz', 'pl', 'sg', 'za'],
+	],
+
+	'jooble' => [
+		'api_key' => env('JOOBLE_API_KEY'),
+		'base_url' => 'https://jooble.org/api',
+	],
+
+	'careerjet' => [
+		'affiliate_id' => env('CAREERJET_AFFILIATE_ID'),
+		'base_url' => 'http://public.api.careerjet.net/search',
+	],
+
 ];
