@@ -47,4 +47,10 @@ jobs:
             php artisan optimize:clear
             php artisan view:cache
 
+            # Fix RSS feed data - extract company names from titles
+            php artisan rss:process --fix-companies --limit=1000 2>/dev/null || true
+
+            # Clear country distribution cache so jobs go to countries that need them
+            php artisan cache:forget countries_needing_jobs 2>/dev/null || true
+
             echo "Deployment completed: $(date)"

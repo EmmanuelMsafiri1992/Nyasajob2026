@@ -92,11 +92,26 @@ class JobDataCleanerService
         // Remove HTML comments
         $clean = preg_replace('/<!--.*?-->/s', '', $clean);
 
+        // Remove embedded logo images at the start (WeWorkRemotely embeds these)
+        $clean = preg_replace('#^\s*<img[^>]+>\s*#i', '', $clean);
+
+        // Remove "To apply:" links at the end (often duplicated)
+        $clean = preg_replace('#<p>\s*<strong>To apply:</strong>.*?</p>#si', '', $clean);
+
+        // Remove footer links
+        $clean = preg_replace('#<p>.*?weworkremotely\.com.*?</p>#si', '', $clean);
+
+        // Remove "Headquarters:" and "URL:" prefix blocks (they clutter the description)
+        $clean = preg_replace('#<p>\s*<strong>Headquarters:</strong>.*?</p>#si', '', $clean);
+
         // Decode HTML entities
         $clean = html_entity_decode($clean, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // Strip disallowed HTML tags but keep allowed ones
         $clean = strip_tags($clean, '<' . implode('><', $this->allowedTags) . '>');
+
+        // Clean up common cruft
+        $clean = $this->removeDescriptionCruft($clean, $title, $company);
 
         // Convert line breaks to proper HTML
         $clean = $this->formatParagraphs($clean);
@@ -105,6 +120,10 @@ class JobDataCleanerService
         $clean = preg_replace('/\s+/', ' ', $clean);
         $clean = preg_replace('/(<br\s*\/?>\s*){3,}/i', '<br><br>', $clean);
         $clean = preg_replace('/(<p>\s*<\/p>\s*)+/', '', $clean);
+
+        // Remove non-breaking spaces
+        $clean = str_replace(['&nbsp;', "\xC2\xA0"], ' ', $clean);
+        $clean = preg_replace('/\s+/', ' ', $clean);
 
         // Ensure minimum content length
         $textLength = mb_strlen(strip_tags($clean));
@@ -116,6 +135,44 @@ class JobDataCleanerService
         $clean = $this->addSeoStructure($clean, $title, $company);
 
         return trim($clean);
+    }
+
+    /**
+     * Remove common cruft from descriptions
+     */
+    protected function removeDescriptionCruft(string $description, ?string $title, ?string $company): string
+    {
+        // Remove title if it appears at the start of description (duplication)
+        if ($title) {
+            $escapedTitle = preg_quote($title, '#');
+            $description = preg_replace("#^\s*{$escapedTitle}\s*#i", '', $description);
+            $description = preg_replace("#<strong>\s*{$escapedTitle}\s*</strong>#i", '', $description);
+            $description = preg_replace("#<b>\s*{$escapedTitle}\s*</b>#i", '', $description);
+            $description = preg_replace("#<h[1-6]>\s*{$escapedTitle}\s*</h[1-6]>#i", '', $description);
+        }
+
+        // Remove company name if it appears at the start (duplication)
+        if ($company) {
+            $escapedCompany = preg_quote($company, '#');
+            $description = preg_replace("#^\s*{$escapedCompany}\s*[-:]\s*#i", '', $description);
+        }
+
+        // Remove common job board footer text
+        $cruftPatterns = [
+            '#LI-Remote#i',
+            '#LI-Hybrid#i',
+            '#LI-Onsite#i',
+            '#LI-[A-Z]{2}[0-9]?#',
+            'This job was posted by.*',
+            'Apply now at.*',
+            'Click here to apply.*',
+        ];
+
+        foreach ($cruftPatterns as $pattern) {
+            $description = preg_replace("#{$pattern}#si", '', $description);
+        }
+
+        return trim($description);
     }
 
     /**

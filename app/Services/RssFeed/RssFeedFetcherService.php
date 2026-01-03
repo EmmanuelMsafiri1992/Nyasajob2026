@@ -5,9 +5,12 @@ namespace App\Services\RssFeed;
 use App\Models\JobFeedSource;
 use App\Models\JobFeedLog;
 use App\Models\JobFeedStagedItem;
+use App\Models\Country;
+use App\Models\Post;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use SimpleXMLElement;
 
@@ -16,6 +19,12 @@ class RssFeedFetcherService
     protected int $timeout = 30;
     protected int $maxRetries = 3;
     protected int $maxAgeDays = 7;
+
+    /**
+     * Country codes that need jobs (prioritized for distribution)
+     * Will be populated dynamically based on job counts
+     */
+    protected array $countriesNeedingJobs = [];
 
     /**
      * Fetch jobs from a feed source
@@ -181,18 +190,169 @@ class RssFeedFetcherService
     protected function normalizeRssItem(SimpleXMLElement $item): array
     {
         $pubDate = (string)($item->pubDate ?? $item->date ?? '');
+        $rawTitle = trim((string)$item->title);
+
+        // Extract company name and clean title
+        // Many feeds use format "Company: Job Title" or "Company - Job Title"
+        $titleData = $this->parseCompanyFromTitle($rawTitle);
+        $cleanTitle = $titleData['title'];
+        $company = $titleData['company'];
+
+        // If company not in title, try author/dc:creator
+        if (empty($company)) {
+            $company = trim((string)($item->author ?? $item->{'dc:creator'} ?? ''));
+        }
+
+        // Extract logo URL from media:content or other sources
+        $logoUrl = $this->extractLogoUrl($item);
+
+        // Extract location from multiple possible fields
+        $location = $this->extractLocation($item);
+
+        // Extract region/country info for better country detection
+        $region = trim((string)($item->region ?? ''));
+        $country = trim((string)($item->country ?? ''));
+        $state = trim((string)($item->state ?? ''));
 
         return [
             'id' => (string)($item->guid ?? $item->link ?? md5((string)$item->title)),
-            'title' => trim((string)$item->title),
+            'title' => $cleanTitle,
             'description' => trim((string)($item->description ?? $item->{'content:encoded'} ?? '')),
             'url' => trim((string)$item->link),
-            'company' => trim((string)($item->author ?? $item->{'dc:creator'} ?? '')),
-            'location' => trim((string)($item->{'job:location'} ?? $item->location ?? '')),
+            'company' => $company,
+            'company_logo_url' => $logoUrl,
+            'location' => $location,
+            'region' => $region,
+            'country' => $country,
+            'state' => $state,
             'salary' => trim((string)($item->{'job:salary'} ?? '')),
             'published_at' => $pubDate ? $this->parseDate($pubDate) : null,
             'categories' => $this->extractCategories($item),
         ];
+    }
+
+    /**
+     * Parse company name from title
+     * Handles formats like "Company: Job Title" or "Company - Job Title"
+     */
+    protected function parseCompanyFromTitle(string $title): array
+    {
+        $company = '';
+        $cleanTitle = $title;
+
+        // Try colon separator first (most common: "Company: Job Title")
+        if (preg_match('/^([^:]+):\s*(.+)$/u', $title, $matches)) {
+            $potentialCompany = trim($matches[1]);
+            $potentialTitle = trim($matches[2]);
+
+            // Only use if company part is reasonable length and title is meaningful
+            if (mb_strlen($potentialCompany) >= 2 &&
+                mb_strlen($potentialCompany) <= 100 &&
+                mb_strlen($potentialTitle) >= 5) {
+                $company = $potentialCompany;
+                $cleanTitle = $potentialTitle;
+            }
+        }
+        // Try dash separator with spaces (" - ")
+        elseif (preg_match('/^([^-]+)\s+-\s+(.+)$/u', $title, $matches)) {
+            $potentialCompany = trim($matches[1]);
+            $potentialTitle = trim($matches[2]);
+
+            if (mb_strlen($potentialCompany) >= 2 &&
+                mb_strlen($potentialCompany) <= 100 &&
+                mb_strlen($potentialTitle) >= 5) {
+                $company = $potentialCompany;
+                $cleanTitle = $potentialTitle;
+            }
+        }
+
+        return [
+            'company' => $company,
+            'title' => $cleanTitle,
+        ];
+    }
+
+    /**
+     * Extract logo URL from RSS item
+     */
+    protected function extractLogoUrl(SimpleXMLElement $item): ?string
+    {
+        // Try media:content namespace (WeWorkRemotely uses this)
+        $namespaces = $item->getNamespaces(true);
+
+        if (isset($namespaces['media'])) {
+            $media = $item->children($namespaces['media']);
+            if (isset($media->content)) {
+                $url = (string)$media->content->attributes()->url;
+                if (!empty($url)) {
+                    return $url;
+                }
+            }
+        }
+
+        // Try enclosure (common RSS media attachment)
+        if (isset($item->enclosure)) {
+            $type = (string)$item->enclosure->attributes()->type;
+            if (str_starts_with($type, 'image/')) {
+                return (string)$item->enclosure->attributes()->url;
+            }
+        }
+
+        // Try image element
+        if (isset($item->image)) {
+            $url = (string)($item->image->url ?? $item->image);
+            if (!empty($url)) {
+                return $url;
+            }
+        }
+
+        // Try to extract logo from description (some feeds embed it)
+        $description = (string)($item->description ?? '');
+        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i', $description, $matches)) {
+            $imgUrl = $matches[1];
+            // Only use if it looks like a logo (contains "logo" in path or is small)
+            if (stripos($imgUrl, 'logo') !== false) {
+                return $imgUrl;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract location from multiple possible RSS fields
+     */
+    protected function extractLocation(SimpleXMLElement $item): string
+    {
+        // Priority order for location fields
+        $locationFields = [
+            $item->{'job:location'} ?? null,
+            $item->location ?? null,
+            $item->region ?? null,
+        ];
+
+        foreach ($locationFields as $field) {
+            if ($field !== null) {
+                $location = trim((string)$field);
+                if (!empty($location) && $location !== 'Anywhere in the World') {
+                    return $location;
+                }
+            }
+        }
+
+        // Combine state and region if available
+        $state = trim((string)($item->state ?? ''));
+        $region = trim((string)($item->region ?? ''));
+
+        if (!empty($state) && !empty($region) && $state !== $region) {
+            return "{$state}, {$region}";
+        }
+
+        if (!empty($state)) {
+            return $state;
+        }
+
+        return 'Remote';
     }
 
     /**
@@ -208,13 +368,32 @@ class RssFeedFetcherService
             }
         }
 
+        $rawTitle = trim((string)$entry->title);
+        $titleData = $this->parseCompanyFromTitle($rawTitle);
+        $cleanTitle = $titleData['title'];
+        $company = $titleData['company'];
+
+        if (empty($company)) {
+            $company = trim((string)($entry->author->name ?? ''));
+        }
+
+        // Try to get logo from entry
+        $logoUrl = null;
+        if (isset($entry->logo)) {
+            $logoUrl = trim((string)$entry->logo);
+        }
+
         return [
             'id' => (string)($entry->id ?? $link ?? md5((string)$entry->title)),
-            'title' => trim((string)$entry->title),
+            'title' => $cleanTitle,
             'description' => trim((string)($entry->content ?? $entry->summary ?? '')),
             'url' => $link,
-            'company' => trim((string)($entry->author->name ?? '')),
-            'location' => '',
+            'company' => $company,
+            'company_logo_url' => $logoUrl,
+            'location' => 'Remote',
+            'region' => '',
+            'country' => '',
+            'state' => '',
             'salary' => '',
             'published_at' => $this->parseDate((string)($entry->published ?? $entry->updated ?? '')),
             'categories' => [],
@@ -226,13 +405,26 @@ class RssFeedFetcherService
      */
     protected function normalizeJsonItem(array $item): array
     {
+        $rawTitle = trim($item['title'] ?? '');
+        $titleData = $this->parseCompanyFromTitle($rawTitle);
+        $cleanTitle = $titleData['title'];
+        $company = $titleData['company'];
+
+        if (empty($company)) {
+            $company = trim($item['author']['name'] ?? $item['company'] ?? '');
+        }
+
         return [
             'id' => $item['id'] ?? $item['url'] ?? md5($item['title'] ?? ''),
-            'title' => trim($item['title'] ?? ''),
+            'title' => $cleanTitle,
             'description' => trim($item['content_html'] ?? $item['content_text'] ?? $item['description'] ?? ''),
             'url' => trim($item['url'] ?? $item['external_url'] ?? ''),
-            'company' => trim($item['author']['name'] ?? $item['company'] ?? ''),
-            'location' => trim($item['location'] ?? ''),
+            'company' => $company,
+            'company_logo_url' => $item['company_logo'] ?? $item['logo'] ?? $item['image'] ?? null,
+            'location' => trim($item['location'] ?? 'Remote'),
+            'region' => $item['region'] ?? '',
+            'country' => $item['country'] ?? '',
+            'state' => $item['state'] ?? '',
             'salary' => trim($item['salary'] ?? ''),
             'published_at' => $this->parseDate($item['date_published'] ?? $item['date'] ?? ''),
             'categories' => $item['tags'] ?? [],
@@ -254,6 +446,11 @@ class RssFeedFetcherService
 
         $maxItems = $source->max_items_per_fetch;
         $processed = 0;
+
+        // Load countries needing jobs for distribution (only for global feeds)
+        if (empty($source->country_code)) {
+            $this->loadCountriesNeedingJobs();
+        }
 
         foreach ($items as $item) {
             if ($processed >= $maxItems) {
@@ -287,8 +484,8 @@ class RssFeedFetcherService
                     continue;
                 }
 
-                // Determine country code - default to MW (Malawi) for global feeds
-                $countryCode = $source->country_code ?? config('settings.localization.default_country_code', 'MW');
+                // Determine country code intelligently
+                $countryCode = $this->determineCountryCode($source, $item);
 
                 // Create staged item
                 JobFeedStagedItem::create([
@@ -298,6 +495,7 @@ class RssFeedFetcherService
                     'title' => substr($item['title'], 0, 191),
                     'raw_description' => $item['description'],
                     'company_name' => substr($item['company'], 0, 200) ?: null,
+                    'company_logo_url' => isset($item['company_logo_url']) ? substr($item['company_logo_url'], 0, 500) : null,
                     'location_raw' => substr($item['location'], 0, 255) ?: 'Remote',
                     'country_code' => $countryCode,
                     'category_id' => $source->category_id,
@@ -323,6 +521,203 @@ class RssFeedFetcherService
         }
 
         return $result;
+    }
+
+    /**
+     * Determine the best country code for a job item
+     */
+    protected function determineCountryCode(JobFeedSource $source, array $item): string
+    {
+        // If source has a specific country, use it
+        if (!empty($source->country_code)) {
+            return $source->country_code;
+        }
+
+        // Try to detect country from item's location/region data
+        $detectedCountry = $this->detectCountryFromItem($item);
+        if ($detectedCountry) {
+            return $detectedCountry;
+        }
+
+        // For global/remote jobs, distribute to countries that need jobs most
+        return $this->getCountryNeedingJobs();
+    }
+
+    /**
+     * Try to detect country from item's location data
+     */
+    protected function detectCountryFromItem(array $item): ?string
+    {
+        // Map of common location strings to country codes
+        $locationToCountry = [
+            'united states' => 'US',
+            'usa' => 'US',
+            'u.s.a' => 'US',
+            'us' => 'US',
+            'united kingdom' => 'GB',
+            'uk' => 'GB',
+            'england' => 'GB',
+            'canada' => 'CA',
+            'germany' => 'DE',
+            'france' => 'FR',
+            'australia' => 'AU',
+            'india' => 'IN',
+            'netherlands' => 'NL',
+            'spain' => 'ES',
+            'italy' => 'IT',
+            'brazil' => 'BR',
+            'mexico' => 'MX',
+            'japan' => 'JP',
+            'south africa' => 'ZA',
+            'nigeria' => 'NG',
+            'kenya' => 'KE',
+            'ghana' => 'GH',
+            'egypt' => 'EG',
+            'malawi' => 'MW',
+            'zambia' => 'ZM',
+            'zimbabwe' => 'ZW',
+            'tanzania' => 'TZ',
+            'uganda' => 'UG',
+            'rwanda' => 'RW',
+            'ethiopia' => 'ET',
+            'morocco' => 'MA',
+            'algeria' => 'DZ',
+            'tunisia' => 'TN',
+            'senegal' => 'SN',
+            'ivory coast' => 'CI',
+            'cameroon' => 'CM',
+            'angola' => 'AO',
+            'mozambique' => 'MZ',
+            'botswana' => 'BW',
+            'namibia' => 'NA',
+            'singapore' => 'SG',
+            'philippines' => 'PH',
+            'indonesia' => 'ID',
+            'malaysia' => 'MY',
+            'vietnam' => 'VN',
+            'thailand' => 'TH',
+            'pakistan' => 'PK',
+            'bangladesh' => 'BD',
+            'ireland' => 'IE',
+            'poland' => 'PL',
+            'portugal' => 'PT',
+            'sweden' => 'SE',
+            'norway' => 'NO',
+            'denmark' => 'DK',
+            'finland' => 'FI',
+            'switzerland' => 'CH',
+            'austria' => 'AT',
+            'belgium' => 'BE',
+            'czech republic' => 'CZ',
+            'romania' => 'RO',
+            'hungary' => 'HU',
+            'ukraine' => 'UA',
+            'argentina' => 'AR',
+            'chile' => 'CL',
+            'colombia' => 'CO',
+            'peru' => 'PE',
+            'israel' => 'IL',
+            'uae' => 'AE',
+            'dubai' => 'AE',
+            'saudi arabia' => 'SA',
+            'qatar' => 'QA',
+            'new zealand' => 'NZ',
+            'california' => 'US',
+            'new york' => 'US',
+            'texas' => 'US',
+            'florida' => 'US',
+            'london' => 'GB',
+            'berlin' => 'DE',
+            'paris' => 'FR',
+            'toronto' => 'CA',
+            'sydney' => 'AU',
+            'dublin' => 'IE',
+        ];
+
+        // Check location, region, state, country fields
+        $fieldsToCheck = ['location', 'region', 'state', 'country'];
+
+        foreach ($fieldsToCheck as $field) {
+            if (!empty($item[$field])) {
+                $locationLower = mb_strtolower(trim($item[$field]));
+
+                // Skip generic remote indicators
+                if (in_array($locationLower, ['remote', 'anywhere', 'worldwide', 'global', 'anywhere in the world', ''])) {
+                    continue;
+                }
+
+                foreach ($locationToCountry as $location => $code) {
+                    if (str_contains($locationLower, $location)) {
+                        return $code;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Load countries that need jobs (have zero or few jobs)
+     */
+    protected function loadCountriesNeedingJobs(): void
+    {
+        $cacheKey = 'countries_needing_jobs';
+
+        $this->countriesNeedingJobs = Cache::remember($cacheKey, 3600, function () {
+            // Get job counts per country
+            $jobCounts = Post::query()
+                ->select('country_code', DB::raw('COUNT(*) as job_count'))
+                ->where('created_at', '>=', now()->subDays(30))
+                ->groupBy('country_code')
+                ->pluck('job_count', 'country_code')
+                ->toArray();
+
+            // Get all active countries
+            $allCountries = Country::withoutGlobalScopes()
+                ->where('active', 1)
+                ->pluck('code')
+                ->toArray();
+
+            // Sort countries by job count (ascending) - countries with zero/few jobs first
+            $countriesWithScores = [];
+            foreach ($allCountries as $code) {
+                $jobCount = $jobCounts[$code] ?? 0;
+                $countriesWithScores[$code] = $jobCount;
+            }
+
+            // Sort by job count (ascending)
+            asort($countriesWithScores);
+
+            // Return array of country codes prioritized by need
+            return array_keys($countriesWithScores);
+        });
+    }
+
+    /**
+     * Get a country that needs jobs (rotating through those with fewest jobs)
+     */
+    protected function getCountryNeedingJobs(): string
+    {
+        if (empty($this->countriesNeedingJobs)) {
+            return config('settings.localization.default_country_code', 'MW');
+        }
+
+        // Use a rotating index to distribute jobs
+        static $index = 0;
+
+        // Get country from the prioritized list (countries with fewer jobs are earlier in list)
+        // Focus on first 50 countries (those with fewest jobs)
+        $priorityCountries = array_slice($this->countriesNeedingJobs, 0, 50);
+
+        if (empty($priorityCountries)) {
+            return config('settings.localization.default_country_code', 'MW');
+        }
+
+        $country = $priorityCountries[$index % count($priorityCountries)];
+        $index++;
+
+        return $country;
     }
 
     /**

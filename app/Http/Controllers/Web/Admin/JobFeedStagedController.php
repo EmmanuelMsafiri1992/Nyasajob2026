@@ -73,14 +73,14 @@ class JobFeedStagedController extends PanelController
             'name' => 'title',
             'label' => 'Job Title',
             'type' => 'text',
-            'limit' => 50,
+            'limit' => 60,
         ]);
 
         $this->xPanel->addColumn([
-            'name' => 'company_name',
+            'name' => 'company_display',
             'label' => 'Company',
-            'type' => 'text',
-            'limit' => 25,
+            'type' => 'model_function',
+            'function_name' => 'getCompanyDisplayHtml',
         ]);
 
         $this->xPanel->addColumn([
@@ -124,14 +124,22 @@ class JobFeedStagedController extends PanelController
             'name' => 'company_name',
             'label' => 'Company',
             'type' => 'text',
-            'wrapperAttributes' => ['class' => 'col-md-6'],
+            'wrapperAttributes' => ['class' => 'col-md-4'],
+        ]);
+
+        $this->xPanel->addField([
+            'name' => 'company_logo_url',
+            'label' => 'Company Logo URL',
+            'type' => 'text',
+            'hint' => 'URL to company logo image',
+            'wrapperAttributes' => ['class' => 'col-md-4'],
         ]);
 
         $this->xPanel->addField([
             'name' => 'location_raw',
             'label' => 'Location',
             'type' => 'text',
-            'wrapperAttributes' => ['class' => 'col-md-6'],
+            'wrapperAttributes' => ['class' => 'col-md-4'],
         ]);
 
         $this->xPanel->addField([

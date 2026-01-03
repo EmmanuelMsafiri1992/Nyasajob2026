@@ -235,6 +235,24 @@ class JobFeedStagedItem extends Model
         return $this->source_name;
     }
 
+    public function getCompanyDisplayHtml(): string
+    {
+        $html = '';
+        $companyName = $this->company_name ?: 'Various Employers';
+
+        // Add logo if available
+        if (!empty($this->company_logo_url)) {
+            $logoUrl = htmlspecialchars($this->company_logo_url, ENT_QUOTES);
+            $html .= '<img src="' . $logoUrl . '" alt="Logo" style="width:24px;height:24px;object-fit:contain;margin-right:8px;vertical-align:middle;border-radius:4px;">';
+        }
+
+        $html .= '<span title="' . htmlspecialchars($companyName, ENT_QUOTES) . '">';
+        $html .= htmlspecialchars(mb_strlen($companyName) > 25 ? mb_substr($companyName, 0, 23) . '...' : $companyName);
+        $html .= '</span>';
+
+        return $html;
+    }
+
     public function importButton(): string
     {
         if ($this->status === 'imported') {
