@@ -50,7 +50,22 @@ jobs:
             # Fix RSS feed data - extract company names from titles
             php artisan rss:process --fix-companies --limit=1000 2>/dev/null || true
 
-            # Clear country distribution cache so jobs go to countries that need them
+            # Assign correct countries based on location data
+            php artisan rss:process --redistribute --limit=1000 2>/dev/null || true
+
+            # Re-process staged items to clean descriptions
+            php artisan rss:process --status=approved --all --limit=500 2>/dev/null || true
+
+            # Fix database auto-increment and disable broken feeds
+            php artisan tinker --execute="
+              DB::statement('ALTER TABLE job_feed_sources MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+              DB::statement('ALTER TABLE job_feed_logs MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+              DB::table('job_feed_sources')->where('name', 'LIKE', 'Indeed%')->update(['status' => 'paused']);
+              DB::table('job_feed_sources')->whereIn('name', ['Working Nomads', 'Authentic Jobs', 'Remote.co'])->update(['status' => 'paused']);
+              echo 'Database fixes applied';
+            " 2>/dev/null || true
+
+            # Clear caches
             php artisan cache:forget countries_needing_jobs 2>/dev/null || true
 
             echo "Deployment completed: $(date)"
