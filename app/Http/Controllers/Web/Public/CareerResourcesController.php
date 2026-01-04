@@ -156,30 +156,38 @@ class CareerResourcesController extends FrontController
      */
     protected function getSalaryByCategory(): array
     {
-        return Cache::remember('salary_by_category', 3600, function () {
-            return DB::table('posts')
+        return Cache::remember('salary_by_category_' . app()->getLocale(), 3600, function () {
+            $results = DB::table('posts')
                 ->join('categories', 'posts.category_id', '=', 'categories.id')
                 ->select(
+                    'categories.id',
                     'categories.name',
-                    DB::raw('AVG(CASE WHEN salary_min > 0 THEN salary_min ELSE salary_max END) as avg_salary'),
+                    DB::raw('AVG(CASE WHEN posts.salary_min > 0 THEN posts.salary_min ELSE posts.salary_max END) as avg_salary'),
                     DB::raw('COUNT(*) as job_count')
                 )
                 ->where(function ($q) {
-                    $q->where('salary_min', '>', 0)
-                        ->orWhere('salary_max', '>', 0);
+                    $q->where('posts.salary_min', '>', 0)
+                        ->orWhere('posts.salary_max', '>', 0);
                 })
                 ->groupBy('categories.id', 'categories.name')
                 ->orderByDesc('avg_salary')
                 ->limit(10)
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'name' => $item->name,
-                        'salary' => round($item->avg_salary),
-                        'jobs' => $item->job_count,
-                    ];
-                })
-                ->toArray();
+                ->get();
+
+            return $results->map(function ($item) {
+                // Parse translatable name - get current locale or English fallback
+                $name = $item->name;
+                if (is_string($name) && str_starts_with($name, '{')) {
+                    $decoded = json_decode($name, true);
+                    $locale = app()->getLocale();
+                    $name = $decoded[$locale] ?? $decoded['en'] ?? $name;
+                }
+                return [
+                    'name' => $name,
+                    'salary' => round($item->avg_salary),
+                    'jobs' => $item->job_count,
+                ];
+            })->toArray();
         });
     }
 
@@ -188,30 +196,38 @@ class CareerResourcesController extends FrontController
      */
     protected function getSalaryByLocation(): array
     {
-        return Cache::remember('salary_by_location', 3600, function () {
-            return DB::table('posts')
+        return Cache::remember('salary_by_location_' . app()->getLocale(), 3600, function () {
+            $results = DB::table('posts')
                 ->join('cities', 'posts.city_id', '=', 'cities.id')
                 ->select(
+                    'cities.id',
                     'cities.name',
-                    DB::raw('AVG(CASE WHEN salary_min > 0 THEN salary_min ELSE salary_max END) as avg_salary'),
+                    DB::raw('AVG(CASE WHEN posts.salary_min > 0 THEN posts.salary_min ELSE posts.salary_max END) as avg_salary'),
                     DB::raw('COUNT(*) as job_count')
                 )
                 ->where(function ($q) {
-                    $q->where('salary_min', '>', 0)
-                        ->orWhere('salary_max', '>', 0);
+                    $q->where('posts.salary_min', '>', 0)
+                        ->orWhere('posts.salary_max', '>', 0);
                 })
                 ->groupBy('cities.id', 'cities.name')
                 ->orderByDesc('avg_salary')
                 ->limit(10)
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'name' => $item->name,
-                        'salary' => round($item->avg_salary),
-                        'jobs' => $item->job_count,
-                    ];
-                })
-                ->toArray();
+                ->get();
+
+            return $results->map(function ($item) {
+                // Parse translatable name - get current locale or English fallback
+                $name = $item->name;
+                if (is_string($name) && str_starts_with($name, '{')) {
+                    $decoded = json_decode($name, true);
+                    $locale = app()->getLocale();
+                    $name = $decoded[$locale] ?? $decoded['en'] ?? $name;
+                }
+                return [
+                    'name' => $name,
+                    'salary' => round($item->avg_salary),
+                    'jobs' => $item->job_count,
+                ];
+            })->toArray();
         });
     }
 
