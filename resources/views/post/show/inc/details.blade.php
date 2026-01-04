@@ -162,7 +162,7 @@
 		{{-- External Application URL (for RSS-imported jobs) --}}
 		@if (!empty(data_get($post, 'application_url')))
 			<a class="btn btn-primary" href="{{ data_get($post, 'application_url') }}" target="_blank" rel="noopener noreferrer">
-				<i class="fa-solid fa-paper-plane"></i> {{ t('Apply Now') }}
+				<i class="fa-solid fa-paper-plane"></i> Apply Now
 			</a>
 		@endif
 
