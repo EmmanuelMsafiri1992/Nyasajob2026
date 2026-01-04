@@ -37,6 +37,15 @@ jobs:
               ./ $DEPLOYPATH/
 
             chmod 755 $DEPLOYPATH
+
+            # Create required storage directories
+            mkdir -p $DEPLOYPATH/storage/framework/cache/data
+            mkdir -p $DEPLOYPATH/storage/framework/sessions
+            mkdir -p $DEPLOYPATH/storage/framework/views
+            mkdir -p $DEPLOYPATH/storage/logs
+            mkdir -p $DEPLOYPATH/bootstrap/cache
+
+            # Set permissions
             chmod -R 775 $DEPLOYPATH/storage $DEPLOYPATH/bootstrap/cache
             chown -R indegnnk:indegnnk $DEPLOYPATH
 
