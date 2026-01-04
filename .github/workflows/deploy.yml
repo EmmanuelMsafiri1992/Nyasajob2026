@@ -73,9 +73,8 @@ jobs:
             # Import approved jobs to posts table (this makes them visible on frontend)
             php artisan rss:import --limit=500 2>/dev/null || true
 
-            # Note: Jobs without application_url but with contact info in description
-            # are still valid and will be imported. The import validation checks for
-            # emails, phone numbers, and application instructions in descriptions.
+            # Clean up existing posts that have no way to apply
+            php artisan posts:cleanup-no-apply --limit=1000 2>/dev/null || true
 
             # Fix database auto-increment and disable broken feeds
             php artisan tinker --execute="
