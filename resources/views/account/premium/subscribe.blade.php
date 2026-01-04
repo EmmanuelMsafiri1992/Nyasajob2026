@@ -27,7 +27,7 @@
                                     <div class="card-body">
                                         <div class="text-center mb-4">
                                             <span class="display-4 fw-bold">${{ number_format($price, 2) }}</span>
-                                            <span class="text-muted">/month</span>
+                                            <span class="text-muted">for 30 days</span>
                                         </div>
 
                                         <ul class="list-unstyled">
@@ -68,7 +68,7 @@
                                             <p>By subscribing to NyasaJob Premium, you agree to the following terms:</p>
 
                                             <h6>1. Subscription Fee</h6>
-                                            <p>The subscription fee is $5.00 USD per month, billed monthly through PayPal. Your subscription will automatically renew each month unless cancelled.</p>
+                                            <p>The subscription fee is $5.00 USD for 30 days access, paid via PayPal. This is a one-time payment - your access will expire after 30 days and you can renew manually if desired.</p>
 
                                             <h6>2. Non-Refundable Policy</h6>
                                             <p><strong>IMPORTANT: All subscription fees are NON-REFUNDABLE.</strong> Once payment is processed, no refunds will be issued under any circumstances. This includes:</p>

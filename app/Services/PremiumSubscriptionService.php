@@ -14,7 +14,6 @@ class PremiumSubscriptionService
     protected string $clientId;
     protected string $clientSecret;
     protected string $baseUrl;
-    protected ?string $planId;
     protected array $settings;
 
     public function __construct()
@@ -28,7 +27,6 @@ class PremiumSubscriptionService
 
         // Get premium settings from database (admin panel configurable)
         $this->settings = $this->getSettings();
-        $this->planId = $this->settings['paypal_plan_id'] ?? null;
     }
 
     /**
@@ -45,8 +43,7 @@ class PremiumSubscriptionService
                 'enabled' => true,
                 'price' => '5.00',
                 'currency' => 'USD',
-                'paypal_plan_id' => '',
-                'trial_days' => 0,
+                'duration_days' => 30,
                 'terms_required' => true,
                 'non_refundable' => true,
             ];
@@ -58,7 +55,7 @@ class PremiumSubscriptionService
      */
     public function isEnabled(): bool
     {
-        return !empty($this->settings['enabled']) && !empty($this->planId);
+        return !empty($this->settings['enabled']) && !empty($this->clientId) && !empty($this->clientSecret);
     }
 
     /**
@@ -75,6 +72,14 @@ class PremiumSubscriptionService
     public function getCurrency(): string
     {
         return $this->settings['currency'] ?? 'USD';
+    }
+
+    /**
+     * Get subscription duration in days
+     */
+    public function getDurationDays(): int
+    {
+        return (int) ($this->settings['duration_days'] ?? 30);
     }
 
     /**
@@ -102,110 +107,44 @@ class PremiumSubscriptionService
     }
 
     /**
-     * Create a subscription plan in PayPal (one-time setup)
+     * Create a one-time PayPal order for premium subscription
      */
-    public function createPlan(): ?array
+    public function createOrder(User $user, string $returnUrl, string $cancelUrl): ?array
     {
         $token = $this->getAccessToken();
-        if (!$token) return null;
+        if (!$token) {
+            Log::error('PayPal: Could not get access token');
+            return null;
+        }
+
+        $price = number_format($this->getPrice(), 2, '.', '');
+        $currency = $this->getCurrency();
 
         try {
-            // First, create the product
-            $productResponse = Http::withToken($token)
-                ->post("{$this->baseUrl}/v1/catalogs/products", [
-                    'name' => 'NyasaJob Premium',
-                    'description' => 'Premium job seeker subscription with job matching, CV tips, and interview prep',
-                    'type' => 'SERVICE',
-                    'category' => 'SOFTWARE',
-                ]);
-
-            if (!$productResponse->successful()) {
-                Log::error('PayPal product creation failed', ['response' => $productResponse->json()]);
-                return null;
-            }
-
-            $productId = $productResponse->json('id');
-
-            // Then create the plan
-            $planResponse = Http::withToken($token)
-                ->post("{$this->baseUrl}/v1/billing/plans", [
-                    'product_id' => $productId,
-                    'name' => 'Job Seeker Premium Monthly',
-                    'description' => 'Monthly premium subscription for job seekers - includes job matching, CV tips, and interview preparation',
-                    'billing_cycles' => [
+            $response = Http::withToken($token)
+                ->post("{$this->baseUrl}/v2/checkout/orders", [
+                    'intent' => 'CAPTURE',
+                    'purchase_units' => [
                         [
-                            'frequency' => [
-                                'interval_unit' => 'MONTH',
-                                'interval_count' => 1,
-                            ],
-                            'tenure_type' => 'REGULAR',
-                            'sequence' => 1,
-                            'total_cycles' => 0, // Unlimited
-                            'pricing_scheme' => [
-                                'fixed_price' => [
-                                    'value' => '5.00',
-                                    'currency_code' => 'USD',
-                                ],
+                            'reference_id' => 'premium_' . $user->id . '_' . time(),
+                            'description' => 'NyasaJob Premium - ' . $this->getDurationDays() . ' Days Access',
+                            'amount' => [
+                                'currency_code' => $currency,
+                                'value' => $price,
                             ],
                         ],
                     ],
-                    'payment_preferences' => [
-                        'auto_bill_outstanding' => true,
-                        'setup_fee' => [
-                            'value' => '0',
-                            'currency_code' => 'USD',
+                    'payment_source' => [
+                        'paypal' => [
+                            'experience_context' => [
+                                'brand_name' => 'NyasaJob',
+                                'locale' => 'en-US',
+                                'shipping_preference' => 'NO_SHIPPING',
+                                'user_action' => 'PAY_NOW',
+                                'return_url' => $returnUrl,
+                                'cancel_url' => $cancelUrl,
+                            ],
                         ],
-                        'setup_fee_failure_action' => 'CANCEL',
-                        'payment_failure_threshold' => 3,
-                    ],
-                ]);
-
-            if ($planResponse->successful()) {
-                return $planResponse->json();
-            }
-
-            Log::error('PayPal plan creation failed', ['response' => $planResponse->json()]);
-            return null;
-        } catch (\Exception $e) {
-            Log::error('PayPal plan exception', ['error' => $e->getMessage()]);
-            return null;
-        }
-    }
-
-    /**
-     * Create a subscription for a user
-     */
-    public function createSubscription(User $user, string $returnUrl, string $cancelUrl): ?array
-    {
-        $token = $this->getAccessToken();
-        if (!$token) return null;
-
-        if (empty($this->planId)) {
-            Log::error('PayPal Premium Plan ID not configured');
-            return null;
-        }
-
-        try {
-            $response = Http::withToken($token)
-                ->post("{$this->baseUrl}/v1/billing/subscriptions", [
-                    'plan_id' => $this->planId,
-                    'subscriber' => [
-                        'name' => [
-                            'given_name' => $user->name,
-                        ],
-                        'email_address' => $user->email,
-                    ],
-                    'application_context' => [
-                        'brand_name' => 'NyasaJob',
-                        'locale' => 'en-US',
-                        'shipping_preference' => 'NO_SHIPPING',
-                        'user_action' => 'SUBSCRIBE_NOW',
-                        'payment_method' => [
-                            'payer_selected' => 'PAYPAL',
-                            'payee_preferred' => 'IMMEDIATE_PAYMENT_REQUIRED',
-                        ],
-                        'return_url' => $returnUrl,
-                        'cancel_url' => $cancelUrl,
                     ],
                 ]);
 
@@ -213,25 +152,50 @@ class PremiumSubscriptionService
                 return $response->json();
             }
 
-            Log::error('PayPal subscription creation failed', ['response' => $response->json()]);
+            Log::error('PayPal order creation failed', ['response' => $response->json()]);
             return null;
         } catch (\Exception $e) {
-            Log::error('PayPal subscription exception', ['error' => $e->getMessage()]);
+            Log::error('PayPal order exception', ['error' => $e->getMessage()]);
             return null;
         }
     }
 
     /**
-     * Get subscription details from PayPal
+     * Capture payment after user approves
      */
-    public function getSubscriptionDetails(string $subscriptionId): ?array
+    public function captureOrder(string $orderId): ?array
     {
         $token = $this->getAccessToken();
         if (!$token) return null;
 
         try {
             $response = Http::withToken($token)
-                ->get("{$this->baseUrl}/v1/billing/subscriptions/{$subscriptionId}");
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post("{$this->baseUrl}/v2/checkout/orders/{$orderId}/capture", []);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('PayPal capture failed', ['response' => $response->json()]);
+            return null;
+        } catch (\Exception $e) {
+            Log::error('PayPal capture exception', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    /**
+     * Get order details from PayPal
+     */
+    public function getOrderDetails(string $orderId): ?array
+    {
+        $token = $this->getAccessToken();
+        if (!$token) return null;
+
+        try {
+            $response = Http::withToken($token)
+                ->get("{$this->baseUrl}/v2/checkout/orders/{$orderId}");
 
             if ($response->successful()) {
                 return $response->json();
@@ -239,163 +203,67 @@ class PremiumSubscriptionService
 
             return null;
         } catch (\Exception $e) {
-            Log::error('PayPal get subscription exception', ['error' => $e->getMessage()]);
+            Log::error('PayPal get order exception', ['error' => $e->getMessage()]);
             return null;
         }
     }
 
     /**
-     * Cancel a subscription
+     * Activate subscription after successful payment
      */
-    public function cancelSubscription(string $subscriptionId, string $reason = 'User requested cancellation'): bool
+    public function activateSubscription(User $user, string $orderId, array $captureData): ?PremiumSubscription
     {
-        $token = $this->getAccessToken();
-        if (!$token) return false;
+        $status = data_get($captureData, 'status');
 
-        try {
-            $response = Http::withToken($token)
-                ->post("{$this->baseUrl}/v1/billing/subscriptions/{$subscriptionId}/cancel", [
-                    'reason' => $reason,
-                ]);
-
-            return $response->status() === 204;
-        } catch (\Exception $e) {
-            Log::error('PayPal cancel subscription exception', ['error' => $e->getMessage()]);
-            return false;
-        }
-    }
-
-    /**
-     * Activate subscription after successful PayPal payment
-     */
-    public function activateSubscription(User $user, string $paypalSubscriptionId): ?PremiumSubscription
-    {
-        $paypalDetails = $this->getSubscriptionDetails($paypalSubscriptionId);
-
-        if (!$paypalDetails || data_get($paypalDetails, 'status') !== 'ACTIVE') {
-            Log::warning('PayPal subscription not active', ['details' => $paypalDetails]);
+        if ($status !== 'COMPLETED') {
+            Log::warning('PayPal payment not completed', ['status' => $status, 'data' => $captureData]);
             return null;
         }
 
-        // Create or update subscription record
-        $subscription = PremiumSubscription::updateOrCreate(
-            ['user_id' => $user->id, 'status' => PremiumSubscription::STATUS_PENDING],
-            [
-                'plan_type' => PremiumSubscription::PLAN_JOB_SEEKER_PREMIUM,
-                'amount' => 5.00,
-                'currency' => 'USD',
-                'paypal_subscription_id' => $paypalSubscriptionId,
-                'paypal_payer_id' => data_get($paypalDetails, 'subscriber.payer_id'),
-                'paypal_payer_email' => data_get($paypalDetails, 'subscriber.email_address'),
+        // Get payer info
+        $payerId = data_get($captureData, 'payer.payer_id');
+        $payerEmail = data_get($captureData, 'payer.email_address');
+        $transactionId = data_get($captureData, 'purchase_units.0.payments.captures.0.id');
+
+        // Find pending subscription or create new one
+        $subscription = PremiumSubscription::where('user_id', $user->id)
+            ->where('status', PremiumSubscription::STATUS_PENDING)
+            ->first();
+
+        if ($subscription) {
+            $subscription->update([
+                'paypal_subscription_id' => $orderId, // Using order ID as reference
+                'paypal_payer_id' => $payerId,
+                'paypal_payer_email' => $payerEmail,
                 'status' => PremiumSubscription::STATUS_ACTIVE,
                 'starts_at' => now(),
-                'expires_at' => now()->addMonth(),
-                'auto_renew' => true,
-                'metadata' => $paypalDetails,
-            ]
-        );
+                'expires_at' => now()->addDays($this->getDurationDays()),
+                'auto_renew' => false, // One-time payment, no auto-renew
+                'metadata' => $captureData,
+            ]);
+        } else {
+            $subscription = PremiumSubscription::create([
+                'user_id' => $user->id,
+                'plan_type' => PremiumSubscription::PLAN_JOB_SEEKER_PREMIUM,
+                'amount' => $this->getPrice(),
+                'currency' => $this->getCurrency(),
+                'paypal_subscription_id' => $orderId,
+                'paypal_payer_id' => $payerId,
+                'paypal_payer_email' => $payerEmail,
+                'status' => PremiumSubscription::STATUS_ACTIVE,
+                'starts_at' => now(),
+                'expires_at' => now()->addDays($this->getDurationDays()),
+                'auto_renew' => false,
+                'terms_accepted' => true,
+                'terms_accepted_at' => now(),
+                'metadata' => $captureData,
+            ]);
+        }
 
         // Create job seeker preferences if not exists
         JobSeekerPreference::firstOrCreate(['user_id' => $user->id]);
 
         return $subscription;
-    }
-
-    /**
-     * Handle PayPal webhook for subscription events
-     */
-    public function handleWebhook(array $payload): bool
-    {
-        $eventType = data_get($payload, 'event_type');
-        $resource = data_get($payload, 'resource');
-
-        Log::info('PayPal webhook received', ['event' => $eventType]);
-
-        switch ($eventType) {
-            case 'BILLING.SUBSCRIPTION.ACTIVATED':
-                return $this->handleSubscriptionActivated($resource);
-
-            case 'BILLING.SUBSCRIPTION.CANCELLED':
-                return $this->handleSubscriptionCancelled($resource);
-
-            case 'BILLING.SUBSCRIPTION.EXPIRED':
-                return $this->handleSubscriptionExpired($resource);
-
-            case 'BILLING.SUBSCRIPTION.SUSPENDED':
-                return $this->handleSubscriptionSuspended($resource);
-
-            case 'PAYMENT.SALE.COMPLETED':
-                return $this->handlePaymentCompleted($resource);
-
-            default:
-                Log::info('Unhandled PayPal webhook event', ['type' => $eventType]);
-                return true;
-        }
-    }
-
-    protected function handleSubscriptionActivated(array $resource): bool
-    {
-        $subscriptionId = data_get($resource, 'id');
-        $subscription = PremiumSubscription::where('paypal_subscription_id', $subscriptionId)->first();
-
-        if ($subscription) {
-            $subscription->activate();
-            return true;
-        }
-
-        return false;
-    }
-
-    protected function handleSubscriptionCancelled(array $resource): bool
-    {
-        $subscriptionId = data_get($resource, 'id');
-        $subscription = PremiumSubscription::where('paypal_subscription_id', $subscriptionId)->first();
-
-        if ($subscription) {
-            $subscription->cancel('Cancelled via PayPal');
-            return true;
-        }
-
-        return false;
-    }
-
-    protected function handleSubscriptionExpired(array $resource): bool
-    {
-        $subscriptionId = data_get($resource, 'id');
-        $subscription = PremiumSubscription::where('paypal_subscription_id', $subscriptionId)->first();
-
-        if ($subscription) {
-            $subscription->markExpired();
-            return true;
-        }
-
-        return false;
-    }
-
-    protected function handleSubscriptionSuspended(array $resource): bool
-    {
-        $subscriptionId = data_get($resource, 'id');
-        $subscription = PremiumSubscription::where('paypal_subscription_id', $subscriptionId)->first();
-
-        if ($subscription) {
-            $subscription->update(['status' => PremiumSubscription::STATUS_SUSPENDED]);
-            return true;
-        }
-
-        return false;
-    }
-
-    protected function handlePaymentCompleted(array $resource): bool
-    {
-        $subscriptionId = data_get($resource, 'billing_agreement_id');
-        $subscription = PremiumSubscription::where('paypal_subscription_id', $subscriptionId)->first();
-
-        if ($subscription && $subscription->isActive()) {
-            $subscription->renew();
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -426,10 +294,16 @@ class PremiumSubscriptionService
             'expired' => PremiumSubscription::where('status', PremiumSubscription::STATUS_EXPIRED)->count(),
             'pending' => PremiumSubscription::where('status', PremiumSubscription::STATUS_PENDING)->count(),
             'expiring_soon' => PremiumSubscription::expiringSoon()->count(),
-            'total_revenue' => PremiumSubscription::where('status', PremiumSubscription::STATUS_ACTIVE)->sum('amount'),
-            'monthly_revenue' => PremiumSubscription::where('status', PremiumSubscription::STATUS_ACTIVE)
-                ->whereMonth('starts_at', now()->month)
-                ->sum('amount'),
+            'total_revenue' => PremiumSubscription::whereIn('status', [
+                PremiumSubscription::STATUS_ACTIVE,
+                PremiumSubscription::STATUS_EXPIRED,
+                PremiumSubscription::STATUS_CANCELLED
+            ])->sum('amount'),
+            'monthly_revenue' => PremiumSubscription::whereIn('status', [
+                PremiumSubscription::STATUS_ACTIVE,
+                PremiumSubscription::STATUS_EXPIRED,
+                PremiumSubscription::STATUS_CANCELLED
+            ])->whereMonth('created_at', now()->month)->sum('amount'),
         ];
     }
 }

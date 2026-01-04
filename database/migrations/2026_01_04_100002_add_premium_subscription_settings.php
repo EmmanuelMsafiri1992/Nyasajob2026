@@ -21,8 +21,7 @@ return new class extends Migration
             'enabled' => '1',
             'price' => '5.00',
             'currency' => 'USD',
-            'paypal_plan_id' => '', // To be set in admin panel
-            'trial_days' => '0',
+            'duration_days' => '30',
             'features' => 'Job Matching, CV Tips, Interview Prep, Email Alerts',
             'terms_required' => '1',
             'non_refundable' => '1',
@@ -30,7 +29,7 @@ return new class extends Migration
 
         DB::table('settings')->where('id', $settingId)->update([
             'value' => $defaultValue,
-            'description' => 'Premium subscription settings for job seekers',
+            'description' => 'Premium subscription settings for job seekers (uses PayPal one-time payments)',
             'field' => json_encode([
                 [
                     'name' => 'enabled',
@@ -39,19 +38,15 @@ return new class extends Migration
                 ],
                 [
                     'name' => 'price',
-                    'label' => 'Monthly Price (USD)',
+                    'label' => 'Price (USD)',
                     'type' => 'text',
+                    'hint' => 'Price per subscription period',
                 ],
                 [
-                    'name' => 'paypal_plan_id',
-                    'label' => 'PayPal Subscription Plan ID',
+                    'name' => 'duration_days',
+                    'label' => 'Duration (Days)',
                     'type' => 'text',
-                    'hint' => 'Create a subscription plan in PayPal Developer Dashboard and paste the Plan ID here',
-                ],
-                [
-                    'name' => 'trial_days',
-                    'label' => 'Free Trial Days (0 = no trial)',
-                    'type' => 'text',
+                    'hint' => 'How many days does the subscription last (e.g., 30 for monthly)',
                 ],
                 [
                     'name' => 'features',

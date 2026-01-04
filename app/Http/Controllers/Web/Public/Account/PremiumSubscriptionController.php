@@ -75,7 +75,7 @@ class PremiumSubscriptionController extends FrontController
     }
 
     /**
-     * Process subscription payment
+     * Process subscription payment (one-time PayPal payment)
      */
     public function processSubscription(Request $request)
     {
@@ -108,24 +108,24 @@ class PremiumSubscriptionController extends FrontController
             'terms_accepted_ip' => $request->ip(),
         ]);
 
-        // Create PayPal subscription
+        // Create PayPal order (one-time payment)
         $returnUrl = route('account.premium.success', ['subscription' => $subscription->id]);
         $cancelUrl = route('account.premium.cancel', ['subscription' => $subscription->id]);
 
-        $paypalSubscription = $this->subscriptionService->createSubscription($user, $returnUrl, $cancelUrl);
+        $paypalOrder = $this->subscriptionService->createOrder($user, $returnUrl, $cancelUrl);
 
-        if (!$paypalSubscription) {
+        if (!$paypalOrder) {
             $subscription->delete();
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create PayPal subscription. Please try again.',
+                'message' => 'Failed to create PayPal payment. Please try again.',
             ]);
         }
 
-        // Find approval URL
+        // Find approval URL (payer-action link)
         $approvalUrl = null;
-        foreach (data_get($paypalSubscription, 'links', []) as $link) {
-            if (data_get($link, 'rel') === 'approve') {
+        foreach (data_get($paypalOrder, 'links', []) as $link) {
+            if (data_get($link, 'rel') === 'payer-action') {
                 $approvalUrl = data_get($link, 'href');
                 break;
             }
@@ -139,10 +139,10 @@ class PremiumSubscriptionController extends FrontController
             ]);
         }
 
-        // Save PayPal subscription ID
+        // Save PayPal order ID
         $subscription->update([
-            'paypal_subscription_id' => data_get($paypalSubscription, 'id'),
-            'metadata' => $paypalSubscription,
+            'paypal_subscription_id' => data_get($paypalOrder, 'id'),
+            'metadata' => $paypalOrder,
         ]);
 
         return response()->json([
@@ -152,7 +152,7 @@ class PremiumSubscriptionController extends FrontController
     }
 
     /**
-     * Handle successful payment
+     * Handle successful payment - capture the order
      */
     public function success(Request $request, PremiumSubscription $subscription)
     {
@@ -162,14 +162,20 @@ class PremiumSubscriptionController extends FrontController
             abort(403);
         }
 
-        $paypalSubscriptionId = $request->input('subscription_id', $subscription->paypal_subscription_id);
+        // Get the order ID (token from PayPal redirect)
+        $orderId = $request->input('token', $subscription->paypal_subscription_id);
 
-        if ($paypalSubscriptionId) {
-            $activatedSubscription = $this->subscriptionService->activateSubscription($user, $paypalSubscriptionId);
+        if ($orderId) {
+            // Capture the payment
+            $captureData = $this->subscriptionService->captureOrder($orderId);
 
-            if ($activatedSubscription) {
-                flash('Your premium subscription is now active! Enjoy your benefits.')->success();
-                return redirect()->route('account.premium.preferences');
+            if ($captureData) {
+                $activatedSubscription = $this->subscriptionService->activateSubscription($user, $orderId, $captureData);
+
+                if ($activatedSubscription) {
+                    flash('Your premium subscription is now active! Enjoy your benefits.')->success();
+                    return redirect()->route('account.premium.preferences');
+                }
             }
         }
 
