@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Share links
         const shareUrl = encodeURIComponent(window.location.href);
-        const shareText = encodeURIComponent(`I'm a "${result.title}" according to the career quiz! Find your career type at`);
+        const shareText = encodeURIComponent('I am a "' + result.title + '" according to the career quiz! Find your career type at');
         document.getElementById('share-facebook').href = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
         document.getElementById('share-twitter').href = `https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}`;
         document.getElementById('share-linkedin').href = `https://www.linkedin.com/shareArticle?mini=true&url=${shareUrl}`;

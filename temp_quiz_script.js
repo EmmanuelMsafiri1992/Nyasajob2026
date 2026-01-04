@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded', function() { const images = document.querySelectorAll('img:not([loading])'); images.forEach(function(img) { // Skip images in the first viewport const rect = img.getBoundingClientRect(); if (rect.top > window.innerHeight) { img.setAttribute('loading', 'lazy'); } }); });
