@@ -290,16 +290,95 @@ class JobDataCleanerService
 
     /**
      * Get default (largest) city for a country
+     * If no city exists, create one based on country capital
      */
     public function getDefaultCityForCountry(string $countryCode): ?City
     {
         $cacheKey = "default_city_{$countryCode}";
 
         return Cache::remember($cacheKey, 86400, function () use ($countryCode) {
-            return City::where('country_code', $countryCode)
+            $city = City::where('country_code', $countryCode)
                 ->orderByDesc('population')
                 ->first();
+
+            // If no city exists, create a default one
+            if (!$city) {
+                $city = $this->createDefaultCityForCountry($countryCode);
+            }
+
+            return $city;
         });
+    }
+
+    /**
+     * Create a default city for a country that has none in the database
+     */
+    protected function createDefaultCityForCountry(string $countryCode): ?City
+    {
+        // Map of country codes to capital/major city names
+        $capitals = [
+            'ZA' => ['name' => 'Johannesburg', 'lat' => -26.2041, 'lon' => 28.0473],
+            'NG' => ['name' => 'Lagos', 'lat' => 6.5244, 'lon' => 3.3792],
+            'KE' => ['name' => 'Nairobi', 'lat' => -1.2921, 'lon' => 36.8219],
+            'GH' => ['name' => 'Accra', 'lat' => 5.6037, 'lon' => -0.1870],
+            'EG' => ['name' => 'Cairo', 'lat' => 30.0444, 'lon' => 31.2357],
+            'MW' => ['name' => 'Lilongwe', 'lat' => -13.9626, 'lon' => 33.7741],
+            'ZM' => ['name' => 'Lusaka', 'lat' => -15.3875, 'lon' => 28.3228],
+            'ZW' => ['name' => 'Harare', 'lat' => -17.8292, 'lon' => 31.0522],
+            'TZ' => ['name' => 'Dar es Salaam', 'lat' => -6.7924, 'lon' => 39.2083],
+            'UG' => ['name' => 'Kampala', 'lat' => 0.3476, 'lon' => 32.5825],
+            'RW' => ['name' => 'Kigali', 'lat' => -1.9403, 'lon' => 29.8739],
+            'ET' => ['name' => 'Addis Ababa', 'lat' => 8.9806, 'lon' => 38.7578],
+            'MA' => ['name' => 'Casablanca', 'lat' => 33.5731, 'lon' => -7.5898],
+            'SN' => ['name' => 'Dakar', 'lat' => 14.7167, 'lon' => -17.4677],
+            'CI' => ['name' => 'Abidjan', 'lat' => 5.3600, 'lon' => -4.0083],
+            'CM' => ['name' => 'Douala', 'lat' => 4.0511, 'lon' => 9.7679],
+            'AO' => ['name' => 'Luanda', 'lat' => -8.8390, 'lon' => 13.2894],
+            'MZ' => ['name' => 'Maputo', 'lat' => -25.9692, 'lon' => 32.5732],
+            'BW' => ['name' => 'Gaborone', 'lat' => -24.6282, 'lon' => 25.9231],
+            'NA' => ['name' => 'Windhoek', 'lat' => -22.5609, 'lon' => 17.0658],
+            'US' => ['name' => 'New York', 'lat' => 40.7128, 'lon' => -74.0060],
+            'GB' => ['name' => 'London', 'lat' => 51.5074, 'lon' => -0.1278],
+            'CA' => ['name' => 'Toronto', 'lat' => 43.6532, 'lon' => -79.3832],
+            'AU' => ['name' => 'Sydney', 'lat' => -33.8688, 'lon' => 151.2093],
+            'DE' => ['name' => 'Berlin', 'lat' => 52.5200, 'lon' => 13.4050],
+            'FR' => ['name' => 'Paris', 'lat' => 48.8566, 'lon' => 2.3522],
+            'IN' => ['name' => 'Mumbai', 'lat' => 19.0760, 'lon' => 72.8777],
+        ];
+
+        $capitalData = $capitals[$countryCode] ?? null;
+
+        if (!$capitalData) {
+            // Use a generic capital name
+            $capitalData = ['name' => 'Capital City', 'lat' => 0, 'lon' => 0];
+        }
+
+        try {
+            // Find subadmin1 for this country or create minimal record
+            $subAdmin = \App\Models\SubAdmin1::where('country_code', $countryCode)->first();
+
+            $city = City::create([
+                'country_code' => $countryCode,
+                'name' => $capitalData['name'],
+                'latitude' => $capitalData['lat'],
+                'longitude' => $capitalData['lon'],
+                'subadmin1_code' => $subAdmin->code ?? $countryCode . '.00',
+                'subadmin2_code' => null,
+                'population' => 1000000,
+                'time_zone' => 'UTC',
+                'active' => 1,
+            ]);
+
+            Log::info("Created default city for {$countryCode}: {$capitalData['name']}");
+
+            // Clear cache so we don't keep trying to create
+            Cache::forget("default_city_{$countryCode}");
+
+            return $city;
+        } catch (\Throwable $e) {
+            Log::warning("Could not create default city for {$countryCode}: {$e->getMessage()}");
+            return null;
+        }
     }
 
     /**

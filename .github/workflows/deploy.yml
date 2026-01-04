@@ -67,20 +67,66 @@ jobs:
             php artisan optimize:clear 2>/dev/null || true
             php artisan view:cache
 
-            # Fix RSS feed data - extract company names from titles
-            php artisan rss:process --fix-companies --limit=1000 2>/dev/null || true
+            # =============================================
+            # RSS FEED PROCESSING PIPELINE
+            # Ensures ALL countries have their jobs processed
+            # =============================================
 
-            # Assign correct countries based on location data
-            php artisan rss:process --redistribute --limit=1000 2>/dev/null || true
+            # Clear city cache to allow new city creation for missing countries
+            php artisan tinker --execute="
+              \Illuminate\Support\Facades\Cache::forget('default_city_ZA');
+              \Illuminate\Support\Facades\Cache::forget('default_city_NG');
+              \Illuminate\Support\Facades\Cache::forget('default_city_KE');
+              \Illuminate\Support\Facades\Cache::forget('default_city_GH');
+              echo 'City caches cleared';
+            " 2>/dev/null || true
 
-            # Re-process staged items to clean descriptions
-            php artisan rss:process --status=approved --all --limit=500 2>/dev/null || true
+            # Step 1: Process ALL approved staged items (fills city_id, cleaned_description)
+            # This is REQUIRED before import - without this, jobs won't import
+            php artisan rss:process --status=approved --all --limit=2000 2>/dev/null || true
 
-            # Import approved jobs to posts table (this makes them visible on frontend)
-            php artisan rss:import --limit=500 2>/dev/null || true
+            # Step 2: Process pending items too (in case some need review)
+            php artisan rss:process --status=pending --all --limit=1000 2>/dev/null || true
 
-            # Clean up existing posts that have no way to apply
-            php artisan posts:cleanup-no-apply --limit=1000 2>/dev/null || true
+            # Step 3: Fix company names extracted from titles
+            php artisan rss:process --fix-companies --limit=2000 2>/dev/null || true
+
+            # Step 4: Redistribute jobs to correct countries based on location
+            php artisan rss:process --redistribute --limit=2000 2>/dev/null || true
+
+            # Step 5: Re-process any items that still have NULL city_id (force city creation)
+            php artisan tinker --execute="
+              \$items = \App\Models\JobFeedStagedItem::whereNull('city_id')
+                ->whereIn('status', ['approved', 'pending'])
+                ->limit(500)
+                ->get();
+              \$cleaner = app(\App\Services\RssFeed\JobDataCleanerService::class);
+              \$fixed = 0;
+              foreach(\$items as \$item) {
+                try {
+                  \$cleaner->cleanStagedItem(\$item);
+                  if(\$item->city_id) \$fixed++;
+                } catch(\Exception \$e) {}
+              }
+              echo \"Fixed city_id for {\$fixed} items\";
+            " 2>/dev/null || true
+
+            # Step 6: Import ALL processed approved jobs to posts table
+            # This makes them LIVE on frontend for ALL countries
+            php artisan rss:import --limit=2000 --auto-approve 2>/dev/null || true
+
+            # Step 7: Clean up posts without application details
+            php artisan posts:cleanup-no-apply --limit=2000 2>/dev/null || true
+
+            # Step 8: Verify imports worked (log count per country)
+            php artisan tinker --execute="
+              \$counts = \App\Models\Post::where('created_at', '>=', now()->subDay())
+                ->selectRaw('country_code, COUNT(*) as cnt')
+                ->groupBy('country_code')
+                ->pluck('cnt', 'country_code')
+                ->toArray();
+              echo 'Jobs imported today by country: ' . json_encode(\$counts);
+            " 2>/dev/null || true
 
             # Fix database auto-increment and disable broken feeds
             php artisan tinker --execute="
