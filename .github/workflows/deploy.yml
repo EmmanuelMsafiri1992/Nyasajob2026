@@ -51,14 +51,22 @@ jobs:
 
             cd $DEPLOYPATH
 
+            # Put site in maintenance mode to prevent errors during deployment
+            php artisan down --retry=60 2>/dev/null || true
+
             # Switch to database cache driver (avoids file permission issues)
             sed -i 's/CACHE_DRIVER=file/CACHE_DRIVER=database/g' .env
             sed -i 's/CACHE_STORE=file/CACHE_STORE=database/g' .env
 
+            # Clear ALL caches immediately after .env change
+            php artisan config:clear 2>/dev/null || true
+            php artisan cache:clear 2>/dev/null || true
+            php artisan optimize:clear 2>/dev/null || true
+
             php artisan storage:link 2>/dev/null || true
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force
-            php artisan optimize:clear
+            php artisan config:cache
             php artisan view:cache
 
             # Fix RSS feed data - extract company names from titles
@@ -87,5 +95,8 @@ jobs:
 
             # Clear caches
             php artisan cache:forget countries_needing_jobs 2>/dev/null || true
+
+            # Bring site back up
+            php artisan up
 
             echo "Deployment completed: $(date)"
