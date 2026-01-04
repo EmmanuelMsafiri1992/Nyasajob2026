@@ -15,7 +15,7 @@ return [
     |
     */
 	
-	'default' => env('CACHE_STORE', 'database'),
+	'default' => 'database', // Hardcoded to avoid file permission issues in production
 	
 	/*
     |--------------------------------------------------------------------------
