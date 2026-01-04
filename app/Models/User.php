@@ -323,7 +323,41 @@ class User extends BaseUser
 	{
 		return $this->hasMany(Resume::class, 'user_id');
 	}
-	
+
+	/**
+	 * Get the user's premium subscription (job seeker)
+	 */
+	public function premiumSubscription(): HasMany
+	{
+		return $this->hasMany(PremiumSubscription::class, 'user_id');
+	}
+
+	/**
+	 * Get the user's active premium subscription
+	 */
+	public function activePremiumSubscription()
+	{
+		return $this->hasOne(PremiumSubscription::class, 'user_id')
+			->where('status', 'active')
+			->where('expires_at', '>', now());
+	}
+
+	/**
+	 * Get the user's job seeker preferences
+	 */
+	public function jobSeekerPreference(): HasMany
+	{
+		return $this->hasMany(JobSeekerPreference::class, 'user_id');
+	}
+
+	/**
+	 * Check if user has active premium subscription
+	 */
+	public function hasPremiumAccess(): bool
+	{
+		return $this->activePremiumSubscription()->exists();
+	}
+
 	/*
 	|--------------------------------------------------------------------------
 	| SCOPES

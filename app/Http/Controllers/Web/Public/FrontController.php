@@ -260,9 +260,18 @@ class FrontController extends Controller
 					'inDropdown'       => true,
 					'isActive'         => (request()->segment(2) == 'messages'),
 				],
+				[
+					'name'       => 'Premium',
+					'url'        => url('account/premium'),
+					'icon'       => 'fa-solid fa-crown',
+					'group'      => 'Premium',
+					'countVar'   => null,
+					'inDropdown' => true,
+					'isActive'   => (request()->segment(2) == 'premium'),
+				],
 			];
 		}
-		
+
 		$myAccount = [
 			'name'       => t('My Account'),
 			'url'        => url('account'),

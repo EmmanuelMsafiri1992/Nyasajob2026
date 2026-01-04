@@ -78,6 +78,11 @@ Route::controller(\App\Http\Controllers\Web\Public\SubscriptionController::class
 		Route::post('subscription/check-feature', 'checkFeature')->name('subscription.checkFeature')->middleware('auth');
 	});
 
+// PayPal Premium Webhook (no CSRF for PayPal)
+Route::post('webhook/paypal/premium', [\App\Http\Controllers\Web\Public\Account\PremiumSubscriptionController::class, 'webhook'])
+	->name('webhook.paypal.premium')
+	->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
 // FILES
 Route::controller(FileController::class)
 	->prefix('common')
@@ -356,7 +361,24 @@ Route::namespace('Account')
 				// New Subscription Management
 				Route::get('subscription-management', [\App\Http\Controllers\Web\Public\SubscriptionController::class, 'index'])
 					->name('account.subscription-management');
-				
+
+				// Premium Subscription (Job Seekers)
+				Route::prefix('premium')
+					->controller(\App\Http\Controllers\Web\Public\Account\PremiumSubscriptionController::class)
+					->group(function () {
+						Route::get('/', 'index')->name('account.premium.index');
+						Route::get('subscribe', 'subscribe')->name('account.premium.subscribe');
+						Route::post('subscribe', 'processSubscription')->name('account.premium.process');
+						Route::get('success/{subscription}', 'success')->name('account.premium.success');
+						Route::get('cancel/{subscription}', 'cancel')->name('account.premium.cancel');
+						Route::post('cancel-subscription', 'cancelSubscription')->name('account.premium.cancel-subscription');
+						Route::get('preferences', 'preferences')->name('account.premium.preferences');
+						Route::post('preferences', 'updatePreferences')->name('account.premium.update-preferences');
+						Route::get('job-matches', 'jobMatches')->name('account.premium.job-matches');
+						Route::get('cv-tips', 'cvTips')->name('account.premium.cv-tips');
+						Route::get('interview-prep', 'interviewPrep')->name('account.premium.interview-prep');
+					});
+
 				// Companies
 				Route::prefix('companies')
 					->controller(AccountCompanyController::class)

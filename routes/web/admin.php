@@ -132,6 +132,14 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 		PanelRoutes::resource('payments/promotion', PaymentController::class);
 		PanelRoutes::resource('payments/subscription', PaymentController::class);
 		PanelRoutes::resource('payment_methods', PaymentMethodController::class);
+
+		// Premium Subscriptions (Job Seekers)
+		PanelRoutes::resource('premium-subscriptions', \App\Http\Controllers\Web\Admin\PremiumSubscriptionController::class);
+		Route::get('premium-subscriptions-dashboard', [\App\Http\Controllers\Web\Admin\PremiumSubscriptionController::class, 'dashboard'])->name('admin.premium-subscriptions.dashboard');
+		Route::post('premium-subscriptions/{id}/cancel', [\App\Http\Controllers\Web\Admin\PremiumSubscriptionController::class, 'cancel'])->name('admin.premium-subscriptions.cancel');
+		Route::post('premium-subscriptions/{id}/extend', [\App\Http\Controllers\Web\Admin\PremiumSubscriptionController::class, 'extend'])->name('admin.premium-subscriptions.extend');
+		Route::post('premium-subscriptions-expire-overdue', [\App\Http\Controllers\Web\Admin\PremiumSubscriptionController::class, 'expireOverdue'])->name('admin.premium-subscriptions.expire-overdue');
+
 		PanelRoutes::resource('permissions', PermissionController::class);
 		PanelRoutes::resource('pictures', PictureController::class);
 		PanelRoutes::resource('post_types', PostTypeController::class);

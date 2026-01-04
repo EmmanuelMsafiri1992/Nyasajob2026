@@ -93,6 +93,12 @@ return [
 	 * Payment gateways
 	 * See payment plugins config files
 	 */
+	'paypal' => [
+		'client_id' => env('PAYPAL_CLIENT_ID'),
+		'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+		'mode' => env('PAYPAL_MODE', 'sandbox'), // 'sandbox' or 'live'
+		'premium_plan_id' => env('PAYPAL_PREMIUM_PLAN_ID'), // Create via PayPal Developer Dashboard
+	],
 	
 	/*
 	 * Other
