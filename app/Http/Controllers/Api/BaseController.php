@@ -143,7 +143,7 @@ class BaseController extends Controller
 	 */
 	protected function resetCachingParameters(): void
 	{
-		config()->set('cache.default', config('cache.tmp.driver', 'file'));
+		config()->set('cache.default', config('cache.tmp.driver', 'database'));
 		$this->cacheExpiration = (int)config('cache.tmp.expiration', 3600);
 	}
 }

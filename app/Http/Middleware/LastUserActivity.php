@@ -70,7 +70,7 @@ class LastUserActivity
 			}
 		} else {
 			$expiresAt = Carbon::now(Date::getAppTimeZone())->addMinutes($waitingTime);
-			cache()->store('file')->put('user-is-online-' . $user->id, true, $expiresAt);
+			cache()->put('user-is-online-' . $user->id, true, $expiresAt);
 		}
 		
 		return $next($request);

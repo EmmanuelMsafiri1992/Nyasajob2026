@@ -20,7 +20,7 @@ trait OptimizationConfig
 {
 	private function updateOptimizationConfig(?array $settings = []): void
 	{
-		config()->set('cache.default', env('CACHE_STORE', 'file'));
+		config()->set('cache.default', 'database'); // Hardcoded - file cache causes permission issues
 		
 		// Memcached
 		config()->set('cache.stores.memcached.persistent_id', env('MEMCACHED_PERSISTENT_ID'));

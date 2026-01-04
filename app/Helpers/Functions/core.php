@@ -2063,7 +2063,7 @@ function isUserOnline($user): bool
 		if (config('settings.optimization.cache_driver') == 'array') {
 			$isOnline = $user->p_is_online;
 		} else {
-			$isOnline = cache()->store('file')->has('user-is-online-' . $user->id);
+			$isOnline = cache()->has('user-is-online-' . $user->id);
 		}
 	}
 	
