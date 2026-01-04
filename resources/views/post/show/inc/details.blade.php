@@ -159,6 +159,13 @@
 	</div>
 	
 	<div class="content-footer text-start">
+		{{-- External Application URL (for RSS-imported jobs) --}}
+		@if (!empty(data_get($post, 'application_url')))
+			<a class="btn btn-primary" href="{{ data_get($post, 'application_url') }}" target="_blank" rel="noopener noreferrer">
+				<i class="fa-solid fa-paper-plane"></i> {{ t('Apply Now') }}
+			</a>
+		@endif
+
 		@if (!empty($authUser))
 			@if ($authUserId == data_get($post, 'user_id'))
 				<a class="btn btn-default" href="{{ \App\Helpers\UrlGen::editPost($post) }}">
