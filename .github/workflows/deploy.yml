@@ -97,8 +97,8 @@ jobs:
             # Clear caches
             php artisan cache:forget countries_needing_jobs 2>/dev/null || true
 
-            # Run smart job fetcher to populate countries needing jobs
-            php artisan jobs:smart-fetch --min-jobs=5 2>/dev/null || true
+            # NOTE: jobs:smart-fetch runs via scheduler 3x daily, not during deployment
+            # (it takes too long for deployment as it fetches for all countries)
 
             # Bring site back up
             php artisan up
