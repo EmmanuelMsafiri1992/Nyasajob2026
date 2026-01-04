@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Web\Public\Account;
 
 use App\Http\Controllers\Web\Public\Auth\Traits\VerificationTrait;
-use App\Http\Controllers\Web\FrontController;
+use App\Http\Controllers\Web\Public\FrontController;
 use App\Models\PremiumSubscription;
 use App\Models\JobSeekerPreference;
 use App\Models\Category;

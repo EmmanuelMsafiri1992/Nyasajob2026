@@ -72,6 +72,14 @@
 								@endif
 							</ul>
 						</div>
+						<div class="footer-col mt-3">
+							<h4 class="footer-title">Career Resources</h4>
+							<ul class="list-unstyled footer-nav">
+								<li><a href="{{ route('career.salary-insights') }}"> Salary Insights </a></li>
+								<li><a href="{{ route('career.tips') }}"> Career Tips </a></li>
+								<li><a href="{{ route('career.quiz') }}"> Career Quiz </a></li>
+							</ul>
+						</div>
 					</div>
 					
 					<div class="col">

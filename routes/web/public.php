@@ -83,6 +83,19 @@ Route::post('webhook/paypal/premium', [\App\Http\Controllers\Web\Public\Account\
 	->name('webhook.paypal.premium')
 	->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
+// CAREER RESOURCES (SEO & Engagement Features)
+Route::controller(\App\Http\Controllers\Web\Public\CareerResourcesController::class)
+	->prefix('career')
+	->name('career.')
+	->group(function () {
+		Route::get('/', 'index')->name('index');
+		Route::get('/salary-insights', 'salaryInsights')->name('salary-insights');
+		Route::get('/tips', 'careerTips')->name('tips');
+		Route::get('/tips/{slug}', 'showCareerTip')->name('tips.show');
+		Route::get('/quiz', 'jobQuiz')->name('quiz');
+		Route::post('/quiz/submit', 'submitQuiz')->name('quiz.submit');
+	});
+
 // FILES
 Route::controller(FileController::class)
 	->prefix('common')

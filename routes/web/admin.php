@@ -234,6 +234,9 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 				->where('id', '[0-9]+');
 		});
 		PanelRoutes::resource('api-credentials', ApiCredentialController::class);
+
+		// Career Tips Management
+		PanelRoutes::resource('career-tips', \App\Http\Controllers\Web\Admin\CareerTipController::class);
 	});
 
 // Files (JS, CSS, ...)
