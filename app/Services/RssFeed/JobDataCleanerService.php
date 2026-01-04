@@ -159,17 +159,17 @@ class JobDataCleanerService
 
         // Remove common job board footer text
         $cruftPatterns = [
-            '#LI-Remote#i',
-            '#LI-Hybrid#i',
-            '#LI-Onsite#i',
-            '#LI-[A-Z]{2}[0-9]?#',
+            'LI-Remote',
+            'LI-Hybrid',
+            'LI-Onsite',
+            'LI-[A-Z]{2}[0-9]?',
             'This job was posted by.*',
             'Apply now at.*',
             'Click here to apply.*',
         ];
 
         foreach ($cruftPatterns as $pattern) {
-            $description = preg_replace("#{$pattern}#si", '', $description);
+            $description = preg_replace('#' . $pattern . '#si', '', $description);
         }
 
         return trim($description);

@@ -2,15 +2,19 @@
 
 namespace App\Services\RssFeed;
 
+use App\Helpers\Files\Upload;
 use App\Models\JobFeedStagedItem;
 use App\Models\JobFeedSource;
 use App\Models\Post;
 use App\Models\City;
 use App\Models\User;
 use App\Models\Category;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class JobImportService
 {
@@ -84,6 +88,15 @@ class JobImportService
                     'accept_terms' => true,
                     'create_from_ip' => request()->ip() ?? '127.0.0.1',
                 ]);
+
+                // Download and save logo if available
+                if (!empty($stagedItem->company_logo_url)) {
+                    $logoPath = $this->downloadAndSaveLogo($stagedItem->company_logo_url, $post);
+                    if ($logoPath) {
+                        $post->logo = $logoPath;
+                        $post->save();
+                    }
+                }
 
                 // Update staged item
                 $stagedItem->markAsImported($post->id);
@@ -296,6 +309,84 @@ class JobImportService
         ];
 
         return $currencies[$countryCode] ?? 'USD';
+    }
+
+    /**
+     * Download and save a logo from external URL
+     */
+    protected function downloadAndSaveLogo(string $url, Post $post): ?string
+    {
+        try {
+            // Validate URL
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                return null;
+            }
+
+            // Download the image
+            $response = Http::timeout(10)->get($url);
+
+            if (!$response->successful()) {
+                Log::warning("Failed to download logo from {$url}: HTTP {$response->status()}");
+                return null;
+            }
+
+            $imageData = $response->body();
+            $contentType = $response->header('Content-Type');
+
+            // Determine extension from content type
+            $extensionMap = [
+                'image/jpeg' => 'jpg',
+                'image/jpg' => 'jpg',
+                'image/png' => 'png',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+            ];
+
+            $extension = $extensionMap[$contentType] ?? null;
+
+            // Try to get extension from URL if content type didn't work
+            if (!$extension) {
+                $urlPath = parse_url($url, PHP_URL_PATH);
+                $urlExtension = strtolower(pathinfo($urlPath, PATHINFO_EXTENSION));
+                if (in_array($urlExtension, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                    $extension = $urlExtension === 'jpeg' ? 'jpg' : $urlExtension;
+                }
+            }
+
+            if (!$extension) {
+                $extension = 'jpg'; // Default fallback
+            }
+
+            // Create temp file
+            $tempPath = sys_get_temp_dir() . '/' . Str::uuid()->toString() . '.' . $extension;
+            file_put_contents($tempPath, $imageData);
+
+            // Create UploadedFile from temp file
+            $uploadedFile = new UploadedFile(
+                $tempPath,
+                'logo.' . $extension,
+                $contentType ?: 'image/jpeg',
+                null,
+                true
+            );
+
+            // Save using the Upload helper
+            $destPath = 'files/' . strtolower($post->country_code) . '/' . $post->id;
+            $logoPath = Upload::image($destPath, $uploadedFile, [
+                'width' => 800,
+                'height' => 800,
+                'ratio' => '1',
+                'upsize' => '0',
+            ]);
+
+            // Clean up temp file
+            @unlink($tempPath);
+
+            return $logoPath;
+        } catch (\Throwable $e) {
+            Log::warning("Error downloading logo from {$url}: {$e->getMessage()}");
+            return null;
+        }
     }
 
     /**
