@@ -96,6 +96,33 @@ Route::controller(\App\Http\Controllers\Web\Public\CareerResourcesController::cl
 		Route::post('/quiz/submit', 'submitQuiz')->name('quiz.submit');
 	});
 
+// CANDIDATE DATABASE (Employer Resume Access)
+Route::controller(\App\Http\Controllers\Web\Public\CandidateDatabaseController::class)
+	->prefix('candidates')
+	->name('candidates.')
+	->group(function () {
+		Route::get('/', 'index')->name('index');
+		Route::get('/packages', 'packages')->name('packages');
+		Route::get('/{id}', 'show')->name('show')->where('id', '[0-9]+');
+		Route::post('/{id}/unlock', 'unlock')->name('unlock')->where('id', '[0-9]+')->middleware('auth');
+		Route::post('/purchase', 'purchase')->name('purchase')->middleware('auth');
+		Route::get('/purchase/success/{package}', 'purchaseSuccess')->name('purchase.success')->middleware('auth');
+		Route::get('/my-unlocked', 'myUnlocked')->name('my-unlocked')->middleware('auth');
+		Route::get('/my-credits', 'myCredits')->name('my-credits')->middleware('auth');
+	});
+
+// COURSE PAYMENTS
+Route::controller(\App\Http\Controllers\Web\Public\CoursePaymentController::class)
+	->prefix('courses')
+	->name('courses.')
+	->middleware('auth')
+	->group(function () {
+		Route::get('/{courseId}/checkout', 'checkout')->name('checkout');
+		Route::post('/{courseId}/pay', 'process')->name('pay');
+		Route::get('/{courseId}/payment/success', 'success')->name('payment.success');
+		Route::get('/{courseId}/payment/cancel', 'cancel')->name('payment.cancel');
+	});
+
 // FILES
 Route::controller(FileController::class)
 	->prefix('common')

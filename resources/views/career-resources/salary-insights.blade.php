@@ -16,8 +16,8 @@
             {{-- Header --}}
             <div class="row mb-4">
                 <div class="col-12">
-                    <h1 class="h2 mb-2"><i class="fa-solid fa-chart-line text-primary me-2"></i> Salary Insights</h1>
-                    <p class="text-muted">Explore salary ranges by job category and location to understand your earning potential</p>
+                    <h1 class="h2 mb-2"><i class="fa-solid fa-chart-line text-primary me-2"></i> Salary Insights - {{ config('country.name') }}</h1>
+                    <p class="text-muted">Explore salary ranges by job category and location in {{ config('country.name') }} to understand your earning potential</p>
                 </div>
             </div>
 
@@ -30,8 +30,15 @@
                             <select name="category" id="category" class="form-select">
                                 <option value="">All Categories</option>
                                 @foreach($categoriesWithSalary as $cat)
+                                    @php
+                                        $catName = $cat->name;
+                                        if (is_string($catName) && str_starts_with($catName, '{')) {
+                                            $decoded = json_decode($catName, true);
+                                            $catName = $decoded[app()->getLocale()] ?? $decoded['en'] ?? $catName;
+                                        }
+                                    @endphp
                                     <option value="{{ $cat->id }}" {{ $selectedCategory == $cat->id ? 'selected' : '' }}>
-                                        {{ $cat->name }}
+                                        {{ $catName }}
                                     </option>
                                 @endforeach
                             </select>
@@ -41,8 +48,15 @@
                             <select name="city" id="city" class="form-select">
                                 <option value="">All Locations</option>
                                 @foreach($citiesWithSalary as $city)
+                                    @php
+                                        $cityName = $city->name;
+                                        if (is_string($cityName) && str_starts_with($cityName, '{')) {
+                                            $decoded = json_decode($cityName, true);
+                                            $cityName = $decoded[app()->getLocale()] ?? $decoded['en'] ?? $cityName;
+                                        }
+                                    @endphp
                                     <option value="{{ $city->id }}" {{ $selectedCity == $city->id ? 'selected' : '' }}>
-                                        {{ $city->name }}
+                                        {{ $cityName }}
                                     </option>
                                 @endforeach
                             </select>

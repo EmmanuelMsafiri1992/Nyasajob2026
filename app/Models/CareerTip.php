@@ -126,4 +126,15 @@ class CareerTip extends Model
         }
         return url('images/career-tips-default.jpg');
     }
+
+    /**
+     * Button to seed default career tips in admin panel
+     */
+    public function seedTipsButton(): string
+    {
+        $url = admin_uri('career-tips/seed-defaults');
+        return '<a href="' . $url . '" class="btn btn-success" data-button-type="seed_tips">
+                    <i class="fa fa-seedling"></i> Seed Default Tips
+                </a>';
+    }
 }

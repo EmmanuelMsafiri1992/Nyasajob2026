@@ -49,31 +49,39 @@ class CareerResourcesController extends FrontController
     {
         $categoryId = $request->input('category');
         $cityId = $request->input('city');
+        $countryCode = config('country.code');
 
-        // Get categories with salary data
-        $categoriesWithSalary = Cache::remember('salary_insights_categories', 3600, function () {
-            return Category::whereHas('posts', function ($query) {
-                $query->where('salary_min', '>', 0)
-                    ->orWhere('salary_max', '>', 0);
+        // Get categories with salary data for current country
+        $categoriesWithSalary = Cache::remember('salary_insights_categories_' . $countryCode, 3600, function () use ($countryCode) {
+            return Category::whereHas('posts', function ($query) use ($countryCode) {
+                $query->where('country_code', $countryCode)
+                    ->where(function ($q) {
+                        $q->where('salary_min', '>', 0)
+                            ->orWhere('salary_max', '>', 0);
+                    });
             })->orderBy('name')->get();
         });
 
-        // Get cities with salary data
-        $citiesWithSalary = Cache::remember('salary_insights_cities', 3600, function () {
-            return City::whereHas('posts', function ($query) {
-                $query->where('salary_min', '>', 0)
-                    ->orWhere('salary_max', '>', 0);
-            })->orderBy('name')->get();
+        // Get cities with salary data for current country
+        $citiesWithSalary = Cache::remember('salary_insights_cities_' . $countryCode, 3600, function () use ($countryCode) {
+            return City::where('country_code', $countryCode)
+                ->whereHas('posts', function ($query) use ($countryCode) {
+                    $query->where('country_code', $countryCode)
+                        ->where(function ($q) {
+                            $q->where('salary_min', '>', 0)
+                                ->orWhere('salary_max', '>', 0);
+                        });
+                })->orderBy('name')->get();
         });
 
-        // Build salary statistics
-        $salaryStats = $this->getSalaryStatistics($categoryId, $cityId);
+        // Build salary statistics for current country
+        $salaryStats = $this->getSalaryStatistics($categoryId, $cityId, $countryCode);
 
-        // Get salary by category chart data
-        $salaryByCategory = $this->getSalaryByCategory();
+        // Get salary by category chart data for current country
+        $salaryByCategory = $this->getSalaryByCategory($countryCode);
 
-        // Get salary by location chart data
-        $salaryByLocation = $this->getSalaryByLocation();
+        // Get salary by location chart data for current country
+        $salaryByLocation = $this->getSalaryByLocation($countryCode);
 
         // Set meta tags
         MetaTag::set('title', 'Salary Insights - Know Your Worth | ' . config('app.name'));
@@ -93,15 +101,17 @@ class CareerResourcesController extends FrontController
     /**
      * Get salary statistics for given filters
      */
-    protected function getSalaryStatistics(?int $categoryId = null, ?int $cityId = null): array
+    protected function getSalaryStatistics(?int $categoryId = null, ?int $cityId = null, ?string $countryCode = null): array
     {
-        $cacheKey = "salary_stats_{$categoryId}_{$cityId}";
+        $countryCode = $countryCode ?: config('country.code');
+        $cacheKey = "salary_stats_{$countryCode}_{$categoryId}_{$cityId}";
 
-        return Cache::remember($cacheKey, 3600, function () use ($categoryId, $cityId) {
-            $query = Post::where(function ($q) {
-                $q->where('salary_min', '>', 0)
-                    ->orWhere('salary_max', '>', 0);
-            });
+        return Cache::remember($cacheKey, 3600, function () use ($categoryId, $cityId, $countryCode) {
+            $query = Post::where('country_code', $countryCode)
+                ->where(function ($q) {
+                    $q->where('salary_min', '>', 0)
+                        ->orWhere('salary_max', '>', 0);
+                });
 
             if ($categoryId) {
                 $query->where('category_id', $categoryId);
@@ -154,9 +164,10 @@ class CareerResourcesController extends FrontController
     /**
      * Get salary data grouped by category
      */
-    protected function getSalaryByCategory(): array
+    protected function getSalaryByCategory(?string $countryCode = null): array
     {
-        return Cache::remember('salary_by_category_' . app()->getLocale(), 3600, function () {
+        $countryCode = $countryCode ?: config('country.code');
+        return Cache::remember('salary_by_category_' . $countryCode . '_' . app()->getLocale(), 3600, function () use ($countryCode) {
             $results = DB::table('posts')
                 ->join('categories', 'posts.category_id', '=', 'categories.id')
                 ->select(
@@ -165,6 +176,7 @@ class CareerResourcesController extends FrontController
                     DB::raw('AVG(CASE WHEN posts.salary_min > 0 THEN posts.salary_min ELSE posts.salary_max END) as avg_salary'),
                     DB::raw('COUNT(*) as job_count')
                 )
+                ->where('posts.country_code', $countryCode)
                 ->where(function ($q) {
                     $q->where('posts.salary_min', '>', 0)
                         ->orWhere('posts.salary_max', '>', 0);
@@ -194,9 +206,10 @@ class CareerResourcesController extends FrontController
     /**
      * Get salary data grouped by location
      */
-    protected function getSalaryByLocation(): array
+    protected function getSalaryByLocation(?string $countryCode = null): array
     {
-        return Cache::remember('salary_by_location_' . app()->getLocale(), 3600, function () {
+        $countryCode = $countryCode ?: config('country.code');
+        return Cache::remember('salary_by_location_' . $countryCode . '_' . app()->getLocale(), 3600, function () use ($countryCode) {
             $results = DB::table('posts')
                 ->join('cities', 'posts.city_id', '=', 'cities.id')
                 ->select(
@@ -205,6 +218,7 @@ class CareerResourcesController extends FrontController
                     DB::raw('AVG(CASE WHEN posts.salary_min > 0 THEN posts.salary_min ELSE posts.salary_max END) as avg_salary'),
                     DB::raw('COUNT(*) as job_count')
                 )
+                ->where('posts.country_code', $countryCode)
                 ->where(function ($q) {
                     $q->where('posts.salary_min', '>', 0)
                         ->orWhere('posts.salary_max', '>', 0);
@@ -336,11 +350,29 @@ class CareerResourcesController extends FrontController
 
         $result = QuizResult::where('result_key', $resultKey)->first();
 
+        // Handle case where result is not found
+        if (!$result) {
+            $result = QuizResult::first(); // Fallback to first result
+            if (!$result) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not determine your career type. Please try again.',
+                ], 500);
+            }
+        }
+
+        // Build recommended jobs URL
+        $recommendedCategories = $result->recommended_categories ?? [];
+        $searchUrl = \App\Helpers\UrlGen::search();
+        if (!empty($recommendedCategories)) {
+            $searchUrl .= (str_contains($searchUrl, '?') ? '&' : '?') . 'c=' . implode(',', $recommendedCategories);
+        }
+
         return response()->json([
             'success' => true,
             'result' => $result,
             'scores' => $scores,
-            'recommended_jobs_url' => route('search', ['c' => implode(',', $result->recommended_categories ?? [])]),
+            'recommended_jobs_url' => $searchUrl,
         ]);
     }
 

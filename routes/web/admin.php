@@ -236,7 +236,14 @@ Route::middleware(['admin', 'clearance', 'banned.user', 'no.http.cache'])
 		PanelRoutes::resource('api-credentials', ApiCredentialController::class);
 
 		// Career Tips Management
+		Route::get('career-tips/seed-defaults', [\App\Http\Controllers\Web\Admin\CareerTipController::class, 'seedDefaults']);
 		PanelRoutes::resource('career-tips', \App\Http\Controllers\Web\Admin\CareerTipController::class);
+
+		// Resume Packages (Employer Candidate Access)
+		PanelRoutes::resource('resume-packages', \App\Http\Controllers\Web\Admin\ResumePackageController::class);
+
+		// Coupons Management
+		PanelRoutes::resource('coupons', \App\Http\Controllers\Web\Admin\CouponController::class);
 	});
 
 // Files (JS, CSS, ...)

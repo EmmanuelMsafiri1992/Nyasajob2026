@@ -544,6 +544,14 @@ Route::prefix('candidate-scoring')
 		Route::get('leaderboard', [\App\Http\Controllers\Api\CandidateScoringApiController::class, 'leaderboard'])->name('scoring.leaderboard');
 	});
 
+// Coupon Validation API
+Route::prefix('coupon')
+	->controller(\App\Http\Controllers\Api\CouponController::class)
+	->group(function ($router) {
+		Route::post('validate', 'validate')->name('coupon.validate');
+		Route::post('remove', 'remove')->name('coupon.remove');
+	});
+
 // fallback
 // catch all routes where the path does not start with 'plugins'
 // regex: ^(?!plugins).*$
