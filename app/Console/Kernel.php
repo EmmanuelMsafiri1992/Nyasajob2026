@@ -103,5 +103,32 @@ class Kernel
 			->timezone($tz)
 			->weeklyOn(0, '04:00')
 			->runInBackground();
+
+		// =============================================
+		// Smart Job Distribution (Daily)
+		// =============================================
+
+		// Run smart job fetcher daily at 6:00 AM
+		// Ensures each country has at least 5 new jobs per day
+		// Prioritizes countries with fewer recent jobs
+		$schedule->command('jobs:smart-fetch --min-jobs=5')
+			->timezone($tz)
+			->dailyAt('06:00')
+			->withoutOverlapping()
+			->runInBackground();
+
+		// Second run at 2:00 PM for countries still needing jobs
+		$schedule->command('jobs:smart-fetch --min-jobs=5')
+			->timezone($tz)
+			->dailyAt('14:00')
+			->withoutOverlapping()
+			->runInBackground();
+
+		// Third run at 10:00 PM for final daily check
+		$schedule->command('jobs:smart-fetch --min-jobs=5')
+			->timezone($tz)
+			->dailyAt('22:00')
+			->withoutOverlapping()
+			->runInBackground();
 	}
 }

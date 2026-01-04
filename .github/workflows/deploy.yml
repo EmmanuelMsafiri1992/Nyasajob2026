@@ -91,8 +91,14 @@ jobs:
               echo 'Database fixes applied';
             " 2>/dev/null || true
 
+            # Seed comprehensive job feed sources (skips existing ones)
+            php artisan jobs:seed-sources 2>/dev/null || true
+
             # Clear caches
             php artisan cache:forget countries_needing_jobs 2>/dev/null || true
+
+            # Run smart job fetcher to populate countries needing jobs
+            php artisan jobs:smart-fetch --min-jobs=5 2>/dev/null || true
 
             # Bring site back up
             php artisan up
