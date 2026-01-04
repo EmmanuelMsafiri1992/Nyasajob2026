@@ -166,6 +166,19 @@
 			</a>
 		@endif
 
+		{{-- Direct Email Application (if employer email is available and different from aggregator) --}}
+		@php
+			$postEmail = data_get($post, 'email');
+			$isEmployerEmail = !empty($postEmail) && !str_contains($postEmail, 'nyasajob');
+			$companyName = data_get($post, 'company_name', 'the employer');
+			$jobTitle = data_get($post, 'title', 'Job Application');
+		@endphp
+		@if ($isEmployerEmail)
+			<a class="btn btn-success" href="mailto:{{ $postEmail }}?subject=Application: {{ urlencode($jobTitle) }}&body={{ urlencode("Dear Hiring Manager,\n\nI am writing to apply for the position of {$jobTitle} at {$companyName}.\n\nPlease find my CV attached.\n\nBest regards") }}">
+				<i class="fa-solid fa-envelope"></i> Apply via Email
+			</a>
+		@endif
+
 		@if (!empty($authUser))
 			@if ($authUserId == data_get($post, 'user_id'))
 				<a class="btn btn-default" href="{{ \App\Helpers\UrlGen::editPost($post) }}">
@@ -173,13 +186,16 @@
 				</a>
 			@else
 				@if ($authUserTypeId == 2)
-					{!! genEmailContactBtn($post) !!}
+					@if (!$isEmployerEmail)
+						{!! genEmailContactBtn($post) !!}
+					@endif
 				@endif
 			@endif
 		@else
-			{!! genEmailContactBtn($post) !!}
+			@if (!$isEmployerEmail)
+				{!! genEmailContactBtn($post) !!}
+			@endif
 		@endif
 		{!! genPhoneNumberBtn($post) !!}
-		&nbsp;<small>{{-- or. Send your CV to: foo@bar.com --}}</small>
 	</div>
 </div>

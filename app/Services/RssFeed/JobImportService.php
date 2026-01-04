@@ -59,6 +59,15 @@ class JobImportService
                 // Get category (use staged item's or source's or default)
                 $categoryId = $stagedItem->category_id ?? $source->category_id ?? $this->getDefaultCategoryId();
 
+                // Extract employer contact info from description
+                $description = $stagedItem->cleaned_description ?? $stagedItem->raw_description ?? '';
+                $employerEmail = $this->extractApplicationEmail($description);
+                $employerPhone = $this->extractApplicationPhone($description);
+
+                // Determine contact email: use extracted employer email if found, otherwise use aggregator
+                $contactEmail = $employerEmail ?: $this->aggregatorEmail;
+                $contactName = $stagedItem->company_name ?: $this->aggregatorContactName;
+
                 // Create the post
                 $post = Post::create([
                     'country_code' => $countryCode,
@@ -74,9 +83,10 @@ class JobImportService
                     'salary_type_id' => 1, // Monthly by default
                     'currency_code' => $stagedItem->currency_code ?? $this->getCurrencyForCountry($countryCode),
                     'application_url' => $stagedItem->application_url ?? $stagedItem->external_url,
-                    'contact_name' => $this->aggregatorContactName,
+                    'contact_name' => $contactName,
                     'auth_field' => 'email',
-                    'email' => $this->aggregatorEmail,
+                    'email' => $contactEmail,
+                    'phone' => $employerPhone,
                     'city_id' => $city->id,
                     'lat' => $city->latitude,
                     'lon' => $city->longitude,
@@ -403,6 +413,82 @@ class JobImportService
             Log::warning("Error downloading logo from {$url}: {$e->getMessage()}");
             return null;
         }
+    }
+
+    /**
+     * Extract application email from job description
+     */
+    public function extractApplicationEmail(string $description): ?string
+    {
+        if (empty($description)) {
+            return null;
+        }
+
+        $text = strip_tags($description);
+
+        // Look for emails near application-related keywords first
+        $patterns = [
+            // "apply to email@domain.com" or "send CV to email@domain.com"
+            '/(?:apply|send|email|cv|resume|contact|careers|recruitment|hr|jobs).*?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i',
+            // "email@domain.com" standalone
+            '/\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match_all($pattern, $text, $matches)) {
+                foreach ($matches[1] as $email) {
+                    $email = strtolower(trim($email));
+                    // Filter out common non-application emails
+                    $excludePatterns = ['noreply', 'no-reply', 'donotreply', 'support@', 'info@nyasajob', 'admin@', 'webmaster@', 'postmaster@'];
+                    $isExcluded = false;
+                    foreach ($excludePatterns as $exclude) {
+                        if (stripos($email, $exclude) !== false) {
+                            $isExcluded = true;
+                            break;
+                        }
+                    }
+                    if (!$isExcluded && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        return $email;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract phone number from job description
+     */
+    public function extractApplicationPhone(string $description): ?string
+    {
+        if (empty($description)) {
+            return null;
+        }
+
+        $text = strip_tags($description);
+
+        // Phone patterns - international and local formats
+        $patterns = [
+            // Near keywords like call, phone, contact
+            '/(?:call|phone|contact|tel|mobile|whatsapp)[:\s]*([+]?\d[\d\s\-().]{8,20}\d)/i',
+            // South African format: +27 or 0 followed by digits
+            '/\b((?:\+27|0)\s*\d{2}\s*\d{3}\s*\d{4})\b/',
+            // General international: +1 (123) 456-7890 style
+            '/\b(\+\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9})\b/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $matches)) {
+                $phone = preg_replace('/[^\d+]/', '', $matches[1]);
+                // Ensure reasonable phone number length
+                if (strlen($phone) >= 10 && strlen($phone) <= 15) {
+                    return $phone;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
