@@ -500,6 +500,13 @@ class RssFeedFetcherService
                     continue;
                 }
 
+                // Skip if no application URL - jobs without application details are useless
+                if (empty($item['url'])) {
+                    $result['failed']++;
+                    $result['details'][] = "Skipped '{$item['title']}': No application URL";
+                    continue;
+                }
+
                 // Generate checksum for duplicate detection
                 $checksum = JobFeedStagedItem::generateChecksum(
                     $item['title'],

@@ -73,6 +73,10 @@ jobs:
             # Import approved jobs to posts table (this makes them visible on frontend)
             php artisan rss:import --limit=500 2>/dev/null || true
 
+            # Note: Jobs without application_url but with contact info in description
+            # are still valid and will be imported. The import validation checks for
+            # emails, phone numbers, and application instructions in descriptions.
+
             # Fix database auto-increment and disable broken feeds
             php artisan tinker --execute="
               DB::statement('ALTER TABLE job_feed_sources MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');

@@ -211,6 +211,22 @@ class JobImportService
             return false;
         }
 
+        // Application details are required - must have at least one way to apply
+        $hasApplicationUrl = !empty($item->application_url) && filter_var($item->application_url, FILTER_VALIDATE_URL);
+        $hasExternalUrl = !empty($item->external_url) && filter_var($item->external_url, FILTER_VALIDATE_URL);
+        $hasContactEmail = !empty($item->contact_email) && filter_var($item->contact_email, FILTER_VALIDATE_EMAIL);
+
+        // If no direct application method, check if description contains contact info
+        if (!$hasApplicationUrl && !$hasExternalUrl && !$hasContactEmail) {
+            $description = $item->cleaned_description ?? $item->raw_description ?? '';
+            $hasContactInDescription = $this->descriptionHasContactInfo($description);
+
+            if (!$hasContactInDescription) {
+                Log::warning("Staged item {$item->id} rejected: No valid application URL, email, or contact info in description");
+                return false;
+            }
+        }
+
         // Check for duplicate posts
         $existingPost = Post::where('title', $item->title)
             ->where('partner', $this->partnerIdentifier)
@@ -387,6 +403,63 @@ class JobImportService
             Log::warning("Error downloading logo from {$url}: {$e->getMessage()}");
             return null;
         }
+    }
+
+    /**
+     * Check if job description contains contact information (email, phone, address)
+     */
+    protected function descriptionHasContactInfo(string $description): bool
+    {
+        if (empty($description)) {
+            return false;
+        }
+
+        // Strip HTML tags but keep text
+        $text = strip_tags($description);
+
+        // Check for email addresses
+        if (preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $text)) {
+            return true;
+        }
+
+        // Check for phone numbers (various formats)
+        // Matches: +1234567890, (123) 456-7890, 123-456-7890, 123.456.7890, +1 (123) 456-7890
+        if (preg_match('/(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/', $text)) {
+            return true;
+        }
+
+        // Check for common application keywords with contact context
+        $applicationPatterns = [
+            '/apply\s+(at|to|via|through)\s+\S+/i',
+            '/send\s+(your\s+)?(cv|resume|application)\s+(to|at)/i',
+            '/email\s+(your\s+)?(cv|resume|application)/i',
+            '/submit\s+(your\s+)?(cv|resume|application)/i',
+            '/contact\s+(us\s+)?(at|on|via)/i',
+            '/call\s+(us\s+)?(at|on)/i',
+            '/write\s+to\s+us/i',
+            '/mail\s+(your\s+)?(cv|resume|application)/i',
+            // Post Office Box variations
+            '/P\.?\s*O\.?\s*Box\s*\d+/i',
+            '/Post\s*Office\s*Box/i',
+            '/Private\s*Bag/i',
+            '/postal\s+address/i',
+            '/mailing\s+address/i',
+            // Physical address indicators
+            '/street\s+address/i',
+            '/office\s+address/i',
+            '/physical\s+address/i',
+            '/located\s+at/i',
+            '/visit\s+(us\s+)?(at|in)/i',
+            '/our\s+office(s)?\s+(is|are)\s+(at|in|located)/i',
+        ];
+
+        foreach ($applicationPatterns as $pattern) {
+            if (preg_match($pattern, $text)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
