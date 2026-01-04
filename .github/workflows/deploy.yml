@@ -50,6 +50,11 @@ jobs:
             chown -R indegnnk:indegnnk $DEPLOYPATH
 
             cd $DEPLOYPATH
+
+            # Switch to database cache driver (avoids file permission issues)
+            sed -i 's/CACHE_DRIVER=file/CACHE_DRIVER=database/g' .env
+            sed -i 's/CACHE_STORE=file/CACHE_STORE=database/g' .env
+
             php artisan storage:link 2>/dev/null || true
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force
